@@ -94,6 +94,7 @@ class Infocasts extends Base
         UNIQUE KEY `locations_uid_date_rep` (`locations_uid`,`date_rep`),
         KEY `locations_uid` (`locations_uid`),
         KEY `date_rep` (`date_rep`),
+        KEY `timestamp_represent` (`timestamp_represent`),
         KEY `tests_units` (`tests_units`)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 

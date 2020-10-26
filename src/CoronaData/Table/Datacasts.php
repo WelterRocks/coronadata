@@ -111,6 +111,7 @@ class Datacasts extends Base
           UNIQUE KEY `locations_uid_date_rep` (`locations_uid`,`date_rep`),
           KEY `date` (`day`,`month`,`year`),
           KEY `locations_uid` (`locations_uid`),
+          KEY `timestamp_represent` (`timestamp_represent`),
           KEY `date_rep` (`date_rep`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
         
