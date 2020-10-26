@@ -29,6 +29,7 @@ class Combined extends Base
     
     protected $uid = null;
     protected $locations_uid = null;
+    protected $timestamp_represent = null;
     protected $date_rep = null;
     protected $day = null;
     protected $month = null;
@@ -118,6 +119,7 @@ class Combined extends Base
       return "CREATE ALGORITHM=UNDEFINED DEFINER=`admin`@`localhost` SQL SECURITY DEFINER VIEW `combined_data`  AS  
       select `datacasts`.`uid` AS `uid`,
       `datacasts`.`locations_uid` AS `locations_uid`,
+      `datacasts`.`timestamp_represent` AS `timestamp_represent`,
       `datacasts`.`date_rep` AS `date_rep`,
       `datacasts`.`day` AS `day`,
       `datacasts`.`month` AS `month`,
