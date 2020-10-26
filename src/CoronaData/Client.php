@@ -720,6 +720,8 @@ class Client
             $location = new \stdClass;
             
             // We only set location, country, country code, geo id (generated) and continent (if it exists) manually
+            $data->location = str_replace("_", " ", $data->location);
+
             $location->location = $data->location;
             $location->country = $data->location;
             $location->country_code = $country_code;
