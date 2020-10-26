@@ -116,7 +116,7 @@ class Combined extends Base
 
     protected function get_install_sql()
     {
-      return "CREATE ALGORITHM=UNDEFINED DEFINER=`admin`@`localhost` SQL SECURITY DEFINER VIEW `combined_data`  AS  
+      return "CREATE ALGORITHM=UNDEFINED DEFINER=`admin`@`localhost` SQL SECURITY DEFINER VIEW `combined`  AS  
       select `datacasts`.`uid` AS `uid`,
       `datacasts`.`locations_uid` AS `locations_uid`,
       `datacasts`.`timestamp_represent` AS `timestamp_represent`,
