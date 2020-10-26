@@ -26,8 +26,9 @@ use WelterRocks\CoronaData\Table\Locations;
 
 class Datacasts extends Base
 {
-    protected $timestamp_last_calculated = null;
     protected $locations_uid = true;
+    protected $timestamp_last_calculated = null;
+    protected $timestamp_represent = null;
     protected $date_rep = true;
     protected $day = null;
     protected $month = null;
@@ -71,6 +72,7 @@ class Datacasts extends Base
           `timestamp_undeleted` timestamp NULL DEFAULT NULL,
           `timestamp_disabled` timestamp NULL DEFAULT NULL,
           `timestamp_enabled` timestamp NULL DEFAULT NULL,
+          `timestamp_represent` timestamp NOT NULL,
           `date_rep` date NOT NULL,
           `day` smallint UNSIGNED NOT NULL,
           `month` smallint UNSIGNED NOT NULL,

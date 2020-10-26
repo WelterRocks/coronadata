@@ -100,7 +100,11 @@ class DataHandler
                         $this->data->records[$id]->location = $val;
                         
                     if ($new_key == "date_rep")
+                    {
                         $val = substr($val, 6, 4)."-".substr($val, 3, 2)."-".substr($val, 0, 2);
+                        
+                        $this->data->records[$id]->timestamp_represent = $val." 00:00:00";
+                    }
                     
                     $this->data->records[$id]->$new_key = $val;
                     
@@ -173,11 +177,18 @@ class DataHandler
 		$key = $header[$id];
 
 		if ($key == "date_rep")
-			$obj->$key = substr($val, 6, 4)."-".substr($val, 3, 2)."-".substr($val, 0, 2);
+		{
+		    $obj->$key = substr($val, 6, 4)."-".substr($val, 3, 2)."-".substr($val, 0, 2);	    
+		    $obj->timestamp_represent = $obj->$key." 00:00:00";
+                }
 		elseif (strstr($val, ","))
-			$obj->$key = (float)str_replace(",", ".", str_replace(".", "", $val));
+		{
+		    $obj->$key = (float)str_replace(",", ".", str_replace(".", "", $val));
+                }
 		else
-			$obj->$key = (double)str_replace(",", ".", str_replace(".", "", $val));
+		{
+		    $obj->$key = (double)str_replace(",", ".", str_replace(".", "", $val));
+                }
             }
 	
             array_push($buffer, $obj); 

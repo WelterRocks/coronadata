@@ -26,6 +26,7 @@ use WelterRocks\CoronaData\Table\Base;
 class Infocasts extends Base
 {
     protected $locations_uid = true;
+    protected $timestamp_represent = null;
     protected $date_rep = true;    
     protected $new_cases = null;
     protected $new_cases_per_million = null;
@@ -61,6 +62,7 @@ class Infocasts extends Base
         `timestamp_undeleted` timestamp NULL DEFAULT NULL,
         `timestamp_disabled` timestamp NULL DEFAULT NULL,
         `timestamp_enabled` timestamp NULL DEFAULT NULL,
+        `timestamp_represent` timestamp NOT NULL,
         `date_rep` date NOT NULL,
         `new_cases` float NOT NULL DEFAULT '0',
         `new_cases_per_million` float NOT NULL DEFAULT '0',

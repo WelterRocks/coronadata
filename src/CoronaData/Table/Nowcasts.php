@@ -26,6 +26,7 @@ use WelterRocks\CoronaData\Table\Base;
 class Nowcasts extends Base
 {
     protected $locations_uid = true;
+    protected $timestamp_represent = null;
     protected $date_rep = true;
     protected $esteem_new_diseases = null;
     protected $esteem_new_diseases_ma4 = null;
@@ -51,6 +52,7 @@ class Nowcasts extends Base
         `timestamp_undeleted` timestamp NULL DEFAULT NULL,
         `timestamp_disabled` timestamp NULL DEFAULT NULL,
         `timestamp_enabled` timestamp NULL DEFAULT NULL,
+        `timestamp_represent` timestamp NOT NULL,
         `date_rep` date NOT NULL,
         `esteem_new_diseases` int NOT NULL DEFAULT '0',
         `lower_new_diseases` int NOT NULL DEFAULT '0',

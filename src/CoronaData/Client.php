@@ -813,9 +813,14 @@ class Client
                             
                         // Because of global warming and efficiency reasons, we transform the date field at this point and not within the DataHandlers transform routine :-)
                         if ($key == "date")
+                        {
                             $infocast->date_rep = $val;
+                            $infocast->timestamp_represent = $infocast->date_rep." 00:00:00";
+                        }
                         elseif (($val !== null) && ($val != ""))
+                        {
                             $infocast->$key = $val;
+                        }
                     }
 
                     if (true === $infocast->uid = $this->database->register_object("Infocasts", $infocast, true, false, $error, $sql))
