@@ -22,6 +22,7 @@
 
 use WelterRocks\CoronaData\Exception;
 use WelterRocks\CoronaData\Table\Base;
+use WelterRocks\CoronaData\Table\Locations;
 
 class Datacasts extends Base
 {
@@ -320,6 +321,18 @@ class Datacasts extends Base
         if (!$obj)
             return false;
             
+        if ($obj->cases == 0)
+        {
+            // No cases within the last 14 days. Flag the location as virus free.
+            $loc = new Locations($this->get_db());
+            
+            $loc->uid = $this->locations_uid;
+            
+            if ($loc->select())
+                $loc->set_virus_free_flag(true);
+            
+        }
+
         $this->cases_14day = $obj->cases;
         $this->deaths_14day = $obj->deaths;
         $this->exponence_14day = $obj->exponence;
@@ -336,6 +349,18 @@ class Datacasts extends Base
         if (!$obj)
             return false;
             
+        if ($obj->cases > 0)
+        {
+            // Cases found within the last 7 days. Flag the location as non virus free.
+            $loc = new Locations($this->get_db());
+            
+            $loc->uid = $this->locations_uid;
+            
+            if ($loc->select())
+                $loc->set_virus_free_flag(false);
+            
+        }
+
         $this->cases_7day = $obj->cases;
         $this->deaths_7day = $obj->deaths;
         $this->exponence_7day = $obj->exponence;

@@ -189,11 +189,13 @@ class Database
         return false;
     }
     
-    public function get_latest($table, &$error = null, &$sql = null)
+    public function get_date_rep($table, $condition = "'1'", $desc = false, &$no_result = null, &$error = null, &$sql = null)
     {	
         $error = null;
         $sql = null;
         $results = null;
+        
+        $no_result = false;
         
         $nulldate = "1970-01-01";
         $nulltime = "00:00:00";
@@ -208,12 +210,25 @@ class Database
             return $nulldate." ".$nulltime;
         }
         
-        $date_rep = $this->select($table, "date_rep", "'1' GROUP BY date_rep ORDER BY date_rep DESC", null, true, true, false, $results, $error, $sql);
+        $date_rep = $this->select($table, "date_rep", $condition." GROUP BY date_rep ORDER BY date_rep ".(($desc) ? "DESC" : "ASC")." LIMIT 1", null, true, true, false, $results, $error, $sql);
         
         if (!$date_rep)
+        {
+          $no_result = true;
           $date_rep = $nulldate;
+        }
           
         return $date_rep." ".$nulltime;
+    }
+    
+    public function get_earliest($table, $condition = "'1'", &$no_result = null, &$error = null, &$sql = null)
+    {
+        return $this->get_date_rep($table, $condition, false, $no_result, $error, $sql);
+    }
+    
+    public function get_latest($table, $condition = "'1'", &$no_result = null, &$error = null, &$sql = null)
+    {
+        return $this->get_date_rep($table, $condition, true, $no_result, $error, $sql);
     }
     
     public function select($table, $field = "*", $conditions = "'1'", $callbacks_execute = null, $single_select = false, $force_stdclass = false, $force_is_view = false, &$result_count = null, &$error = null, &$sql = null)
@@ -406,7 +421,9 @@ class Database
         if (!$this->is_table(strtolower($object_name)))
           throw new Exception("Not an installed table '".$object_name."'");
         
-        $obj = new $table($this->db, $disable_autoexec);
+        $obj = new $table($this->db);
+        
+        $obj->disable_autoexec($disable_autoexec);
         
         foreach ($data as $key => $val)
           $obj->$key = $val;

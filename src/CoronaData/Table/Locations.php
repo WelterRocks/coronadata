@@ -54,6 +54,14 @@ class Locations extends Base
     protected $cardiovasc_death_rate = null;
     protected $diabetes_prevalence = null;
     protected $extreme_poverty = null;
+    protected $infection_density = null;
+    protected $average_cases_per_day = null;
+    protected $average_cases_per_week = null;
+    protected $average_cases_per_month = null;
+    protected $average_cases_per_year = null;
+    protected $contamination_runtime = null;
+    protected $contamination_value = null;
+    protected $contamination_target = null;
     protected $flag_data_incomplete = null;
     protected $flag_no_longer_updated = null;
     protected $flag_virus_free = null;
@@ -97,6 +105,14 @@ class Locations extends Base
         `cardiovasc_death_rate` float DEFAULT NULL,
         `diabetes_prevalence` float DEFAULT NULL,
         `extreme_poverty` float DEFAULT NULL,
+        `infection_density` FLOAT NOT NULL DEFAULT '0',
+        `average_cases_per_day` float NOT NULL DEFAULT '0',
+        `average_cases_per_week` float NOT NULL DEFAULT '0',
+        `average_cases_per_month` float NOT NULL DEFAULT '0',
+        `average_cases_per_year` float NOT NULL DEFAULT '0',
+        `contamination_runtime` INT UNSIGNED NOT NULL DEFAULT '0',
+        `contamination_value` float NOT NULL DEFAULT '0',
+        `contamination_target` date DEFAULT NULL,
         `update_count` int UNSIGNED NOT NULL DEFAULT '0',
         `flag_updated` tinyint(1) NOT NULL DEFAULT '0',
         `flag_disabled` tinyint(1) NOT NULL DEFAULT '0',
@@ -113,6 +129,54 @@ class Locations extends Base
         KEY `geo_id` (`geo_id`),
         KEY `country` (`country`)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;";
+    }
+    
+    public function calculate_contamination()
+    {
+        $sql = "SELECT SUM(cases) AS cases_total, AVG(population_used) as population_average, AVG(exponence_1day) as exponence_average, COUNT(uid) AS days FROM `datacasts` WHERE `flag_disabled` = 0 AND `flag_deleted` = 0 AND `locations_uid` = ".$this->uid;
+        
+        $res = $this->get_db()->query($sql);
+        
+        if ((!$res) || ($res->num_rows == 0))
+          return null;
+          
+        $obj = $res->fetch_object();
+        $res->free();
+        
+        if ($obj->days == 0)
+          return null;
+          
+        $this->contamination_runtime = $obj->days;
+          
+        $this->average_cases_per_day = ($obj->cases_total / $obj->days);
+        $this->average_cases_per_week = ($this->average_cases_per_day * 7);
+        $this->average_cases_per_month = ($this->average_cases_per_day * 30);
+        $this->average_cases_per_year = ($this->average_cases_per_day * 365);
+        
+        if ($obj->population_average == 0)
+          $obj->population_average = $this->population;
+          
+        if ($obj->population_average > 0)
+          $this->contamination_value = (100 / $obj->population_average * $obj->cases_total);
+        else
+          $this->contamination_value = 0;
+          
+        if (!$obj->exponence_average)
+          $obj->exponence_average = 0.667;
+        
+        if ($this->population_density > 0)
+          $this->infection_density = $this->average_cases_per_day / $this->population_density;
+        else
+          $this->infection_density = 0;
+
+        if ($this->human_development_index == 0)
+          $hdi = 0.1;
+        else
+          $hdi = $this->human_development_index;
+                
+        $contamination_target_seconds = (($obj->population_average / $this->average_cases_per_day * $obj->exponence_average) * 24 * 60 * 60) * $hdi;
+        
+        $this->contamination_target = date("Y-m-d", (time() + $contamination_target_seconds));
     }
     
     public function is_data_incomplete()
@@ -232,7 +296,13 @@ class Locations extends Base
         $error = null;
         $sql = null;
 
-        $this->check_view_and_uid();        
+        $this->check_view_and_uid();
+        
+        if (($has_virus) && ($this->flag_virus_free == 1))
+          return null;
+          
+        if ((!$has_virus) && ($this->flag_virus_free != 0))
+          return null;
           
         $sql = "UPDATE `".$this->get_tablename()."` SET `flag_virus_free` = ".(($has_virus) ? 0 : 1).", `timestamp_virus_".(($has_virus) ? "back" : "free")."` = '".$this->get_sql_timestamp()."' WHERE `uid` = '".$this->uid."' LIMIT 1";
         

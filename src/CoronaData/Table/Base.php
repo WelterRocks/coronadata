@@ -885,12 +885,14 @@ abstract class Base
     
     function __get($key)
     {
-        if (substr($key, 0, 2) == "__")
+        if ((substr($key, 0, 2) == "__") && ($key != "__is_view"))
           throw new Exception("Read-access to a super private is denied.");
+        elseif ($key == "__is_view")
+          return ((isset($this->__is_view)) ? $this->__is_view : null);
 
         if ($this->is_unknown_field($key))
           return $this->__unknown_fields[$key];
-          
+        
         return $this->$key;
     }
     
@@ -900,16 +902,6 @@ abstract class Base
         {
           case "__db":
           case "__tablename":
-          case "__transactions":
-          case "__initialized":
-          case "__unknown_fields":
-          case "__updated_fields":
-          case "__update_version":
-          case "__has_updates":
-          case "__autoselect_keys":
-          case "__autoexec_disabled":
-          case "__required_fields":
-          case "__is_view":
               throw new Exception("Write-access to a super private is denied.");
               return;
           default:

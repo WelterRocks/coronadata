@@ -261,6 +261,37 @@ class Client
         return $results->datacasts;
     }
     
+    public function recalculate_location_store_fields($transaction_name = null, $autocommit = false, &$result_count = null, &$update_results = null, &$error = null, &$sql = null)
+    {
+        $error = null;
+        $sql = null;
+        
+        $result_count = -1;
+        $update_results = null;
+        
+        if ($transaction_name)
+        {
+            if ($this->transaction_name)
+                throw new Exception("Transaction already open with ID '".$this->transaction_name."'");
+                
+            $this->transaction_name = $transaction_name;
+            $this->database->begin_transaction($transaction_name);
+        }
+        
+        $callbacks = new \stdClass;
+        $callbacks->calculate_contamination = array();
+        $callbacks->save = array(null, null, false);
+
+        $none = null;
+        
+        $update_results = $this->database->select("locations", "*", '1', $callbacks, false, false, false, $none, $result_count, $error, $sql);
+            
+        if (($this->transaction_name) && ($autocommit))
+            return $this->database_transaction_commit($transaction_name);
+
+        return true;    
+    }
+
     public function recalculate_eu_datacast_store_fields($transaction_name = null, $autocommit = false, $incidence_factor = 100000, $r_value_skip_days = 3, &$result_count = null, &$update_results = null, &$error = null, &$sql = null)
     {
         $error = null;
@@ -272,7 +303,7 @@ class Client
         if ($transaction_name)
         {
             if ($this->transaction_name)
-                throw new Exception("Transaction alread open with ID '".$this->transaction_name."'");
+                throw new Exception("Transaction already open with ID '".$this->transaction_name."'");
                 
             $this->transaction_name = $transaction_name;
             $this->database->begin_transaction($transaction_name);
@@ -317,13 +348,30 @@ class Client
         
         if ($this->is_ready_for_calculation())
             $disable_datacast_autoexec = false;
-            
-        $latest_ts = $this->database->get_latest("datacasts");
+        
+        $no_result = null;
+        $db_empty = false;
+        
+        $latest_ts = $this->database->get_latest("datacasts", "'1'", $no_result);
+        
+        if ($no_result)
+        {
+            // For future use
+            $db_empty = true;
+        }
+        else
+        {        
+            $earliest_ts = $this->database->get_earliest("datacasts", "flag_calculated = 0", $no_result);
+        
+            // We have uncalculated datasets, set earliest date_rep as reference for latest timestamp, to make sure, all relevant datasets are updated
+            if (!$no_result)
+                $latest_ts = $earliest_ts;
+        }
         
         if ($transaction_name)
         {
             if ($this->transaction_name)
-                throw new Exception("Transaction alread open with ID '".$this->transaction_name."'");
+                throw new Exception("Transaction already open with ID '".$this->transaction_name."'");
                 
             $this->transaction_name = $transaction_name;
             $this->database->begin_transaction($transaction_name);
@@ -497,7 +545,7 @@ class Client
         if ($transaction_name)
         {
             if ($this->transaction_name)
-                throw new Exception("Transaction alread open with ID '".$this->transaction_name."'");
+                throw new Exception("Transaction already open with ID '".$this->transaction_name."'");
                 
             $this->transaction_name = $transaction_name;
             $this->database->begin_transaction($transaction_name);
@@ -628,7 +676,7 @@ class Client
         if ($transaction_name)
         {
             if ($this->transaction_name)
-                throw new Exception("Transaction alread open with ID '".$this->transaction_name."'");
+                throw new Exception("Transaction already open with ID '".$this->transaction_name."'");
                 
             $this->transaction_name = $transaction_name;
             $this->database->begin_transaction($transaction_name);
@@ -767,7 +815,7 @@ class Client
                         elseif (($val !== null) && ($val != ""))
                             $infocast->$key = $val;
                     }
-                
+
                     if (true === $infocast->uid = $this->database->register_object("Infocasts", $infocast, true, false, $error, $sql))
                     {
                         $errcount++;

@@ -139,6 +139,8 @@ function worker_loop(Client $client)
     
     if ($ticks_state == $ticks_max_state)
     {
+        $did_updates = 0;
+        
         // Retrieve EU datacast
         if (($client->get_eu_datacast_timestamp() + ($max_cast_age * 1000)) < Client::timestamp())
         {
@@ -177,7 +179,9 @@ function worker_loop(Client $client)
                         $cli->log("Unable to write dumpfile.", LOG_ALERT);
                         
                     unset($dumpfile);
-                }                
+                }
+                
+                $did_updates++;
             }
             catch (Exception $ex)
             {
@@ -228,6 +232,8 @@ function worker_loop(Client $client)
                         
                     unset($dumpfile);
                 }
+                
+                $did_updates++;
             }
             catch (Exception $ex)
             {
@@ -277,6 +283,8 @@ function worker_loop(Client $client)
                         
                     unset($dumpfile);
                 }
+                
+                $did_updates++;
             }
             catch (Exception $ex)
             {
@@ -287,6 +295,22 @@ function worker_loop(Client $client)
             unset($successcount);
             unset($errorcount);
             unset($errordata);
+        }
+        
+        // If something has probably changed, recalculate the location contamination
+        if ($did_updates)
+        {
+            $cli->log("Updating location contamination");
+            
+            try
+            {
+                $client->recalculate_location_store_fields("location_contamination", true);
+                $cli->log("Update sequence finished.", LOG_INFO);
+            }
+            catch (Exception $ex)
+            {
+                $cli->log("Unable to update location store: ".$ex->getMessage()." in ".$ex->getFile().", line ".$ex->getLine(), LOG_ALERT);            
+            }
         }
         
         $ticks_state = 0;
