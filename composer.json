@@ -1,0 +1,36 @@
+{
+    "name": "welterrocks/coronadata",
+    "description": "PHP library for analyzing the worldwide corona/covid19 situation.",
+    "keywords": [
+        "php",
+        "corona",
+        "covid19",
+        "covid",
+        "covid-19",
+        "pandemic",
+        "pandemie",
+        "inzidenz",
+        "r-faktor",
+        "incidents",
+        "reproduction",
+        "repro-factor"
+    ],
+    "license": "GPL-3.0-only",
+    "authors": [
+        {
+            "name": "Oliver Welter",
+            "email": "oliver@welter.rocks"
+        }
+    ],
+    "type": "project",
+    "require": {
+        "php": ">=7.1"
+    },
+    "require-dev": {
+    },
+    "autoload": {
+        "psr-4": {
+            "WelterRocks\\": "src"
+        }
+    }
+}
