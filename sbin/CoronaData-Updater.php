@@ -270,7 +270,7 @@ function worker_loop(Client $client)
             try
             {
                 // No filtering ("eu_datacast", null, null, null), so we can get worldwide datasets
-                $client->update_cov_infocast_store_fields("cov_infocast", null, null, null, true, 25, $totalcount, $successcount, $errorcount, $errordata, $filtercount);
+                $client->update_cov_infocast_store("cov_infocast", null, null, null, true, 25, $totalcount, $successcount, $errorcount, $errordata, $filtercount);
                 $cli->log("COV infocast store has been updated. Wrote ".$successcount." entries from ".$totalcount.", while ".$filtercount." were filtered.", LOG_INFO);
                 
                 if ($errorcount)
@@ -311,7 +311,7 @@ function worker_loop(Client $client)
             try
             {
                 // No filtering ("eu_datacast", null, null, null), so we can get worldwide datasets
-                $client->recalculate_eu_datacast_store("recalc_eu_datacast", true, 100000, 3, $resultcount, $updatedata, $errordata);
+                $client->recalculate_eu_datacast_store_fields("recalc_eu_datacast", true, 100000, 3, $resultcount, $updatedata, $errordata);
                 $cli->log("EU datacast store has been recalculated. Updated ".$resultcount." entries.", LOG_INFO);
                 
                 if ((is_array($errordata)) && (count($errordata) > 0))
