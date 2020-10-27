@@ -539,8 +539,9 @@ class Client
         
         if ($this->rki_nowcast_size == 0)
             throw new Exception("RKI nowcast is empty");
-        
-        $latest_ts = $this->database->get_latest("nowcasts");
+
+        // Seems that the RKI data is corrected after some days, so we will write all datasets, not only the latest        
+        // $latest_ts = $this->database->get_latest("nowcasts");
         
         if ($transaction_name)
         {
@@ -619,7 +620,7 @@ class Client
                 array_push($errstore, $errobj);
                 continue;
             }
-            
+/* DISABLED, BECAUSE OF THE RKI CORRECTED OLD DATASETS, THAT MUST BE UPDATED            
             $datediff = $this->get_datetime_diff($latest_ts, $recorddate." 00:00:00");
             
             if ($datediff->invert == 1)
@@ -627,7 +628,7 @@ class Client
                 $filtercount++;
                 continue;
             }
-                
+*/                
             if (true === $nowcast->uid = $this->database->register_object("Nowcasts", $nowcast, true, false, $error, $sql))
             {
                 $errcount++;

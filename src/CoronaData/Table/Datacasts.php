@@ -231,7 +231,7 @@ class Datacasts extends Base
         $cases->prefix_average = ($cases->prefix_value / $days);
         $cases->suffix_average = ($cases->suffix_value / $days);
         
-        if ($cases->suffix_average == 0)
+        if ($cases->prefix_average == 0)
             $cases->r_value = 0;
         else
             $cases->r_value = ($cases->suffix_average / $cases->prefix_average);
