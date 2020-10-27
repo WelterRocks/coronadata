@@ -234,7 +234,7 @@ class Datacasts extends Base
         if ($cases->suffix_average == 0)
             $cases->r_value = 0;
         else
-            $cases->r_value = ($cases->prefix_average / $cases->suffix_average);
+            $cases->r_value = ($cases->suffix_average / $cases->prefix_average);
 
         return $cases;
     }
@@ -446,7 +446,7 @@ class Datacasts extends Base
     public function autoexec_insert_before()
     {
         if ($this->autoexec_is_disabled()) return;
-
+        
         if (!$this->flag_calculated)
         {
             $this->recalculate();

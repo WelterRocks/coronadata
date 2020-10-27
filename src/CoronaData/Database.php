@@ -423,7 +423,8 @@ class Database
         
         $obj = new $table($this->db);
         
-        $obj->disable_autoexec($disable_autoexec);
+        if ($disable_autoexec)
+          $obj->disable_autoexec(true);
         
         foreach ($data as $key => $val)
           $obj->$key = $val;

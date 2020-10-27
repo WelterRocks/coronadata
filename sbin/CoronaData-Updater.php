@@ -136,6 +136,9 @@ function worker_loop(Client $client)
 	$ticks_max_state = 1000;
     else
         $ticks_max_state = 25000;
+        
+    // Is datacast autoexec disabled? Probably first run
+    $datacast_autoexec_disabled = false;
     
     if ($ticks_state == $ticks_max_state)
     {
@@ -159,14 +162,12 @@ function worker_loop(Client $client)
             $successcount = 0;
             $filtercount = 0;
             $errorcount = 0;
-            $resultcount = 0;            
             $errordata = null;
-            $updatedata = null;
             
             try
             {
                 // No filtering ("eu_datacast", null, null, null), so we can get worldwide datasets
-                $client->update_eu_datacast_store("eu_datacast", null, null, null, true, 25, $totalcount, $successcount, $errorcount, $errordata, $filtercount);
+                $client->update_eu_datacast_store("eu_datacast", null, null, null, true, 25, $totalcount, $successcount, $errorcount, $errordata, $filtercount, $datacast_autoexec_disabled);
                 $cli->log("EU datacast store has been updated. Wrote ".$successcount." entries from ".$totalcount.", while ".$filtercount." were filtered.", LOG_INFO);
                 
                 if ($errorcount)
@@ -297,6 +298,46 @@ function worker_loop(Client $client)
             unset($errordata);
         }
         
+        // Datacast autoexec disabled, do recalculation
+        if ($datacast_autoexec_disabled)
+        {
+            // Update the EU datacast store
+            $cli->log("Recalculating EU datacast store.", LOG_INFO);
+    
+            $resultcount = 0;            
+            $errordata = null;
+            $updatedata = null;
+            
+            try
+            {
+                // No filtering ("eu_datacast", null, null, null), so we can get worldwide datasets
+                $client->recalculate_eu_datacast_store("recalc_eu_datacast", true, 100000, 3, $resultcount, $updatedata, $errordata);
+                $cli->log("EU datacast store has been recalculated. Updated ".$resultcount." entries.", LOG_INFO);
+                
+                if ((is_array($errordata)) && (count($errordata) > 0))
+                {
+                    $cli->log("There were problems recalculating EU datacast data. ".count($errordata)." record(s) could not be updated.", LOG_ALERT);
+                    
+                    if ($dumpfile = $client->create_error_dump("eu-datacast-recalc-error-", $errordata))
+                        $cli->log("Dump file written to '".$dumpfile."'", LOG_ALERT);
+                    else
+                        $cli->log("Unable to write dumpfile.", LOG_ALERT);
+                        
+                    unset($dumpfile);
+                }
+            }
+            catch (Exception $ex)
+            {
+                $cli->log("Unable to update EU datacast store: ".$ex->getMessage()." in ".$ex->getFile().", line ".$ex->getLine(), LOG_ALERT);
+            }
+            
+            unset($totalcount);
+            unset($successcount);
+            unset($filtercount);
+            unset($errorcount);
+            unset($errordata);
+        }
+
         // If something has probably changed, recalculate the location contamination
         if ($did_updates)
         {

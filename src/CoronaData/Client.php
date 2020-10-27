@@ -225,7 +225,7 @@ class Client
         $results = new \stdClass;
         $results->datacasts = false;
         $results->infocasts = false;
-        $results->nowcasts = false;        
+        $results->nowcasts = false;
         
         $this->database->analyze();
         
@@ -333,7 +333,7 @@ class Client
         return $datediff;    
     }
     
-    public function update_eu_datacast_store($transaction_name = null, $filter_continent = null, $filter_country = null, $filter_location = null, $autocommit = false, $throttle_usecs = 1, &$totalcount = null, &$successcount = null, &$errcount = null, &$errstore = null, &$filtercount = null)
+    public function update_eu_datacast_store($transaction_name = null, $filter_continent = null, $filter_country = null, $filter_location = null, $autocommit = false, $throttle_usecs = 1, &$totalcount = null, &$successcount = null, &$errcount = null, &$errstore = null, &$filtercount = null, &$disable_datacast_autoexec = null)
     {
         $successcount = 0;
         $totalcount = 0;
@@ -344,10 +344,10 @@ class Client
         if ($this->eu_datacast_size == 0)
             throw new Exception("EU datacast is empty");
         
-        $disable_datacast_autoexec = true;
+        $disable_datacast_autoexec = false;
         
-        if ($this->is_ready_for_calculation())
-            $disable_datacast_autoexec = false;
+        if (!$this->is_ready_for_calculation())
+            $disable_datacast_autoexec = true;
         
         $no_result = null;
         $db_empty = false;
