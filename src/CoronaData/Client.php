@@ -35,6 +35,11 @@ class Client
     private $eu_datacast_timestamp = null;
     private $eu_datacast_filename = null;
     
+    private $rki_positive = null;
+    private $rki_positive_size = null;
+    private $rki_positive_timestamp = null;
+    private $rki_positive_filename = null;
+    
     private $rki_nowcast = null;
     private $rki_nowcast_size = null;
     private $rki_nowcast_timestamp = null;
@@ -100,6 +105,22 @@ class Client
            
            return $retval;
        }
+    }
+    
+    public function retrieve_rki_positive($cache_timeout = 14400)
+    {
+        if ($retval = $this->rki_positive->retrieve($this->rki_positive_filename, $cache_timeout))
+        {
+            if (!$this->rki_positive->transform_rki_positive())
+                return null;
+            
+            $this->rki_positive_timestamp = self::timestamp();
+            $this->rki_positive_size = $retval;
+            
+            return $retval;
+        }
+        
+        return null;
     }
     
     public function retrieve_rki_nowcast($cache_timeout = 14400)
@@ -183,6 +204,21 @@ class Client
     public function get_eu_datacast_filename()
     {
         return $this->eu_datacast_filename;
+    }
+    
+    public function get_rki_positive_timestamp()
+    {
+       return $this->rki_positive_timestamp; 
+    }
+    
+    public function get_rki_positive_size()
+    {
+        return $this->rki_positive_size;
+    }
+    
+    public function get_rki_positive_filename()
+    {
+        return $this->rki_positive_filename;
     }
     
     public function get_rki_nowcast_timestamp()
@@ -342,7 +378,7 @@ class Client
         $errstore = array();
         
         if ($this->eu_datacast_size == 0)
-            throw new Exception("EU datacast is empty");
+            throw new Exception("EU datacast store is empty");
         
         $disable_datacast_autoexec = false;
         
@@ -528,6 +564,215 @@ class Client
         return true;
     }
     
+    public function update_rki_positive_store($transaction_name = null, $continent = "Europe", $country = "Germany", $autocommit = false, $throttle_usecs = 1, &$totalcount = null, &$successcount = null, &$errcount = null, &$errstore = null, &$filtercount = null)
+    {
+        $successcount = 0;
+        $totalcount = 0;
+        $filtercount = 0;
+        
+        $errcount = 0;
+        $errstore = array();
+        
+        if ($this->rki_positive_size == 0)
+            throw new Exception("RKI positive store is empty");
+            
+        $latest_ts = $this->database->get_latest("positives");
+        
+        if ($transaction_name)
+        {
+            if ($this->transaction_name)
+                throw new Exception("Transaction already open with ID '".$this->transaction_name."'");
+                
+            $this->transaction_name = $transaction_name;
+            $this->database->begin_transaction($transaction_name);
+        }
+        
+        // Shadow store for internal stats
+        $shadow_store = new \stdClass;
+        $shadow_store->states = array();
+        $shadow_store->districts = array();
+        
+        // Phase 1: Get the main location object to set states parent UIDs
+        $error = null;
+        $sql = null;
+        $resultcount = 0;
+        
+        $location = $this->database->select("locations", "*", "continent = '".$this->database->esc($continent)."' AND country = '".$this->database->esc($country)."' AND location = '".$this->database->esc($country)."'", null, true, false, false, $resultcount, $error, $sql);
+        
+        if (!$resultcount)
+            throw new Exception("Unable to find parent location for positive data");
+                                
+        // Phase 2: Get states and districts and create all data objects
+        foreach ($this->rki_positive->get_data() as $id => $record)
+        {
+            // Check, whether we have to hrottle the processing
+            if ($throttle_usecs)
+                usleep($throttle_usecs);
+                
+            $totalcount++;
+                
+            $recorddate = $record->timestamp_dataset;
+            
+            if (!$recorddate)
+            {
+                $errcount++;
+                
+                $errobj = new \stdClass;
+                $errobj->error = "Missing record date";
+                
+                array_push($errstore, $errobj);
+                continue;
+            }
+            
+            $datediff = $this->get_datetime_diff($latest_ts, $recorddate);
+
+            if ($datediff->invert == 1)
+            {
+                $filtercount++;
+                continue;
+            }
+                            
+            if (!isset($shadow_store->states[$record->state_id]))
+            {
+                $state = new \stdClass;
+                
+                $state->uid = null;
+                $state->location = $record->state;
+                $state->country = $country;
+                $state->continent = $continent;
+                $state->geo_id = trim(strtoupper(substr($record->state, 0, 3))).$record->state_id;
+                $state->parent_uid = $location->uid;
+                
+                if (true === $state->uid = $this->database->register_object("Locations", $state, true, false, $error, $sql))
+                {
+                    $errcount++;
+                    
+                    $errobj = new \stdClass;
+                    
+                    $errobj->error = "Unable to fetch UID of location object";
+                    $errobj->sql = $sql;
+                    
+                    array_push($errstore, $errobj);
+                }
+                elseif (($state->uid === false) || ($state->uid === null))
+                {
+                    $errcount++;
+                    
+                    $errobj = new \stdClass;
+                    
+                    $errobj->error = $error;
+                    $errobj->sql = $sql;
+                    
+                    array_push($errstore, $errobj);                
+                }
+
+                $shadow_store->states[$record->state_id] = clone $state;
+                
+                unset($state);
+            }
+                
+            if (!isset($shadow_store->districts[$record->state_id]))
+                $shadow_store->districts[$record->state_id] = array();
+            
+            if ((!isset($shadow_store->districts[$record->state_id][$record->district_id])) && ($shadow_store->states[$record->state_id]->uid))
+            {
+                $district = new \stdClass;
+                
+                $district->uid = null;
+                $district->location = $record->district;
+                $district->country = $country;
+                $district->continent = $continent;
+                $district->geo_id = trim(strtoupper(substr($record->state, 0, 3))).$record->state_id.".".$record->district_id;
+                $district->parent_uid = $shadow_store->states[$record->state_id]->uid;
+                
+                if (true === $district->uid = $this->database->register_object("Locations", $district, true, false, $error, $sql))
+                {
+                    $errcount++;
+                    
+                    $errobj = new \stdClass;
+                    
+                    $errobj->error = "Unable to fetch UID of location object";
+                    $errobj->sql = $sql;
+                    
+                    array_push($errstore, $errobj);
+                }
+                elseif (($district->uid === false) || ($district->uid === null))
+                {
+                    $errcount++;
+                    
+                    $errobj = new \stdClass;
+                    
+                    $errobj->error = $error;
+                    $errobj->sql = $sql;
+                    
+                    array_push($errstore, $errobj);                
+                }
+
+                $shadow_store->districts[$record->state_id][$record->district_id] = clone $district;
+                
+                unset($district);
+            }            
+        
+            if ($shadow_store->districts[$record->state_id][$record->district_id]->uid)
+            {
+                $obj = new \stdClass;
+                
+                $obj->country_uid = $location->uid;
+                $obj->state_uid = $shadow_store->states[$record->state_id]->uid;
+                $obj->district_uid = $shadow_store->districts[$record->state_id][$record->district_id]->uid;
+                $obj->foreign_identifier = $record->foreign_identifier;
+                $obj->timestamp_dataset = $record->timestamp_dataset;
+                $obj->timestamp_reported = $record->timestamp_reported;
+                $obj->timestamp_referenced = $record->timestamp_referenced;
+                $obj->date_rep = date("Y-m-d", strtotime($record->timestamp_dataset));
+                $obj->age_group_low = $record->age_group->lower;
+                $obj->age_group_high = $record->age_group->upper;
+                $obj->age_group2_low = $record->age_group2->lower;
+                $obj->age_group2_high = $record->age_group2->upper;
+                $obj->gender = $record->gender;
+                $obj->cases = $record->cases_count;
+                $obj->deaths = $record->deaths_count;
+                $obj->recovered = $record->recovered_count;
+                $obj->new_cases = $record->cases_new;
+                $obj->new_deaths = $record->deaths_new;
+                $obj->new_recovered = $record->recovered_new;
+                $obj->flag_is_disease_beginning = $record->flag_is_disease_beginning;
+                
+                if (true === $obj->uid = $this->database->register_object("Positives", $obj, true, false, $error, $sql))
+                {
+                    $errcount++;
+                    
+                    $errobj = new \stdClass;
+                    
+                    $errobj->error = "Unable to fetch UID of positive object";
+                    $errobj->sql = $sql;
+                    
+                    array_push($errstore, $errobj);
+                }
+                elseif (($obj->uid === false) || ($obj->uid === null))
+                {
+                    $errcount++;
+                    
+                    $errobj = new \stdClass;
+                    
+                    $errobj->error = $error;
+                    $errobj->sql = $sql;
+                    
+                    array_push($errstore, $errobj);                
+                }
+                else
+                {
+                    $successcount++;
+                }
+            }
+        }
+        
+        if (($this->transaction_name) && ($autocommit))
+            return $this->database_transaction_commit($transaction_name);
+
+        return true;            
+    }
+    
     public function update_rki_nowcast_store($transaction_name = null, $continent = "Europe", $country = "Germany", $location = "Germany", $autocommit = false, $throttle_usecs = 1, &$totalcount = null, &$successcount = null, &$errcount = null, &$errstore = null, &$filtercount = null)
     {
         $successcount = 0;
@@ -538,7 +783,7 @@ class Client
         $errstore = array();
         
         if ($this->rki_nowcast_size == 0)
-            throw new Exception("RKI nowcast is empty");
+            throw new Exception("RKI nowcast store is empty");
 
         // Seems that the RKI data is corrected after some days, so we will write all datasets, not only the latest        
         // $latest_ts = $this->database->get_latest("nowcasts");
@@ -670,7 +915,7 @@ class Client
         $errstore = array();
         
         if ($this->cov_infocast_size == 0)
-            throw new Exception("COV infocast is empty");
+            throw new Exception("COV infocast store is empty");
             
         $latest_ts = $this->database->get_latest("infocasts");
         
@@ -884,7 +1129,7 @@ class Client
         return $retval;
     }
     
-    function __construct($config = ".coronadatarc", $eu_datacast_filename = "eu_datacast.jgz", $rki_nowcast_filename = "rki_nowcast.jgz", $cov_infocast_filename = "cov_infocast.jgz")
+    function __construct($config = ".coronadatarc", $eu_datacast_filename = "eu_datacast.jgz", $rki_positive_filename = "rki_positive.jgz", $rki_nowcast_filename = "rki_nowcast.jgz", $cov_infocast_filename = "cov_infocast.jgz")
     {
         $this->config_file = $config;
         
@@ -893,15 +1138,20 @@ class Client
         $this->create_datastore();
         
         $this->eu_datacast_filename = $this->config->data_store."/".$eu_datacast_filename;
+        $this->rki_positive_filename = $this->config->data_store."/".$rki_positive_filename;
         $this->rki_nowcast_filename = $this->config->data_store."/".$rki_nowcast_filename;
         $this->cov_infocast_filename = $this->config->data_store."/".$cov_infocast_filename;
         
         $this->eu_datacast = new DataHandler($this->config->url_eu_datacast);
+        $this->rki_positive = new DataHandler($this->config->url_rki_positive);
         $this->rki_nowcast = new DataHandler($this->config->url_rki_nowcast);
         $this->cov_infocast = new DataHandler($this->config->url_cov_infocast);
         
         $this->eu_datacast_timestamp = 0;
         $this->eu_datacast_size = 0;
+        
+        $this->rki_positive_timestamp = 0;
+        $this->rki_positive_size = 0;
         
         $this->rki_nowcast_timestamp = 0;
         $this->rki_nowcast_size = 0;

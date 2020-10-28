@@ -41,11 +41,17 @@ $worker_reload = false;
 
 $ticks_state = 0;
 
-$max_cast_age = 7200;
+$max_cast_age = 3600;
 
-$cachetime_eu_datacast = 14400;
-$cachetime_rki_datacast = 14400;
-$cachetime_cov_infocast = 14400;
+$cachetime_eu_datacast = 3600;
+$cachetime_rki_datacast = 3600;
+$cachetime_rki_positive = 3600;
+$cachetime_cov_infocast = 3600;
+
+$skip_eu_datacast = false;
+$skip_rki_nowcast = false;
+$skip_rki_positive = false;
+$skip_cov_infocast = false;
 
 $pid = null;
 
@@ -120,11 +126,12 @@ function select_config_file()
 }
 
 // Worker loop
-function worker_loop(Client $client)
+function worker_loop(Client $client, $oneshot = false)
 {
     global $ticks_state, $max_cast_age;
     global $cli, $worker_reload, $daemon_terminate;
-    global $cachetime_eu_datacast, $cachetime_rki_nowcast, $cachetime_cov_infocast;
+    global $cachetime_eu_datacast, $cachetime_rki_nowcast, $cachetime_cov_infocast, $cachetime_rki_positive;
+    global $skip_eu_datacast, $skip_rki_nowcast, $skip_rki_positive, $skip_cov_infocast;
     
     // Dispatch signals in inner loop
     $cli->signals_dispatch();
@@ -140,12 +147,12 @@ function worker_loop(Client $client)
     // Is datacast autoexec disabled? Probably first run
     $datacast_autoexec_disabled = false;
     
-    if ($ticks_state == $ticks_max_state)
+    if (($ticks_state == $ticks_max_state) || ($oneshot))
     {
         $did_updates = 0;
         
         // Retrieve EU datacast
-        if (($client->get_eu_datacast_timestamp() + ($max_cast_age * 1000)) < Client::timestamp())
+        if ((!$skip_eu_datacast) && (($client->get_eu_datacast_timestamp() + ($max_cast_age * 1000)) < Client::timestamp()))
         {
             $cli->log("Retrieving EU datacast.", LOG_INFO);
             $size = $client->retrieve_eu_datacast($cachetime_eu_datacast);
@@ -197,7 +204,7 @@ function worker_loop(Client $client)
         }
 
         // Retrieve RKI nowcast
-        if (($client->get_rki_nowcast_timestamp() + ($max_cast_age * 1000)) < Client::timestamp())
+        if ((!$skip_rki_nowcast) && (($client->get_rki_nowcast_timestamp() + ($max_cast_age * 1000)) < Client::timestamp()))
         {
             $cli->log("Retrieving RKI nowcast.", LOG_INFO);
             $size = $client->retrieve_rki_nowcast($cachetime_rki_nowcast);
@@ -248,7 +255,7 @@ function worker_loop(Client $client)
         }
         
         // Retrieve COV infocast
-        if (($client->get_cov_infocast_timestamp() + ($max_cast_age * 1000)) < Client::timestamp())
+        if ((!$skip_cov_infocast) && (($client->get_cov_infocast_timestamp() + ($max_cast_age * 1000)) < Client::timestamp()))
         {
             $cli->log("Retrieving COV infocast.", LOG_INFO);
             $size = $client->retrieve_cov_infocast($cachetime_cov_infocast);
@@ -299,7 +306,7 @@ function worker_loop(Client $client)
         }
         
         // Datacast autoexec disabled, do recalculation
-        if ($datacast_autoexec_disabled)
+        if ((!$skip_eu_datacast) && ($datacast_autoexec_disabled))
         {
             // Update the EU datacast store
             $cli->log("Recalculating EU datacast store.", LOG_INFO);
@@ -338,6 +345,56 @@ function worker_loop(Client $client)
             unset($errordata);
         }
 
+        // Retrieve RKI positive data
+        if ((!$skip_rki_positive) && (($client->get_rki_positive_timestamp() + ($max_cast_age * 1000)) < Client::timestamp()))
+        {
+            $cli->log("Retrieving RKI positive data.", LOG_INFO);
+            $size = $client->retrieve_rki_positive($cachetime_rki_positive);
+
+            if (!$size)
+                $cli->log("Unable to fetch RKI positive data. The result was empty.", LOG_ALERT);
+            else
+                $cli->log("RKI positive data with ".$size." bytes received.", LOG_INFO);
+            
+            // Update the RKI positive store
+            $cli->log("Updating RKI positive data store.", LOG_INFO);
+    
+            $totalcount = 0;
+            $successcount = 0;
+            $errorcount = 0;
+            $errordata = null;
+            
+            try
+            {
+                // Europe, Germany is currently hardcoded, because it is the only country known to produce compatible nowcasts
+                $client->update_rki_positive_store("rki_nowcast", "Europe", "Germany", true, 25, $totalcount, $successcount, $errorcount, $errordata);
+                $cli->log("RKI positive data store has been updated. Wrote ".$successcount." entries from ".$totalcount.".", LOG_INFO);
+                
+                if ($errorcount)
+                {
+                    $cli->log("There were problems writing RKI positive data. ".$errorcount." esteem dataset(s) could not be written.", LOG_ALERT);
+                    
+                    if ($dumpfile = $client->create_error_dump("rki-positive-error-", $errordata))
+                        $cli->log("Dump file written to '".$dumpfile."'", LOG_ALERT);
+                    else
+                        $cli->log("Unable to write dumpfile.", LOG_ALERT);
+                        
+                    unset($dumpfile);
+                }
+                
+                $did_updates++;
+            }
+            catch (Exception $ex)
+            {
+                $cli->log("Unable to update RKI positive store: ".$ex->getMessage()." in ".$ex->getFile().", line ".$ex->getLine(), LOG_ALERT);
+            }
+            
+            unset($totalcount);
+            unset($successcount);
+            unset($errorcount);
+            unset($errordata);
+        }
+        
         // If something has probably changed, recalculate the location contamination
         if ($did_updates)
         {
@@ -424,15 +481,23 @@ function daemon()
         // Send info to log, if inner worker loop begins
         $cli->log("Reached inner worker loop. Ready to serve :-)", LOG_INFO);
 
-        // The worker loop
-        while (!$worker_reload) worker_loop($client);
-        
-        // Send info to log, if inner worker loop breaks
-        $cli->log("Left inner worker loop. Reloading.", LOG_INFO);
+        // The worker loop. Just execute once on oneshot cli argument
+        if ($cli->has_argument("--oneshot"))
+        {
+            worker_loop($client, true);
+            $daemon_terminate = true;
+        }
+        else
+        {
+            while (!$worker_reload) worker_loop($client);
+            
+            // Send info to log, if inner worker loop breaks
+            $cli->log("Left inner worker loop. Reloading.", LOG_INFO);
+        }        
     
         // Reset worker reload
         $worker_reload = false;
-        
+                
         // Wait a second before reloop
         sleep(1);
     }
@@ -460,6 +525,16 @@ function shutdown_daemon()
 {
     remove_pid();
 }
+
+// Checkm, whether we have to skip something
+if ($cli->has_argument("--skip-eu-datacast"))
+    $skip_eu_datacast = true;
+if ($cli->has_argument("--skip-rki-nowcast"))
+    $skip_rki_nowcast = true;
+if ($cli->has_argument("--skip-cov-infocast"))
+    $skip_cov_infocast = true;
+if ($cli->has_argument("--skip-rki-positive"))
+    $skip_rki_positive = true;
 
 // Check usage
 if ($cli->has_argument("start"))

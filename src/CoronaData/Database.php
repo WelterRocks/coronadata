@@ -24,6 +24,7 @@ use WelterRocks\CoronaData\Table\Locations;
 use WelterRocks\CoronaData\Table\Datacasts;
 use WelterRocks\CoronaData\Table\Nowcasts;
 use WelterRocks\CoronaData\Table\Infocasts;
+use WelterRocks\CoronaData\Table\Positives;
 use WelterRocks\CoronaData\Table\Combined;
 use WelterRocks\CoronaData\Config;
 use WelterRocks\CoronaData\Exception;
@@ -40,7 +41,7 @@ class Database
     
     private $transactions = null;
     
-    private function esc($str)
+    public function esc($str)
     {
         return $this->db->escape_string($str);
     }

@@ -33,6 +33,122 @@ class DataHandler
     private $timestamp = null;
     private $datasource = null;
     
+    public static function time_to_timestamp($time)
+    {
+        // This "weird" function is required, because of the "german gründlichkeit"
+        // Who in this world sets multiple date formats within one single dataset???
+        $retval = null;
+        
+        $time = str_replace(" Uhr", "", $time);
+        $time = str_replace("Uhr", "", $time);
+        $time = str_replace(", ", " ", $time);
+            
+        $known_formats = array(
+            "/d{2}\.d{2}\.d{4} d{2}:d{2}:d{2}/"   => array("german_date_time", "."),
+            "/d{4}\/d{2}\/d{2} d{2}:d{2}:d{2}/"   => array("english_date_time", "."),
+            "/d{4}-d{2}-d{2} d{2}:d{2}:d{2}/" 	  => array("english_date_time", "."),
+            "/d{2}:d{2}:d{2} d{2}\.d{2}\.d{4}/"   => array("german_time_date", "."),
+            "/d{2}:d{2}:d{2} d{4}\/d{2}\/d{2}/"   => array("english_time_date", "."),
+            "/d{2}:d{2}:d{2} d{4}-d{2}-d{2}/" 	  => array("english_time_date", "."),
+            "/d{2}\.d{2}\.d{4} d{2}:d{2}/" 	  => array("german_date_time", "."),
+            "/d{4}\/d{2}\/d{2} d{2}:d{2}/" 	  => array("english_date_time", "."),
+            "/d{4}-d{2}-d{2} d{2}:d{2}/" 	  => array("english_date_time", "."),
+            "/d{2}:d{2} d{2}\.d{2}\.d{4}/" 	  => array("german_time_date", "."),
+            "/d{2}:d{2} d{4}\/d{2}\/d{2}/" 	  => array("english_time_date", "."),
+            "/d{2}:d{2} d{4}-d{2}-d{2}/" 	  => array("english_time_date", "."),
+            "/d{2}\.d{2}\.d{4}/" 		  => array("german_date", "."),
+            "/d{4}\/d{2}\/d{2}/" 		  => array("english_date", "."),
+            "/d{4}-d{2}-d{2}/" 			  => array("english_date", "."),
+            "/d{2}:d{2}:d{2}/" 			  => array("time", "."),
+            "/d{2}:d{2}/" 			  => array("time", ".")
+        );
+            
+        foreach ($known_formats as $format => $mode)
+        {
+            $matches = array();
+            
+            @preg_match($known_formats, $time, $matches);
+            
+            if (!$matches)
+                continue;
+            
+            if (($mode[0] != "time") && ($mode[0] != "english_date") && ($mode[0] != "german_date"))
+            {
+                if (count($matches) != 2)
+                    continue;
+            }
+            else
+            {
+                if (count($matches) != 1)
+                    continue;
+            }
+            
+            switch ($mode[0])
+            {
+                case "german_date_time":
+                    $d = explode($mode[1], $matches[0]);
+                    $day = (double)$d[0];
+                    $month = (double)$d[1];
+                    $year = (double)$d[2];
+                    
+                    $t = explode(":", $matches[1]);
+                    $hour = (double)$t[0];
+                    $minute = (double)$t[1];
+                    $second = (double)((isset($t[2])) ? $t[2] : 0);
+                    
+                    $retval = mktime($hour, $minute, $second, $month, $day, $year);
+                    break;
+                case "english_date_time":
+                    $d = explode($mode[1], $matches[0]);
+                    $day = (double)$d[2];
+                    $month = (double)$d[1];
+                    $year = (double)$d[0];
+                    
+                    $t = explode(":", $matches[1]);
+                    $hour = (double)$t[0];
+                    $minute = (double)$t[1];
+                    $second = (double)((isset($t[2])) ? $t[2] : 0);
+                    
+                    $retval = mktime($hour, $minute, $second, $month, $day, $year);
+                    break;
+                case "german_date":
+                    $d = explode($mode[1], $matches[0]);
+                    $day = (double)$d[0];
+                    $month = (double)$d[1];
+                    $year = (double)$d[2];
+                                        
+                    $retval = mktime(0, 0, 0, $month, $day, $year);
+                    break;
+                case "english_date":
+                    $d = explode($mode[1], $matches[0]);
+                    $day = (double)$d[2];
+                    $month = (double)$d[1];
+                    $year = (double)$d[0];
+                                        
+                    $retval = mktime(0, 0, 0, $month, $day, $year);
+                    break;
+                case "time":
+                    $ts = time();
+                    $day = (double)date("d", $ts);
+                    $month = (double)date("m", $ts);
+                    $year = (double)date("Y", $ts);
+                                        
+                    $t = explode(":", $matches[1]);
+                    $hour = (double)$t[0];
+                    $minute = (double)$t[1];
+                    $second = (double)((isset($t[2])) ? $t[2] : 0);
+                    
+                    $retval = mktime($hour, $minute, $second, $month, $day, $year);
+                    break;
+            }
+        }
+        
+        if (!$retval)
+            $retval = strtotime($time);
+        
+        return $retval;
+    }
+    
     public function get_timestamp()
     {
         return $this->timestamp;
@@ -103,7 +219,7 @@ class DataHandler
                     {
                         $val = substr($val, 6, 4)."-".substr($val, 3, 2)."-".substr($val, 0, 2);
                         
-                        $this->data->records[$id]->timestamp_represent = $val." 00:00:00";
+                        $this->data->records[$id]->timestamp_represent = $val." 23:59:59";
                     }
                     
                     $this->data->records[$id]->$new_key = $val;
@@ -125,6 +241,156 @@ class DataHandler
                 }
             }
         }
+        
+        return true;
+    }
+    
+    public function transform_rki_positive()
+    {
+        $buffer = array();
+        
+        $header_transform = array(
+            "ObjectId" => "foreign_identifier",
+            "IdBundesland" => "state_id",
+            "Bundesland" => "state",
+            "Landkreis" => "district",
+            "Altersgruppe" => "age_group",
+            "Geschlecht" => "gender",
+            "AnzahlFall" => "cases_count",
+            "AnzahlTodesfall" => "deaths_count",
+            "Meldedatum" => "timestamp_reported",
+            "IdLandkreis" => "district_id",
+            "Datenstand" => "timestamp_dataset",
+            "NeuerFall" => "cases_new",
+            "NeuerTodesfall" => "deaths_new",
+            "Refdatum" => "timestamp_referenced",
+            "NeuGenesen" => "recovered_new",
+            "AnzahlGenesen" => "recovered_count",
+            "IstErkrankungsbeginn" => "flag_is_disease_beginning",
+            "Altersgruppe2" => "age_group2"
+        );
+        
+        if (($this->data->type != "FeatureCollection") || ($this->data->name != "RKI_COVID19") || (isset($this->data->features) == false))
+            throw new Exception("Possible cache poisoning attack detected");
+        
+        foreach ($this->data->features as $id => $record)
+        {
+            if ($record->type != "Feature")
+                continue;
+                
+            if (!isset($record->properties))
+                continue;
+                
+            $prop = $record->properties;
+            $obj = new \stdClass;
+            
+            foreach ($prop as $key => $val)
+            {
+                if (isset($header_transform[$key]))
+                    $key = $header_transform[$key];
+                    
+                switch ($key)
+                {
+                    case "gender":
+                        $gender = strtolower($val);
+                        
+                        switch ($gender)
+                        {
+                            case "mann":
+                            case "male":
+                            case "men":
+                            case "m":
+                                $val = "male";
+                                break;
+                            case "frau":
+                            case "female":
+                            case "woman":
+                            case "f":
+                            case "w":
+                                $val = "female";
+                                break;
+                            default:
+                                $val = "asterisk";
+                                break;
+                        }
+                        break;
+                    case "timestamp_reported":
+                    case "timestamp_dataset":
+                    case "timestamp_referenced":
+                        $timets = self::time_to_timestamp($val);
+                        
+                        if ((!$timets) && ($val))
+                            break;
+                            
+                        $val = date("Y-m-d H:i:s", $timets);
+                        
+                        unset($timets);
+                        break;
+                    case "age_group":
+                    case "age_group2":
+                        $obj->$key = new \stdClass;
+                        
+                        if (trim($val) == "")
+                        {
+                            $obj->$key->lower = -1;
+                            $obj->$key->upper = -1;
+                            
+                            continue(2);
+                        }
+                        
+                        $ages = explode("-", $val);
+                        
+                        if (count($ages) > 0)
+                        {
+                            if (substr($ages[0], 0, 1) == "A")
+                            {
+                                $age1 = substr($ages[0], 1);
+                                
+                                if (isset($ages[1]))
+                                    $age2 = substr($ages[1], 1);
+                                else
+                                    $age2 = $age1;
+                                    
+                                if (($age1 == $age2) && (substr($age1, -1) == "+"))
+                                {
+                                    $age1 = substr($age1, 0, -1);
+                                    $age2 = 999;
+                                }
+                                    
+                                $obj->$key->lower = $age1;
+                                $obj->$key->upper = $age2;
+                            }
+                            else
+                            {
+                                $obj->$key->lower = -1;
+                                $obj->$key->upper = -1;
+                            }
+                        }
+                        else
+                        {
+                            $obj->$key->lower = -1;
+                            $obj->$key->upper = -1;
+                        }
+                        
+                        continue(2);
+                }
+                    
+                $obj->$key = $val;
+            }
+            
+            $buffer[$id] = clone $obj;
+            
+            unset($obj);
+        }
+        
+        $json = json_encode($buffer);
+        
+        unset($buffer);
+        
+        $this->length = strlen($json);
+        $this->data = json_decode($json);
+        
+        unset($json);
         
         return true;
     }
@@ -179,7 +445,7 @@ class DataHandler
 		if ($key == "date_rep")
 		{
 		    $obj->$key = substr($val, 6, 4)."-".substr($val, 3, 2)."-".substr($val, 0, 2);	    
-		    $obj->timestamp_represent = $obj->$key." 00:00:00";
+		    $obj->timestamp_represent = $obj->$key." 23:59:59";
                 }
 		elseif (strstr($val, ","))
 		{
