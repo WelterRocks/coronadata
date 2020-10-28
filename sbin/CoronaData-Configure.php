@@ -177,3 +177,41 @@ foreach ($new_config as $key => $val)
 
 @fclose($fd);
 $cli->write("done");
+
+// Install database
+try
+{
+    $cli->write(CLI::COLOR_DEFAULT."Installing database...".CLI::COLOR_EOL, "");
+    $installer = new Client($config_file);
+    
+    $error = null;
+    $sql = null;
+    
+    $force = false;
+    $debug = false;
+    
+    if ($cli->has_argument("--force-install"))
+        $force = true;
+        
+    if ($cli->has_argument("--debug"))
+        $debug = true;
+    
+    if (!$installer->install($force, $error, $sql))
+    {
+        $cli->write(CLI::COLOR_RED."FAILED".CLI::COLOR_EOL);
+            
+        if ($debug)
+        {
+            print_r($error);
+            print_r($sql);
+        }
+        
+        $cli->exit_error(CLI::COLOR_LIGHT_RED."ERROR: ".CLI::COLOR_YELLOW."Installation failed".CLI::COLOR_EOL, 4);
+    }
+    
+    $cli->exit_error(CLI::COLOR_LIGHT_GREEN."OK".CLI::COLOR_EOL);
+}
+catch (Exception $ex)
+{
+    $cli->write(CLI::COLOR_LIGHT_RED."ERROR: ".CLI::COLOR_YELLOW.$ex->getMessage().CLI::COLOR_EOL);
+}

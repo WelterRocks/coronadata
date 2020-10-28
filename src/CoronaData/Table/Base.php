@@ -345,10 +345,14 @@ abstract class Base
   	    return false;
           }
         }
-                    
-        $sql = (($force_install) ? "DROP ".(($this->is_view()) ? "VIEW" : "TABLE")." `".$this->__tablename."`;" : "")."
-        SET SQL_MODE = \"NO_AUTO_VALUE_ON_ZERO\";
-        SET AUTOCOMMIT = 0;
+        
+        $drop = (($force_install) ? "DROP ".(($this->is_view()) ? "VIEW" : "TABLE")." IF EXISTS `".$this->__tablename."`;" : null);
+        
+        if ($drop)
+          $this->__db->query($drop);
+         
+        $sql = "SET SQL_MODE = \"NO_AUTO_VALUE_ON_ZERO\";
+        SET AUTOCOMMIT = 1;
         START TRANSACTION;
         SET time_zone = \"+00:00\";
 
@@ -362,6 +366,8 @@ abstract class Base
             $error = $this->__db->error;
             return false;
         }
+        
+        while ($this->__db->next_result()) {;}
         
         return true;
     }

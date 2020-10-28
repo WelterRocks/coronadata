@@ -59,6 +59,11 @@ class Client
         return round((microtime(true) * $resolution));
     }
     
+    public function install($force_install = false, &$error = null, &$sql = null)
+    {
+        return $this->database->install($force_install, $error, $sql);
+    }
+    
     private function create_datastore()
     {
         if (!is_dir($this->config->data_store))
