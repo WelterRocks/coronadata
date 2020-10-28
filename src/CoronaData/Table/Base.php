@@ -340,27 +340,33 @@ abstract class Base
         {
           if ($this->is_installed())
           {
-            $error = "Alread installed";
+            $error = "Already installed";
             
   	    return false;
           }
         }
         
         $drop = (($force_install) ? "DROP ".(($this->is_view()) ? "VIEW" : "TABLE")." IF EXISTS `".$this->__tablename."`;" : "");
-        
+
         $sql = "SET FOREIGN_KEY_CHECKS=0;\n".$drop."
         SET SQL_MODE = \"NO_AUTO_VALUE_ON_ZERO\";
         SET AUTOCOMMIT = 0;
         START TRANSACTION;
         SET time_zone = \"+00:00\";
-
+          
         ".$this->get_install_sql()."
-
+          
         COMMIT;
         SET FOREIGN_KEY_CHECKS=1;
         ";
-        
+
         if (!$this->__db->multi_query($sql))
+        {
+            $error = $this->__db->error;
+            return false;
+        } 
+               
+        if ($this->__db->error)
         {
             $error = $this->__db->error;
             return false;

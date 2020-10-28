@@ -58,7 +58,7 @@ class Positives extends Base
         `timestamp_registration` timestamp NOT NULL,
         `timestamp_deleted` timestamp NULL DEFAULT NULL,
         `timestamp_undeleted` timestamp NULL DEFAULT NULL,
-        `timestamp_disabled` timestamp NULL DEAFULT NULL,
+        `timestamp_disabled` timestamp NULL DEFAULT NULL,
         `timestamp_enabled` timestamp NULL DEFAULT NULL,
         `timestamp_dataset` timestamp NOT NULL,
         `timestamp_reported` timestamp NOT NULL,
