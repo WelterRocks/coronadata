@@ -61,7 +61,6 @@ class Combined extends Base
     protected $alert_condition = null;
     protected $new_cases = null;
     protected $new_cases_per_million = null;
-    protected $uid = null;
     protected $new_cases_smoothed = null;
     protected $new_cases_smoothed_per_million = null;
     protected $new_deaths = null;

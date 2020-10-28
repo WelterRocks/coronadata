@@ -464,15 +464,17 @@ class Database
         }
         
         $tables = array(
-          "Locations",
-          "Nowcasts",
-          "Datacasts",
-          "Infocasts"
+          "Locations" => true,
+          "Nowcasts" => true,
+          "Datacasts" => true,
+          "Infocasts" => true,
+          "Positives" => true,
+          "Combined" => false
         );
         
         $errorcount = 0;
         
-        foreach ($tables as $table)
+        foreach ($tables as $table => $is_view)
         {
           $error = null;
           $sql = null;
