@@ -101,7 +101,7 @@ class Datacasts extends Base
           `incidence_14day_given` float NOT NULL DEFAULT '0',
           `condition_7day` enum('white','green','yellow','orange','red','darkred','black') NOT NULL DEFAULT 'green',
           `condition_14day` enum('white','green','yellow','orange','red','darkred','black') NOT NULL DEFAULT 'green',
-          `alert_condition` enum('white','green','yellow','orange','red','darkred','black') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'green',
+          `alert_condition` enum('white','green','yellow','orange','red','darkred','black') CHARACTER SET utf8mb4 NOT NULL DEFAULT 'green',
           `update_count` int UNSIGNED NOT NULL DEFAULT '0',
           `flag_updated` tinyint(1) NOT NULL DEFAULT '0',
           `flag_disabled` tinyint(1) NOT NULL DEFAULT '0',
@@ -113,7 +113,7 @@ class Datacasts extends Base
           KEY `locations_uid` (`locations_uid`),
           KEY `timestamp_represent` (`timestamp_represent`),
           KEY `date_rep` (`date_rep`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         
         ALTER TABLE `datacasts`
           ADD CONSTRAINT `datacasts_locations_uid` FOREIGN KEY (`locations_uid`) REFERENCES `locations` (`uid`) ON DELETE CASCADE ON UPDATE CASCADE;";

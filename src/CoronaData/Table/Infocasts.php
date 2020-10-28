@@ -79,7 +79,7 @@ class Infocasts extends Base
         `positive_rate` float NOT NULL DEFAULT '0',
         `stringency_index` float NOT NULL DEFAULT '0',
         `tests_per_case` float NOT NULL DEFAULT '0',
-        `tests_units` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '0',
+        `tests_units` varchar(64) CHARACTER SET utf8mb4 NOT NULL DEFAULT '0',
         `total_cases` float NOT NULL DEFAULT '0',
         `total_cases_per_million` float NOT NULL DEFAULT '0',
         `total_deaths` float NOT NULL DEFAULT '0',
@@ -96,7 +96,7 @@ class Infocasts extends Base
         KEY `date_rep` (`date_rep`),
         KEY `timestamp_represent` (`timestamp_represent`),
         KEY `tests_units` (`tests_units`)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
       ALTER TABLE `infocasts`
         ADD CONSTRAINT `infocasts_locations_uid` FOREIGN KEY (`locations_uid`) REFERENCES `locations` (`uid`) ON DELETE CASCADE ON UPDATE CASCADE;";

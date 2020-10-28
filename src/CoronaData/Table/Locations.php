@@ -81,8 +81,8 @@ class Locations extends Base
         `timestamp_virus_back` timestamp NULL DEFAULT NULL,
         `timestamp_data_complete` timestamp NULL DEFAULT NULL,
         `parent_uid` bigint UNSIGNED DEFAULT NULL,
-        `geo_id` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-        `country_code` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+        `geo_id` varchar(16) CHARACTER SET utf8mb4 DEFAULT NULL,
+        `country_code` varchar(16) CHARACTER SET utf8mb4 DEFAULT NULL,
         `continent` varchar(32) NOT NULL,
         `country` varchar(64) NOT NULL,
         `location` varchar(64) NOT NULL,
@@ -128,7 +128,7 @@ class Locations extends Base
         KEY `parent_uid` (`parent_uid`),
         KEY `geo_id` (`geo_id`),
         KEY `country` (`country`)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;";
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
     }
     
     public function calculate_contamination()

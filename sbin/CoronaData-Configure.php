@@ -208,10 +208,19 @@ try
         
         $cli->exit_error(CLI::COLOR_LIGHT_RED."ERROR: ".CLI::COLOR_YELLOW."Installation failed".CLI::COLOR_EOL, 4);
     }
-    
-    $cli->exit_error(CLI::COLOR_LIGHT_GREEN."OK".CLI::COLOR_EOL);
+    elseif ($debug)
+    {
+        $cli->write(CLI::COLOR_LIGHT_GREEN."OK".CLI::COLOR_EOL);
+        
+        print_r($error);
+        print_r($sql);
+    }
+    else
+    {    
+        $cli->write(CLI::COLOR_LIGHT_GREEN."OK".CLI::COLOR_EOL);
+    }
 }
 catch (Exception $ex)
 {
-    $cli->write(CLI::COLOR_LIGHT_RED."ERROR: ".CLI::COLOR_YELLOW.$ex->getMessage().CLI::COLOR_EOL);
+    $cli->exit_error(CLI::COLOR_LIGHT_RED."ERROR: ".CLI::COLOR_YELLOW.$ex->getMessage().CLI::COLOR_EOL, 5);
 }

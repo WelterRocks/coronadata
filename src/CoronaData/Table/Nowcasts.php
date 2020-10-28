@@ -75,7 +75,7 @@ class Nowcasts extends Base
         KEY `locations_uid` (`locations_uid`),
         KEY `timestamp_represent` (`timestamp_represent`),
         KEY `date_rep` (`date_rep`)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
       
       ALTER TABLE `nowcasts`
         ADD CONSTRAINT `nowcasts_datacasts_date_rep` FOREIGN KEY (`date_rep`) REFERENCES `datacasts` (`date_rep`) ON DELETE CASCADE ON UPDATE CASCADE,

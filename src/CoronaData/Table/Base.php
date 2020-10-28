@@ -346,13 +346,11 @@ abstract class Base
           }
         }
         
-        $drop = (($force_install) ? "DROP ".(($this->is_view()) ? "VIEW" : "TABLE")." IF EXISTS `".$this->__tablename."`;" : null);
+        $drop = (($force_install) ? "DROP ".(($this->is_view()) ? "VIEW" : "TABLE")." IF EXISTS `".$this->__tablename."`;" : "");
         
-        if ($drop)
-          $this->__db->query($drop);
-         
-        $sql = "SET SQL_MODE = \"NO_AUTO_VALUE_ON_ZERO\";
-        SET AUTOCOMMIT = 1;
+        $sql = $drop.
+        "SET SQL_MODE = \"NO_AUTO_VALUE_ON_ZERO\";
+        SET AUTOCOMMIT = 0;
         START TRANSACTION;
         SET time_zone = \"+00:00\";
 

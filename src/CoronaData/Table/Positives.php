@@ -92,7 +92,7 @@ class Positives extends Base
         KEY `age_group2_high` (`age_group2_high`),
         KEY `date_rep` (`date_rep`),
         KEY `foreign_identifier` (`foreign_identifier`)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
       ALTER TABLE `positives`
         ADD CONSTRAINT `positive_country_uid` FOREIGN KEY (`country_uid`) REFERENCES `locations` (`uid`) ON DELETE CASCADE ON UPDATE CASCADE,
