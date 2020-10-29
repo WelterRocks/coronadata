@@ -28,6 +28,10 @@ class Infocasts extends Base
     protected $locations_uid = true;
     protected $timestamp_represent = null;
     protected $date_rep = true;    
+    protected $day_of_week = null;
+    protected $day = null;
+    protected $month = null;
+    protected $year = null;
     protected $new_cases = null;
     protected $new_cases_per_million = null;
     protected $new_cases_smoothed = null;
@@ -50,6 +54,8 @@ class Infocasts extends Base
     protected $total_deaths_per_million = null;
     protected $total_tests = null;
     protected $total_tests_per_thousand = null;
+    protected $weekly_hosp_admissions = null;
+    protected $weekly_hosp_admissions_per_million = null;
     
     protected function get_install_sql()
     {
@@ -64,6 +70,10 @@ class Infocasts extends Base
         `timestamp_enabled` timestamp NULL DEFAULT NULL,
         `timestamp_represent` timestamp NOT NULL,
         `date_rep` date NOT NULL,
+        `day_of_week` tinyint UNSIGNED NOT NULL,
+        `day` tinyint UNSIGNED NOT NULL,
+        `month` tinyint UNSIGNED NOT NULL,
+        `year` year NOT NULL,
         `new_cases` float NOT NULL DEFAULT '0',
         `new_cases_per_million` float NOT NULL DEFAULT '0',
         `new_cases_smoothed` float NOT NULL DEFAULT '0',
@@ -86,6 +96,8 @@ class Infocasts extends Base
         `total_deaths_per_million` float NOT NULL DEFAULT '0',
         `total_tests` float NOT NULL DEFAULT '0',
         `total_tests_per_thousand` float NOT NULL DEFAULT '0',
+        `weekly_hosp_admissions` float NOT NULL DEFAULT '0',
+        `weekly_hosp_admissions_per_million` float NOT NULL DEFAULT '0',
         `update_count` int UNSIGNED NOT NULL DEFAULT '0',
         `flag_updated` tinyint(1) NOT NULL DEFAULT '0',
         `flag_disabled` tinyint(1) NOT NULL DEFAULT '0',
@@ -95,6 +107,8 @@ class Infocasts extends Base
         KEY `locations_uid` (`locations_uid`),
         KEY `date_rep` (`date_rep`),
         KEY `timestamp_represent` (`timestamp_represent`),
+        KEY `day_of_week` (`day_of_week`),
+        KEY `date` (`day`,`month`,`year`),
         KEY `tests_units` (`tests_units`)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

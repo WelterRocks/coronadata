@@ -30,6 +30,7 @@ class Locations extends Base
     protected $timestamp_virus_back = null;
     protected $timestamp_data_complete = null;
     protected $parent_uid = null;
+    protected $location_type = null;
     protected $geo_id = null;
     protected $country_code = null;
     protected $continent = true;
@@ -81,6 +82,7 @@ class Locations extends Base
         `timestamp_virus_back` timestamp NULL DEFAULT NULL,
         `timestamp_data_complete` timestamp NULL DEFAULT NULL,
         `parent_uid` bigint UNSIGNED DEFAULT NULL,
+        `location_type` ENUM('continent','country','state','district','location') NOT NULL DEFAULT 'location',
         `geo_id` varchar(16) CHARACTER SET utf8mb4 DEFAULT NULL,
         `country_code` varchar(16) CHARACTER SET utf8mb4 DEFAULT NULL,
         `continent` varchar(32) NOT NULL,
@@ -123,6 +125,7 @@ class Locations extends Base
         PRIMARY KEY (`uid`),
         UNIQUE KEY `continent_country_location` (`continent`,`country`,`location`),
         KEY `country_code` (`country_code`),
+        KEY `location_type` (`location_type`),
         KEY `continent` (`continent`),
         KEY `location` (`location`),
         KEY `parent_uid` (`parent_uid`),

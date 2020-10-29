@@ -484,6 +484,7 @@ class Client
             $location->geo_id = $record->geo_id;
             $location->population = $record->population;
             $location->population_year = $record->population_year;
+            $location->location_type = 'country';
             
             $datacast = new \stdClass;
 
@@ -647,6 +648,7 @@ class Client
                 $state->continent = $continent;
                 $state->geo_id = trim(strtoupper(substr($record->state, 0, 3))).$record->state_id;
                 $state->parent_uid = $location->uid;
+                $state->location_type = 'state';
                 
                 if (true === $state->uid = $this->database->register_object("Locations", $state, true, false, $error, $sql))
                 {
@@ -689,6 +691,7 @@ class Client
                 $district->continent = $continent;
                 $district->geo_id = trim(strtoupper(substr($record->state, 0, 3))).$record->state_id.".".$record->district_id;
                 $district->parent_uid = $shadow_store->states[$record->state_id]->uid;
+                $district->location_type = 'district';
                 
                 if (true === $district->uid = $this->database->register_object("Locations", $district, true, false, $error, $sql))
                 {
@@ -729,7 +732,11 @@ class Client
                 $obj->timestamp_dataset = $record->timestamp_dataset;
                 $obj->timestamp_reported = $record->timestamp_reported;
                 $obj->timestamp_referenced = $record->timestamp_referenced;
-                $obj->date_rep = date("Y-m-d", strtotime($record->timestamp_dataset));
+                $obj->date_rep = $record->date_rep;
+                $obj->day_of_week = $record->day_of_week;
+                $obj->day = $record->day;
+                $obj->month = $record->month;
+                $obj->year = $record->year;
                 $obj->age_group_low = $record->age_group->lower;
                 $obj->age_group_high = $record->age_group->upper;
                 $obj->age_group2_low = $record->age_group2->lower;
@@ -977,6 +984,7 @@ class Client
             $location->country = $data->location;
             $location->country_code = $country_code;
             $location->geo_id = substr($country_code, 0, 2);
+            $location->location_type = 'country';
             
             if (isset($data->continent))
                 $location->continent = $data->continent;
@@ -1062,11 +1070,18 @@ class Client
                         if (($key == "uid") || ($key == "locations_uid"))
                             continue;
                             
-                        // Because of global warming and efficiency reasons, we transform the date field at this point and not within the DataHandlers transform routine :-)
+                        // Because of global warming and efficiency reasons, we transform the date field at this point and not within a DataHandlers transform routine :-)
                         if ($key == "date")
                         {
                             $infocast->date_rep = $val;
-                            $infocast->timestamp_represent = $infocast->date_rep." 00:00:00";
+                            
+                            $ts = strtotime($val." 23:59:59");
+                            
+                            $infocast->timestamp_represent = date("Y-m-d H:i:s", $ts);
+                            $infocast->day_of_week = (int)date("w", $ts);
+                            $infocast->day = (int)date("j", $ts);
+                            $infocast->month = (int)date("n", $ts);
+                            $infocast->year = (int)date("Y", $ts);
                         }
                         elseif (($val !== null) && ($val != ""))
                         {

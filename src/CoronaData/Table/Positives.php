@@ -33,6 +33,10 @@ class Positives extends Base
     protected $timestamp_reported = null;
     protected $timestamp_referenced = null;
     protected $date_rep = null;
+    protected $day_of_week = null;
+    protected $day = null;
+    protected $month = null;
+    protected $year = null;
     protected $age_group_low = null;
     protected $age_group_high = null;
     protected $age_group2_low = null;
@@ -64,6 +68,10 @@ class Positives extends Base
         `timestamp_reported` timestamp NOT NULL,
         `timestamp_referenced` timestamp NOT NULL,
         `date_rep` date NOT NULL,
+        `day_of_week` tinyint UNSIGNED NOT NULL,
+        `day` tinyint UNSIGNED NOT NULL,
+        `month` tinyint UNSIGNED NOT NULL,
+        `year` year NOT NULL,
         `age_group_low` int NOT NULL DEFAULT '-1',
         `age_group_high` int NOT NULL DEFAULT '-1',
         `age_group2_low` int NOT NULL DEFAULT '-1',
@@ -86,6 +94,8 @@ class Positives extends Base
         KEY `state_uid` (`state_uid`),
         KEY `district_uid` (`district_uid`),
         KEY `gender` (`gender`),
+        KEY `day_of_week` (`day_of_week`),
+        KEY `date` (`day`,`month`,`year`),
         KEY `age_group_low` (`age_group_low`),
         KEY `age_group_high` (`age_group_high`),
         KEY `age_group2_low` (`age_group2_low`),

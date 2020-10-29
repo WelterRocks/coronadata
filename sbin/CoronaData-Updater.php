@@ -41,12 +41,12 @@ $worker_reload = false;
 
 $ticks_state = 0;
 
-$max_cast_age = 3600;
+$max_cast_age = 7200;
 
-$cachetime_eu_datacast = 3600;
-$cachetime_rki_datacast = 3600;
-$cachetime_rki_positive = 3600;
-$cachetime_cov_infocast = 3600;
+$cachetime_eu_datacast = 7200;
+$cachetime_rki_datacast = 7200;
+$cachetime_rki_positive = 7200;
+$cachetime_cov_infocast = 7200;
 
 $skip_eu_datacast = false;
 $skip_rki_nowcast = false;

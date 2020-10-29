@@ -54,6 +54,10 @@ class Nowcasts extends Base
         `timestamp_enabled` timestamp NULL DEFAULT NULL,
         `timestamp_represent` timestamp NOT NULL,
         `date_rep` date NOT NULL,
+        `day_of_week` tinyint UNSIGNED NOT NULL,
+        `day` tinyint UNSIGNED NOT NULL,
+        `month` tinyint UNSIGNED NOT NULL,
+        `year` year NOT NULL,
         `esteem_new_diseases` int NULL DEFAULT NULL,
         `lower_new_diseases` int NULL DEFAULT NULL,
         `upper_new_diseases` int NULL DEFAULT NULL,
@@ -74,6 +78,8 @@ class Nowcasts extends Base
         UNIQUE KEY `locations_uid_date_rep` (`locations_uid`,`date_rep`),
         KEY `locations_uid` (`locations_uid`),
         KEY `timestamp_represent` (`timestamp_represent`),
+        KEY `day_of_week` (`day_of_week`),
+        KEY `date` (`day`,`month`,`year`),
         KEY `date_rep` (`date_rep`)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
       

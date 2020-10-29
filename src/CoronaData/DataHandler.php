@@ -219,7 +219,13 @@ class DataHandler
                     {
                         $val = substr($val, 6, 4)."-".substr($val, 3, 2)."-".substr($val, 0, 2);
                         
-                        $this->data->records[$id]->timestamp_represent = $val." 23:59:59";
+                        $ts = strtotime($val." 23:59:59");
+                        
+                        $this->data->records[$id]->timestamp_represent = date("Y-m-d H:i:s", $ts);
+                        $this->data->records[$id]->day = (int)date("j", $ts);
+                        $this->data->records[$id]->month = (int)date("n", $ts);
+                        $this->data->records[$id]->year = (int)date("Y", $ts);
+                        $this->data->records[$id]->day_of_week = (int)date("w", $ts);
                     }
                     
                     $this->data->records[$id]->$new_key = $val;
@@ -323,6 +329,14 @@ class DataHandler
                             break;
                             
                         $val = date("Y-m-d H:i:s", $timets);
+                        
+                        if ($key == "timestamp_dataset")
+                        {
+                            $obj->year = (int)date("Y", $timets);
+                            $obj->month = (int)date("n", $timets);
+                            $obj->day = (int)date("j", $timets);
+                            $obj->day_of_week = (int)date("w", $timets);
+                        }
                         
                         unset($timets);
                         break;
@@ -445,7 +459,14 @@ class DataHandler
 		if ($key == "date_rep")
 		{
 		    $obj->$key = substr($val, 6, 4)."-".substr($val, 3, 2)."-".substr($val, 0, 2);	    
-		    $obj->timestamp_represent = $obj->$key." 23:59:59";
+		    
+		    $ts = strtotime($obj->$key." 23:59:59");
+		    
+		    $obj->timestamp_represent = date("Y-m-d H:i:s", $ts);
+		    $obj->day_of_week = (int)date("w", $ts);
+		    $obj->day = (int)date("j", $ts);
+		    $obj->month = (int)date("n", $ts);
+		    $obj->year = (int)date("Y", $ts);
                 }
 		elseif (strstr($val, ","))
 		{

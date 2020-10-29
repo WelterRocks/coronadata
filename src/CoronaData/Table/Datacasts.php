@@ -30,6 +30,7 @@ class Datacasts extends Base
     protected $timestamp_last_calculated = null;
     protected $timestamp_represent = null;
     protected $date_rep = true;
+    protected $day_of_week = null;
     protected $day = null;
     protected $month = null;
     protected $year = null;
@@ -74,8 +75,9 @@ class Datacasts extends Base
           `timestamp_enabled` timestamp NULL DEFAULT NULL,
           `timestamp_represent` timestamp NOT NULL,
           `date_rep` date NOT NULL,
-          `day` smallint UNSIGNED NOT NULL,
-          `month` smallint UNSIGNED NOT NULL,
+          `day_of_week` tinyint UNSIGNED NOT NULL,
+          `day` tinyint UNSIGNED NOT NULL,
+          `month` tinyint UNSIGNED NOT NULL,
           `year` year NOT NULL,
           `cases` bigint NOT NULL DEFAULT '0',
           `deaths` bigint NOT NULL DEFAULT '0',
@@ -109,6 +111,7 @@ class Datacasts extends Base
           `flag_calculated` tinyint(1) NOT NULL DEFAULT '0',
           PRIMARY KEY (`uid`),
           UNIQUE KEY `locations_uid_date_rep` (`locations_uid`,`date_rep`),
+          KEY `day_of_week` (`day_of_week`),
           KEY `date` (`day`,`month`,`year`),
           KEY `locations_uid` (`locations_uid`),
           KEY `timestamp_represent` (`timestamp_represent`),
