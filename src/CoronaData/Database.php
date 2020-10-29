@@ -413,12 +413,6 @@ class Database
         
         $this->check_init();
         $this->update_table_status();
-        
-        if ($object_name == "Infocasts")
-        {
-          print_r($data);
-          exit;
-        }
 
         $table = "WelterRocks\\CoronaData\\Table\\".$object_name;
         

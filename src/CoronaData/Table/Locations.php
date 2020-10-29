@@ -123,7 +123,7 @@ class Locations extends Base
         `flag_no_longer_updated` tinyint(1) NOT NULL DEFAULT '0',
         `flag_virus_free` tinyint(1) NOT NULL DEFAULT '0',
         PRIMARY KEY (`uid`),
-        UNIQUE KEY `continent_country_location` (`continent`,`country`,`location`),
+        UNIQUE KEY `location_unique_identifier` (`continent`,`country`,`location`,`location_type`),
         KEY `country_code` (`country_code`),
         KEY `location_type` (`location_type`),
         KEY `continent` (`continent`),

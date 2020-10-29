@@ -119,9 +119,11 @@ abstract class Base
                 $worker_count++;
               }
             }
-            elseif (($val !== null) && ($val != ""))
+            elseif ((($val === 0) || ($val === false) || ($val !== "")) && ($val !== null))
             {
-              if (is_numeric($val))
+              if ((($val === 0) || ($val === false)) && ($val !== null))
+                $update_clause .= ", `".$key."` = ".$val;
+              elseif (is_numeric($val))
                 $update_clause .= ", `".$key."` = ".$val;
               else
                 $update_clause .= ", `".$key."` = '".$this->esc($val)."'";
@@ -431,7 +433,7 @@ abstract class Base
         
         return true;
     }
-    
+
     public function insert($prefix = null, $ignore = false, $partitions = null, $on_duplicate_key_data = null, $autoselect_fields_only = false, &$error = null, &$sql = null)
     {
         $error = null;
@@ -515,7 +517,9 @@ abstract class Base
           {
             $keys .= ",`".$key."`";
             
-            if (is_numeric($val))
+            if ((($val === 0) || ($val === false)) && ($val !== null) && ($val !== ""))
+              $vals .= ",".$val;
+            elseif (is_numeric($val))
               $vals .= ",".$val;
             else
               $vals .= ",'".$this->esc($val)."'";

@@ -336,6 +336,7 @@ class DataHandler
                             $obj->month = (int)date("n", $timets);
                             $obj->day = (int)date("j", $timets);
                             $obj->day_of_week = (int)date("w", $timets);
+                            $obj->date_rep = date("Y-m-d", $timets);
                         }
                         
                         unset($timets);
