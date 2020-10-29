@@ -319,7 +319,7 @@ function worker_loop(Client $client, $oneshot = false)
             {
                 // No filtering ("eu_datacast", null, null, null), so we can get worldwide datasets
                 $client->recalculate_eu_datacast_store_fields("recalc_eu_datacast", true, 100000, 3, $resultcount, $updatedata, $errordata);
-                $cli->log("EU datacast store has been recalculated. Updated ".$resultcount." entries.", LOG_INFO);
+                $cli->log("EU datacast store has been recalculated.", LOG_INFO);
                 
                 if ((is_array($errordata)) && (count($errordata) > 0))
                 {
