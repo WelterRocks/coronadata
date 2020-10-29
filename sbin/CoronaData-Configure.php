@@ -63,9 +63,11 @@ if ($config_file == HOME_DIR."/.coronadatarc")
         define("INIT_CONFIG", true);
 }
 
-// No config file? Create one.
-if (defined("INIT_CONFIG"))
+// Create config function
+function init_config()
 {
+    global $cli, $config_file;
+    
     if (!is_dir(HOME_DIR))
         $cli->exit_error("Missing home directory '".HOME_DIR, 1);
     
@@ -91,16 +93,34 @@ if (defined("INIT_CONFIG"))
     @fclose($fd);
 }
 
+// Print a nice header
+$cli->write(CLI::COLOR_LIGHT_YELLOW."Welcome to CoronaData Configuration Utility.\nVisit us on: ".CLI::COLOR_LIGHT_RED."https://github.com/WelterRocks/coronadata\n".CLI::COLOR_LIGHT_YELLOW."Copyright (c) 2020 by Oliver Welter.\n".CLI::COLOR_EOL);
+
 // Load the config file
 $config = parse_ini_file($config_file);
 $new_config = array();
 
-// Print a nice header
-$cli->write(CLI::COLOR_LIGHT_YELLOW."Welcome to CoronaData Configuration Utility.\nVisit us on: ".CLI::COLOR_LIGHT_RED."https://github.com/WelterRocks/coronadata\n".CLI::COLOR_LIGHT_YELLOW."Copyright (c) 2020 by Oliver Welter.\n".CLI::COLOR_EOL);
+// No config file, config file empty or forced creation? Create one!
+if ((defined("INIT_CONFIG")) || (!$config) || (count($config) == 0) || ($cli->has_argument("--force-config-init")))
+{
+    $cli->write(CLI::COLOR_DEFAULT."Creating new configuration file...".CLI::COLOR_EOL, "");
+    
+    init_config();
+        
+    $cli->write(CLI::COLOR_LIGHT_GREEN."OK".CLI::COLOR_EOL);
+}
+
+// Skip config?
+$skip_config = false;
+
+if ($cli->has_argument("--skip-config"))
+    $skip_config = true;
 
 // Configure fields
-foreach ($config as $key => $val)
+if (!$skip_config) 
 {
+  foreach ($config as $key => $val)
+  {        
     $default = ((trim($val)) ? "[".$val."] " : "");
     $default_val = $val;
     
@@ -160,23 +180,27 @@ foreach ($config as $key => $val)
         $newval = $default_val;
         
     $new_config[$key] = $newval;
-}
+  }
 
-// Write the new config
-$cli->write("\n".CLI::COLOR_DEFAULT."Writing config file '".$config_file."'...".CLI::COLOR_EOL, "");
-
-$fd = fopen($config_file, "w");
-
-if (!is_resource($fd))
+  $cli->write("\n".CLI::COLOR_DEFAULT."Writing config file '".$config_file."'...".CLI::COLOR_EOL, "");
+    
+  $fd = fopen($config_file, "w");
+    
+  if (!is_resource($fd))
     $cli->exit_error("failed", 3);
-
-foreach ($new_config as $key => $val)
-{
+        
+  foreach ($new_config as $key => $val)
+  {
     @fwrite($fd, $key."=".$val."\n");
+  }
+         
+  @fclose($fd);
+  
+  $cli->write("done");
 }
 
-@fclose($fd);
-$cli->write("done");
+if (!$cli->has_argument("--install"))
+    $cli->exit_error(CLI::COLOR_DEFAULT."Configration done. If you want to install the database, too, you need to set the --install switch.".CLI::COLOR_EOL, 0);
 
 // Install database
 try
