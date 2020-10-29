@@ -330,7 +330,7 @@ class DataHandler
                             
                         $val = date("Y-m-d H:i:s", $timets);
                         
-                        if ($key == "timestamp_dataset")
+                        if ($key == "timestamp_reported")
                         {
                             $obj->year = (int)date("Y", $timets);
                             $obj->month = (int)date("n", $timets);

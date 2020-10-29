@@ -25,9 +25,11 @@ use WelterRocks\CoronaData\Table\Base;
 
 class Positives extends Base
 {
+    protected $continent_uid = true;
     protected $country_uid = true;
     protected $state_uid = true;
     protected $district_uid = true;
+    protected $location_uid = null;
     protected $foreign_identifier = true;
     protected $timestamp_dataset = null;
     protected $timestamp_reported = null;
@@ -54,9 +56,11 @@ class Positives extends Base
     {
       return "CREATE TABLE IF NOT EXISTS `positives` (
         `uid` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
+        `continent_uid` bigint UNSIGNED NOT NULL,
         `country_uid` bigint UNSIGNED NOT NULL,
         `state_uid` bigint UNSIGNED NOT NULL,
         `district_uid` bigint UNSIGNED NOT NULL,
+        `location_uid` bigint UNSIGNED NOT DEFAULT NULL,
         `foreign_identifier` bigint NOT NULL,
         `timestamp_last_update` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         `timestamp_registration` timestamp NOT NULL,
@@ -89,7 +93,8 @@ class Positives extends Base
         `flag_deleted` tinyint(1) NOT NULL DEFAULT '0',
         `flag_is_disease_beginning` tinyint(1) NOT NULL DEFAULT '0',
         PRIMARY KEY (`uid`),
-        UNIQUE KEY `district_foreign_date_rep` (`district_uid`,`foreign_identifier`,`date_rep`),
+        UNIQUE KEY `district_foreign_date_rep` (`continent_uid`,`country_uid`,`state_uid`,`district_uid`,`location_uid`,`foreign_identifier`,`date_rep`),
+        KEY `continent_uid` (`continent_uid`),
         KEY `country_uid` (`country_uid`),
         KEY `state_uid` (`state_uid`),
         KEY `district_uid` (`district_uid`),
@@ -105,8 +110,10 @@ class Positives extends Base
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
       ALTER TABLE `positives`
+        ADD CONSTRAINT `positive_continent_uid` FOREIGN KEY (`continent_uid`) REFERENCES `locations` (`uid`) ON DELETE CASCADE ON UPDATE CASCADE,
         ADD CONSTRAINT `positive_country_uid` FOREIGN KEY (`country_uid`) REFERENCES `locations` (`uid`) ON DELETE CASCADE ON UPDATE CASCADE,
         ADD CONSTRAINT `positive_district_uid` FOREIGN KEY (`district_uid`) REFERENCES `locations` (`uid`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-        ADD CONSTRAINT `positive_state_uid` FOREIGN KEY (`state_uid`) REFERENCES `locations` (`uid`) ON DELETE CASCADE ON UPDATE CASCADE;";
+        ADD CONSTRAINT `positive_state_uid` FOREIGN KEY (`state_uid`) REFERENCES `locations` (`uid`) ON DELETE CASCADE ON UPDATE CASCADE,
+        ADD CONSTRAINT `positive_location_uid` FOREIGN KEY (`location_uid`) REFERENCES `locations` (`uid`) ON DELETE CASCADE ON UPDATE CASCADE;";
     }    
 }

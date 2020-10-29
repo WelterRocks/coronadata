@@ -319,6 +319,44 @@ class Locations extends Base
         return true;
     }
     
+    public function inject_averages_from_positives(&$error = null, &$sql = null)
+    {
+        $error = null;
+        $sql = null;
+        
+        $this->check_view_and_uid();
+        
+        $sql = "SELECT * FROM `positivestat` WHERE ".$this->location_type."_uid = ".$this->uid;
+        
+        $result = $this->get_db()->query($sql);
+        
+        if (!$result)
+        {
+          $error = $this->get_db()->error;
+          
+          return null;
+        }
+        
+        if (!$result->num_rows)
+        {
+          $error = "No positive entry found";
+          
+          return false;
+        }
+        
+        $stat = $result->fetch_object();        
+        $result->free();
+
+        $this->average_cases_per_day = ($stat->cases_average / $stat->days_total);
+        $this->average_cases_per_week = ($stat->cases_average / $stat->days_total * 7);
+        $this->average_cases_per_month = ($stat->cases_average / $stat->days_total * 30);
+        $this->average_cases_per_year = ($stat->cases_average / $stat->days_total * 365);
+                
+        $this->contamination_runtime = $stat->days_total;
+        
+        return true;
+    }
+    
     public function autoexec_insert_after($retval)
     {
         if ($this->autoexec_is_disabled()) return;
