@@ -31,6 +31,7 @@ class Combined extends Base
     protected $locations_uid = null;
     protected $timestamp_represent = null;
     protected $date_rep = null;
+    protected $day_of_week = null;
     protected $day = null;
     protected $month = null;
     protected $year = null;
@@ -109,6 +110,14 @@ class Combined extends Base
     protected $cardiovasc_death_rate = null;
     protected $diabetes_prevalence = null;
     protected $extreme_poverty = null;
+    protected $hosp_patients = null;
+    protected $hosp_patients_per_million = null;
+    protected $icu_patients = null;
+    protected $icu_patients_per_million = null;
+    protected $weekly_hosp_admissions = null;
+    protected $weekly_hosp_admissions_per_million = null;
+    protected $weekly_icu_admissions = null;
+    protected $weekly_icu_admissions_per_million = null;
     protected $flag_data_incomplete = null;
     protected $flag_no_longer_updated = null;
     protected $flag_virus_free = null;
@@ -119,7 +128,8 @@ class Combined extends Base
       select `datacasts`.`uid` AS `uid`,
       `datacasts`.`locations_uid` AS `locations_uid`,
       `datacasts`.`timestamp_represent` AS `timestamp_represent`,
-      `datacasts`.`date_rep` AS `date_rep`,
+      `datacasts`.`date_rep` AS `date_rep`,      
+      `datacasts`.`day_of_week` AS `day_of_week`,
       `datacasts`.`day` AS `day`,
       `datacasts`.`month` AS `month`,
       `datacasts`.`year` AS `year`,
@@ -171,6 +181,14 @@ class Combined extends Base
       `infocasts`.`total_deaths_per_million` AS `total_deaths_per_million`,
       `infocasts`.`total_tests` AS `total_tests`,
       `infocasts`.`total_tests_per_thousand` AS `total_tests_per_thousand`,
+      `infocasts`.`hosp_patients` AS `hosp_patients`,
+      `infocasts`.`hosp_patients_per_million` AS `hosp_patients_per_million`,
+      `infocasts`.`icu_patients` AS `icu_patients`,
+      `infocasts`.`icu_patients_per_million` AS `icu_patients_per_million`,
+      `infocasts`.`weekly_hosp_admissions` AS `weekly_hosp_admissions`,
+      `infocasts`.`weekly_hosp_admissions_per_million` AS `weekly_hosp_admissions_per_million`,
+      `infocasts`.`weekly_icu_admissions` AS `weekly_icu_admissions`,
+      `infocasts`.`weekly_icu_admissions_per_million` AS `weekly_icu_admissions_per_million`,
       `locations`.`timestamp_virus_free` AS `timestamp_virus_free`,
       `locations`.`timestamp_virus_back` AS `timestamp_virus_back`,
       `locations`.`timestamp_data_complete` AS `timestamp_data_complete`,
