@@ -54,8 +54,14 @@ class Infocasts extends Base
     protected $total_deaths_per_million = null;
     protected $total_tests = null;
     protected $total_tests_per_thousand = null;
+    protected $hosp_patients = null;
+    protected $hosp_patients_per_million = null;
+    protected $icu_patients = null;
+    protected $icu_patients_per_million = null;
     protected $weekly_hosp_admissions = null;
     protected $weekly_hosp_admissions_per_million = null;
+    protected $weekly_icu_admissions = null;
+    protected $weekly_icu_admissions_per_million = null;
     
     protected function get_install_sql()
     {
@@ -96,8 +102,14 @@ class Infocasts extends Base
         `total_deaths_per_million` float NOT NULL DEFAULT '0',
         `total_tests` float NOT NULL DEFAULT '0',
         `total_tests_per_thousand` float NOT NULL DEFAULT '0',
+        `hosp_patients` float NOT NULL DEFAULT '0',
+        `hosp_patients_per_million` float NOT NULL DEFAULT '0',
+        `icu_patients` float NOT NULL DEFAULT '0',
+        `icu_patients_per_million` float NOT NULL DEFAULT '0',
         `weekly_hosp_admissions` float NOT NULL DEFAULT '0',
         `weekly_hosp_admissions_per_million` float NOT NULL DEFAULT '0',
+        `weekly_icu_admissions` float NOT NULL DEFAULT '0',
+        `weekly_icu_admissions_per_million` float NOT NULL DEFAULT '0',
         `update_count` int UNSIGNED NOT NULL DEFAULT '0',
         `flag_updated` tinyint(1) NOT NULL DEFAULT '0',
         `flag_disabled` tinyint(1) NOT NULL DEFAULT '0',

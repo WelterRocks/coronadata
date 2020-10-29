@@ -28,6 +28,10 @@ class Nowcasts extends Base
     protected $locations_uid = true;
     protected $timestamp_represent = null;
     protected $date_rep = true;
+    protected $day_of_week = null;
+    protected $day = null;
+    protected $month = null;
+    protected $year = null;
     protected $esteem_new_diseases = null;
     protected $esteem_new_diseases_ma4 = null;
     protected $esteem_reproduction_r = null;
