@@ -460,6 +460,11 @@ class DataHandler
             foreach ($row as $id => $val)
             {
 		$key = $header[$id];
+		
+		// Why the fck hll these RKI guys send a 0 and not a NULL in their crappy table
+		// This causes grafana to "crash the curves", so we do, what they should do!
+                if ($val === 0)
+                    $val = null;
 
 		if ($key == "date_rep")
 		{
