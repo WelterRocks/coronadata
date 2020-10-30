@@ -60,7 +60,7 @@ class Positives extends Base
         `country_uid` bigint UNSIGNED NOT NULL,
         `state_uid` bigint UNSIGNED NOT NULL,
         `district_uid` bigint UNSIGNED NOT NULL,
-        `location_uid` bigint UNSIGNED NOT DEFAULT NULL,
+        `location_uid` bigint UNSIGNED DEFAULT NULL,
         `foreign_identifier` bigint NOT NULL,
         `timestamp_last_update` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         `timestamp_registration` timestamp NOT NULL,
