@@ -934,8 +934,9 @@ class Client
                      
                 if (isset($location->$key))
                     continue;
-                        
-                $nowcast->$key = $val;
+                
+                if ($val !== null)
+                    $nowcast->$key = $val;
             }
             
             $totalcount++;
