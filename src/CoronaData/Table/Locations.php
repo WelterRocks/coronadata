@@ -134,6 +134,44 @@ class Locations extends Base
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
     }
     
+    private function process_contamination($cases_total, $days = 0, $population_average = 0)
+    {
+        if ($days != 0)
+        {
+          $this->contamination_runtime = $days;
+            
+          $this->average_cases_per_day = ($cases_total / $days);
+          $this->average_cases_per_week = ($this->average_cases_per_day * 7);
+          $this->average_cases_per_month = ($this->average_cases_per_day * 30);
+          $this->average_cases_per_year = ($this->average_cases_per_day * 365);
+        }
+        
+        if ($population_average == 0)
+          $population_average = $this->population;
+          
+        if ($population_average > 0)
+          $this->contamination_value = (100 / $population_average * $cases_total);
+        else
+          $this->contamination_value = 0;
+          
+        if ($this->population_density > 0)
+          $this->infection_density = $this->average_cases_per_day / $this->population_density;
+        else
+          $this->infection_density = 0;
+
+        if ($this->human_development_index == 0)
+          $hdi = 0.1;
+        else
+          $hdi = $this->human_development_index;
+        
+        if ($this->average_cases_per_day > 0)
+          $contamination_target_seconds = (($population_average / $this->average_cases_per_day) * 24 * 60 * 60) * $hdi;
+        else
+          $contamination_target_seconds = 60 * 60 * 24 * 365;
+        
+        $this->contamination_target = date("Y-m-d", (time() + round($contamination_target_seconds)));
+    }
+    
     public function calculate_child_values($filter = null)
     {
         $this->check_view_and_uid();
@@ -176,23 +214,22 @@ class Locations extends Base
           "aged_65_older" => "sum",
           "aged_70_older" => "sum",
           "life_expectancy" => "avg",
-          "human_development_index" => 0,
-          "gdp_per_capita" => 0,
-          "handwashing_facilities" => 0,
-          "hospital_beds_per_thousand" => 0,
-          "male_smokers" => 0,
-          "female_smokers" => 0,
-          "cardiovasc_death_rate" => 0,
-          "diabetes_prevalence" => 0,
-          "extreme_poverty" => 0,
-          "infection_density" => 0,
-          "average_cases_per_day" => 0,
-          "average_cases_per_week" => 0,
-          "average_cases_per_month" => 0,
-          "average_cases_per_year" => 0,
-          "contamination_runtime" => 0,
-          "contamination_value" => 0,
-          "contamination_target" => 0
+          "human_development_index" => "avg",
+          "gdp_per_capita" => "avg",
+          "handwashing_facilities" => "sum",
+          "hospital_beds_per_thousand" => "sum",
+          "male_smokers" => "sum",
+          "female_smokers" => "sum",
+          "cardiovasc_death_rate" => "avg",
+          "diabetes_prevalence" => "avg",
+          "extreme_poverty" => "avg",
+          "infection_density" => "avg",
+          "average_cases_per_day" => "avg",
+          "average_cases_per_week" => "avg",
+          "average_cases_per_month" => "avg",
+          "average_cases_per_year" => "avg",
+          "contamination_runtime" => "avg",
+          "contamination_value" => "avg"
         );
         
         foreach ($fields as $field => $type)
@@ -213,7 +250,7 @@ class Locations extends Base
         }
         
         $sql = "SELECT `parent_uid`".$sql." FROM `".$this->get_tablename()."` WHERE `parent_uid` = ".$this->uid." AND location_type = '".$sublevel."' GROUP BY `parent_uid`";
-        
+
         $result = $this->get_db()->query($sql);
         
         if (!$result)
@@ -227,8 +264,12 @@ class Locations extends Base
           foreach ($obj as $key => $val)
             $this->$key = $val;
         }
-        
+                
         $result->free();
+        
+        $cases_total = $this->average_cases_per_day * $this->contamination_runtime;
+        
+        $this->process_contamination($cases_total);
                 
         return true;
     }
@@ -248,37 +289,7 @@ class Locations extends Base
         if ($obj->days == 0)
           return null;
           
-        $this->contamination_runtime = $obj->days;
-          
-        $this->average_cases_per_day = ($obj->cases_total / $obj->days);
-        $this->average_cases_per_week = ($this->average_cases_per_day * 7);
-        $this->average_cases_per_month = ($this->average_cases_per_day * 30);
-        $this->average_cases_per_year = ($this->average_cases_per_day * 365);
-        
-        if ($obj->population_average == 0)
-          $obj->population_average = $this->population;
-          
-        if ($obj->population_average > 0)
-          $this->contamination_value = (100 / $obj->population_average * $obj->cases_total);
-        else
-          $this->contamination_value = 0;
-          
-        if (!$obj->exponence_average)
-          $obj->exponence_average = 0.667;
-        
-        if ($this->population_density > 0)
-          $this->infection_density = $this->average_cases_per_day / $this->population_density;
-        else
-          $this->infection_density = 0;
-
-        if ($this->human_development_index == 0)
-          $hdi = 0.1;
-        else
-          $hdi = $this->human_development_index;
-                
-        $contamination_target_seconds = (($obj->population_average / $this->average_cases_per_day * $obj->exponence_average) * 24 * 60 * 60) * $hdi;
-        
-        $this->contamination_target = date("Y-m-d", (time() + $contamination_target_seconds));
+        return $this->process_contamination($obj->cases_total, $obj->days, $obj->population_average);
     }
     
     public function is_data_incomplete()

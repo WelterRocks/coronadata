@@ -572,7 +572,9 @@ abstract class Base
     
     public function save($prefix = null, $partitions = null, $autoselect_fields_only = false, &$error = null, &$sql = null)
     {
-        return $this->insert($prefix, null, $partitions, "self", $autoselect_fields_only, $error, $sql);
+        $retval = $this->insert($prefix, null, $partitions, "self", $autoselect_fields_only, $error, $sql);
+
+        return $retval;
     }
     
     public function delete(&$error = null, &$sql = null, $undelete = false)
