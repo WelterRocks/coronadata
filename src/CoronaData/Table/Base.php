@@ -540,11 +540,6 @@ abstract class Base
 
         $retval = null;
         
-        if (($this->get_tablename() == "nowcasts") && ($this->esteem_7day_r_value == 0))
-        {
-          echo $sql."\n";exit;
-        }
-        
         if ($insert = $this->__db->query($sql))
         {
             if ($no_insert_id)
