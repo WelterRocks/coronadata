@@ -856,6 +856,7 @@ class Client
                 $obj->timestamp_dataset = $record->timestamp_dataset;
                 $obj->timestamp_reported = $record->timestamp_reported;
                 $obj->timestamp_referenced = $record->timestamp_referenced;
+                $obj->timestamp_represent = $record->timestamp_represent;
                 $obj->date_rep = $record->date_rep;
                 $obj->day_of_week = $record->day_of_week;
                 $obj->day = $record->day;
