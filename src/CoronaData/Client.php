@@ -691,7 +691,7 @@ class Client
                 
             $totalcount++;
                 
-            $recorddate = $record->timestamp_dataset;
+            $recorddate = $record->timestamp_represent;
             
             if (!$recorddate)
             {

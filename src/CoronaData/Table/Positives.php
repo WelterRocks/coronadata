@@ -95,7 +95,8 @@ class Positives extends Base
         `flag_deleted` tinyint(1) NOT NULL DEFAULT '0',
         `flag_is_disease_beginning` tinyint(1) NOT NULL DEFAULT '0',
         PRIMARY KEY (`uid`),
-        UNIQUE KEY `district_foreign_date_rep` (`continent_uid`,`country_uid`,`state_uid`,`district_uid`,`location_uid`,`foreign_identifier`,`date_rep`),
+        UNIQUE KEY `foreign_identifier` (`foreign_identifier`),
+        UNIQUE KEY `location_date_rep` (`continent_uid`,`country_uid`,`state_uid`,`district_uid`,`location_uid`,`date_rep`),
         KEY `continent_uid` (`continent_uid`),
         KEY `country_uid` (`country_uid`),
         KEY `state_uid` (`state_uid`),
@@ -115,7 +116,7 @@ class Positives extends Base
       ALTER TABLE `positives`
         ADD CONSTRAINT `positive_continent_uid` FOREIGN KEY (`continent_uid`) REFERENCES `locations` (`uid`) ON DELETE CASCADE ON UPDATE CASCADE,
         ADD CONSTRAINT `positive_country_uid` FOREIGN KEY (`country_uid`) REFERENCES `locations` (`uid`) ON DELETE CASCADE ON UPDATE CASCADE,
-        ADD CONSTRAINT `positive_district_uid` FOREIGN KEY (`district_uid`) REFERENCES `locations` (`uid`) ON DELETE CASCASE ON UPDATE RESTRICT,
+        ADD CONSTRAINT `positive_district_uid` FOREIGN KEY (`district_uid`) REFERENCES `locations` (`uid`) ON DELETE CASCADE ON UPDATE CASCADE,
         ADD CONSTRAINT `positive_state_uid` FOREIGN KEY (`state_uid`) REFERENCES `locations` (`uid`) ON DELETE CASCADE ON UPDATE CASCADE,
         ADD CONSTRAINT `positive_location_uid` FOREIGN KEY (`location_uid`) REFERENCES `locations` (`uid`) ON DELETE CASCADE ON UPDATE CASCADE;";
     }    
