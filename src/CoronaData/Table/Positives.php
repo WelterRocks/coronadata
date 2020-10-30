@@ -74,7 +74,7 @@ class Positives extends Base
         `timestamp_referenced` timestamp NOT NULL,
         `timestamp_represent` timestamp NOT NULL,
         `date_rep` date NOT NULL,
-        `day_of_week` tinyint UNSIGNED NOT NULL,
+        `day_of_week` tinyint UNSIGNED NOT NULL DEFAULT '0',
         `day` tinyint UNSIGNED NOT NULL,
         `month` tinyint UNSIGNED NOT NULL,
         `year` year NOT NULL,

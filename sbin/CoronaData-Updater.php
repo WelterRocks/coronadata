@@ -361,18 +361,19 @@ function worker_loop(Client $client, $oneshot = false)
     
             $totalcount = 0;
             $successcount = 0;
+            $filtercount = 0;
             $errorcount = 0;
             $errordata = null;
             
             try
             {
                 // Europe, Germany is currently hardcoded, because it is the only country known to produce compatible nowcasts
-                $client->update_rki_positive_store("rki_nowcast", "Europe", "Germany", true, 25, $totalcount, $successcount, $errorcount, $errordata);
-                $cli->log("RKI positive data store has been updated. Wrote ".$successcount." entries from ".$totalcount.".", LOG_INFO);
+                $client->update_rki_positive_store("rki_positive", "Europe", "Germany", true, 25, $totalcount, $successcount, $errorcount, $errordata, $filtercount);
+                $cli->log("RKI positive data store has been updated. Wrote ".$successcount." entries from ".$totalcount.", while ".$filtercount." were filtered.", LOG_INFO);
                 
                 if ($errorcount)
                 {
-                    $cli->log("There were problems writing RKI positive data. ".$errorcount." esteem dataset(s) could not be written.", LOG_ALERT);
+                    $cli->log("There were problems writing RKI positive data. ".$errorcount." dataset(s) could not be written.", LOG_ALERT);
                     
                     if ($dumpfile = $client->create_error_dump("rki-positive-error-", $errordata))
                         $cli->log("Dump file written to '".$dumpfile."'", LOG_ALERT);
