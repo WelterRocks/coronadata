@@ -19,6 +19,7 @@ yarn-error.log
 run/
 *.jgz
 *.log
+*.xml
 *~
 
 \.php_cs\.cache

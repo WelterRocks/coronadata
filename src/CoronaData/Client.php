@@ -45,6 +45,11 @@ class Client
     private $rki_nowcast_timestamp = null;
     private $rki_nowcast_filename = null;
     
+    private $rki_rssfeed = null;
+    private $rki_rssfeed_size = null;
+    private $rki_rssfeed_timestamp = null;
+    private $rki_rssfeed_filename = null;
+    
     private $cov_infocast = null;
     private $cov_infocast_size = null;
     private $cov_infocast_timestamp = null;
@@ -169,6 +174,19 @@ class Client
         return null;
     }
     
+    public function retrieve_rki_rssfeed($cache_timeout = 14400)
+    {
+        if ($retval = $this->rki_rssfeed->retrieve($this->rki_rssfeed_filename, $cache_timeout, -1, true))
+        {
+            $this->rki_rssfeed_timestamp = self::timestamp();
+            $this->rki_rssfeed_size = $retval;
+            
+            return $retval;
+        }
+        
+        return null;
+    }
+    
     public function retrieve_cov_infocast($cache_timeout = 14400)
     {
         if ($retval = $this->cov_infocast->retrieve($this->cov_infocast_filename, $cache_timeout))
@@ -199,6 +217,22 @@ class Client
         $timestamp = $this->rki_nowcast->get_timestamp();
         
         return $this->rki_nowcast->get_data();
+    }
+    
+    public function export_rki_positive(&$length = null, &$timestamp = null)
+    {
+        $length = $this->rki_positive->get_length();
+        $timestamp = $this->rki_positive->get_timestamp();
+        
+        return $this->rki_positive->get_data();
+    }
+    
+    public function export_rki_rssfeed(&$length = null, &$timestamp = null)
+    {
+        $length = $this->rki_rssfeed->get_length();
+        $timestamp = $this->rki_rssfeed->get_timestamp();
+        
+        return $this->rki_rssfeed->get_data();
     }
     
     public function export_cov_infocast(&$length = null, &$timestamp = null)
@@ -254,6 +288,21 @@ class Client
     public function get_rki_nowcast_timestamp()
     {
        return $this->rki_nowcast_timestamp; 
+    }
+    
+    public function get_rki_rssfeed_timestamp()
+    {
+       return $this->rki_rssfeed_timestamp; 
+    }
+    
+    public function get_rki_rssfeed_filename()
+    {
+        return $this->rki_rssfeed_filename;
+    }
+    
+    public function get_rki_rssfeed_size()
+    {
+        return $this->rki_rssfeed_size;
     }
     
     public function get_rki_nowcast_size()
@@ -1268,7 +1317,7 @@ class Client
         return $retval;
     }
     
-    function __construct($config = ".coronadatarc", $eu_datacast_filename = "eu_datacast.jgz", $rki_positive_filename = "rki_positive.jgz", $rki_nowcast_filename = "rki_nowcast.jgz", $cov_infocast_filename = "cov_infocast.jgz")
+    function __construct($config = ".coronadatarc", $eu_datacast_filename = "eu_datacast.jgz", $rki_positive_filename = "rki_positive.jgz", $rki_nowcast_filename = "rki_nowcast.jgz", $rki_rssfeed_filename = "rki_rssfeed.xml", $cov_infocast_filename = "cov_infocast.jgz")
     {
         $this->config_file = $config;
         
@@ -1279,11 +1328,13 @@ class Client
         $this->eu_datacast_filename = $this->config->data_store."/".$eu_datacast_filename;
         $this->rki_positive_filename = $this->config->data_store."/".$rki_positive_filename;
         $this->rki_nowcast_filename = $this->config->data_store."/".$rki_nowcast_filename;
+        $this->rki_rssfeed_filename = $this->config->data_store."/".$rki_rssfeed_filename;
         $this->cov_infocast_filename = $this->config->data_store."/".$cov_infocast_filename;
         
         $this->eu_datacast = new DataHandler($this->config->url_eu_datacast);
         $this->rki_positive = new DataHandler($this->config->url_rki_positive);
         $this->rki_nowcast = new DataHandler($this->config->url_rki_nowcast);
+        $this->rki_rssfeed = new DataHandler($this->config->url_rki_rssfeed);
         $this->cov_infocast = new DataHandler($this->config->url_cov_infocast);
         
         $this->eu_datacast_timestamp = 0;
@@ -1294,6 +1345,9 @@ class Client
         
         $this->rki_nowcast_timestamp = 0;
         $this->rki_nowcast_size = 0;
+        
+        $this->rki_rssfeed_timestamp = 0;
+        $this->rki_rssfeed_size = 0;
         
         $this->cov_infocast_timestamp = 0;
         $this->cov_infocast_size = 0;

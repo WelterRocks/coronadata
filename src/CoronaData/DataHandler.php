@@ -29,6 +29,7 @@ class DataHandler
     
     private $data = null;
     private $length = null;
+    private $is_json = null;
 
     private $timestamp = null;
     private $datasource = null;
@@ -147,6 +148,22 @@ class DataHandler
             $retval = strtotime($time);
         
         return $retval;
+    }
+    
+    public static function compress($data, $compression_level = 9)
+    {
+        if ($compression_level < 0)
+            return $data;
+            
+        return gzencode($data, $compression_level);
+    }
+    
+    public static function uncompress($data, $not_compressed = false)
+    {
+        if ($not_compressed)
+            return $data;
+            
+        return gzdecode($data);
     }
     
     public function get_timestamp()
@@ -505,7 +522,7 @@ class DataHandler
         return true;
     }
     
-    public function retrieve($target_file = null, $cache_time = 14400)
+    public function retrieve($target_file = null, $cache_time = 14400, $compression_level = 9, $not_json_encoded = false)
     {
         if ($target_file)
         {
@@ -517,15 +534,21 @@ class DataHandler
                     @unlink($target_file);
             }
             
+            $this->is_json = (($not_json_encoded) ? false : true);
+            
             if (file_exists($target_file))
             {
-                $data = gzdecode(file_get_contents($target_file));
+                $data = $this->uncompress(file_get_contents($target_file), (($compression_level == -1) ? true : false));
                 
                 $length = strlen($data);
                 
                 if ($length > 0)
-                {            
-                    $this->data = json_decode($data);
+                {   
+                    if ($not_json_encoded)
+                        $this->data = $data;
+                    else 	        
+                        $this->data = json_decode($data);
+                        
                     $this->length = $length;
                     $this->datasource = "cache";
                 
@@ -545,7 +568,10 @@ class DataHandler
         
         if ($target_file)
         {    
-            $fd = @gzopen($target_file, "w9");
+            if ($compression_level < 0)
+                $fd = @fopen($target_file, "w");
+            else
+                $fd = @gzopen($target_file, "w".$compression_level);
             
             if (!is_resource($fd))
                 throw new Exception("Unable to open target file '".$target_file."'");
@@ -558,9 +584,25 @@ class DataHandler
         $this->datasource = "url";
         
         if ($target_file)
-        {    
-            @gzwrite($fd, json_encode($this->data));
-            @gzclose($fd);
+        {   
+            if ($compression_level < 0)
+            {
+                if ($not_json_encoded)
+                    @fwrite($fd, $this->data);
+                else
+                    @fwrite($fd, json_encode($this->data));
+                    
+                @fclose($fd);
+            }
+            else
+            {
+                if ($not_json_encoded)
+                    @gzwrite($fd, $this->data);
+                else
+                    @gzwrite($fd, json_encode($this->data));
+                    
+                @gzclose($fd);
+            }
         }
         
         return $length;

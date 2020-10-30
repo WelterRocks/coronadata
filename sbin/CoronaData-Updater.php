@@ -46,11 +46,13 @@ $max_cast_age = 7200;
 $cachetime_eu_datacast = 7200;
 $cachetime_rki_datacast = 7200;
 $cachetime_rki_positive = 7200;
+$cachetime_rki_rssfeed = 7200;
 $cachetime_cov_infocast = 7200;
 
 $skip_eu_datacast = false;
 $skip_rki_nowcast = false;
 $skip_rki_positive = false;
+$skip_rki_rssfeed = false;
 $skip_cov_infocast = false;
 
 $pid = null;
@@ -131,7 +133,7 @@ function worker_loop(Client $client, $oneshot = false)
     global $ticks_state, $max_cast_age;
     global $cli, $worker_reload, $daemon_terminate;
     global $cachetime_eu_datacast, $cachetime_rki_nowcast, $cachetime_cov_infocast, $cachetime_rki_positive;
-    global $skip_eu_datacast, $skip_rki_nowcast, $skip_rki_positive, $skip_cov_infocast;
+    global $skip_eu_datacast, $skip_rki_nowcast, $skip_rki_positive, $skip_rki_rssfeed, $skip_cov_infocast;
     
     // Dispatch signals in inner loop
     $cli->signals_dispatch();
@@ -151,6 +153,18 @@ function worker_loop(Client $client, $oneshot = false)
     {
         $did_updates = 0;
         
+        // Retrieve RKI RSS feed
+        if ((!$skip_rki_rssfeed) && (($client->get_rki_rssfeed_timestamp() + ($max_cast_age * 1000)) < Client::timestamp()))
+        {
+            $cli->log("Retrieving RKI RSS feed.", LOG_INFO);
+            $size = $client->retrieve_rki_rssfeed($cachetime_rki_nowcast);
+
+            if (!$size)
+                $cli->log("Unable to fetch RKI RSS feed. The result was empty.", LOG_ALERT);
+            else
+                $cli->log("RKI RSS feed with ".$size." bytes received.", LOG_INFO);
+        }
+                    
         // Retrieve EU datacast
         if ((!$skip_eu_datacast) && (($client->get_eu_datacast_timestamp() + ($max_cast_age * 1000)) < Client::timestamp()))
         {
@@ -532,6 +546,8 @@ if ($cli->has_argument("--skip-eu-datacast"))
     $skip_eu_datacast = true;
 if ($cli->has_argument("--skip-rki-nowcast"))
     $skip_rki_nowcast = true;
+if ($cli->has_argument("--skip-rki-rssfeed"))
+    $skip_rki_rssfeed = true;
 if ($cli->has_argument("--skip-cov-infocast"))
     $skip_cov_infocast = true;
 if ($cli->has_argument("--skip-rki-positive"))

@@ -25,6 +25,7 @@ final class Config
     private $url_eu_datacast = 'https://opendata.ecdc.europa.eu/covid19/casedistribution/json/';
     private $url_rki_positive = 'https://opendata.arcgis.com/datasets/dd4580c810204019a7b8eb3e0b329dd6_0.geojson';
     private $url_rki_nowcast = 'https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/Nowcasting_Zahlen_csv.csv?__blob=publicationFile';
+    private $url_rki_rssfeed = 'https://www.rki.de/SiteGlobals/Functions/RSSFeed/RSSGenerator_nCoV.xml';
     private $url_cov_infocast = 'https://github.com/owid/covid-19-data/raw/master/public/data/owid-covid-data.json';
     
     private $data_store = './data';
