@@ -367,7 +367,7 @@ function worker_loop(Client $client, $oneshot = false)
             try
             {
                 // Europe, Germany is currently hardcoded, because it is the only country known to produce compatible nowcasts
-//                $client->update_rki_positive_store("rki_nowcast", "Europe", "Germany", true, 25, $totalcount, $successcount, $errorcount, $errordata);
+                $client->update_rki_positive_store("rki_nowcast", "Europe", "Germany", true, 25, $totalcount, $successcount, $errorcount, $errordata);
                 $cli->log("RKI positive data store has been updated. Wrote ".$successcount." entries from ".$totalcount.".", LOG_INFO);
                 
                 if ($errorcount)
