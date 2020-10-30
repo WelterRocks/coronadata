@@ -204,6 +204,7 @@ class Database
         
         switch ($table)
         {
+          case "positives":
           case "datacasts":
           case "nowcasts":
           case "infocasts":
