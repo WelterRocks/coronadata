@@ -54,6 +54,31 @@ class Client
     
     private $transaction_name = null;
     
+    public static function threeletter_encode($str)
+    {
+        $allowed = "abcdefghijklmnopqrstuvwxyz";
+        $retval = "";
+        
+        $str = trim($str);
+        
+        for ($i = 0; $i < strlen($str); $i++)
+        {
+            $c = substr($str, 0, 1);
+            
+            if (!stripos($allowed, $str))
+                continue;
+                
+            $retval = strtoupper($c);
+            
+            if (strlen($retval) == 3)
+                break;
+        }
+        
+        $retval = str_pad($retval, 3, "0");
+        
+        return $retval;
+    }
+    
     public static function timestamp($resolution = 1000)
     {
         return round((microtime(true) * $resolution));
@@ -485,7 +510,7 @@ class Client
                 $continent->country = $record->continent;
                 $continent->location = $record->continent;
                 $continent->location_type = 'continent';
-                $continent->geo_id = strtoupper(substr($record->continent, 0, 3));
+                $continent->geo_id = self::threeletter_encode($record->continent);
                 $continent->country_code = $continent->geo_id;
                 
                 if (true === $continent->uid = $this->database->register_object("Locations", $continent, true, false, $error, $sql))
@@ -679,7 +704,7 @@ class Client
                 $state->location = $record->state;
                 $state->country = $country;
                 $state->continent = $continent;
-                $state->geo_id = trim(strtoupper(substr($record->state, 0, 3))).$record->state_id;
+                $state->geo_id = self::threeletter_encode($record->state).$record->state_id;
                 $state->parent_uid = $location->uid;
                 $state->location_type = 'state';
                 
@@ -722,7 +747,7 @@ class Client
                 $district->location = $record->district;
                 $district->country = $country;
                 $district->continent = $continent;
-                $district->geo_id = trim(strtoupper(substr($record->state, 0, 3))).$record->state_id.".".$record->district_id;
+                $district->geo_id = self::threeletter_encode($record->state).$record->state_id.".".$record->district_id;
                 $district->parent_uid = $shadow_store->states[$record->state_id]->uid;
                 $district->location_type = 'district';
                 
@@ -1025,7 +1050,7 @@ class Client
                     $continent->country = $data->continent;
                     $continent->location = $data->continent;
                     $continent->location_type = 'continent';
-                    $continent->geo_id = strtoupper(substr($data->continent, 0, 3));
+                    $continent->geo_id = self::threeletter_encode($data->continent);
                     $continent->country_code = $continent->geo_id;
                     
                     if (true === $continent->uid = $this->database->register_object("Locations", $continent, true, false, $error, $sql))
