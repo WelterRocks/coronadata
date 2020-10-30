@@ -34,6 +34,7 @@ class Positives extends Base
     protected $timestamp_dataset = null;
     protected $timestamp_reported = null;
     protected $timestamp_referenced = null;
+    protected $timestamp_represent = null;
     protected $date_rep = null;
     protected $day_of_week = null;
     protected $day = null;
@@ -71,6 +72,7 @@ class Positives extends Base
         `timestamp_dataset` timestamp NOT NULL,
         `timestamp_reported` timestamp NOT NULL,
         `timestamp_referenced` timestamp NOT NULL,
+        `timestamp_represent` timestamp NOT NULL,
         `date_rep` date NOT NULL,
         `day_of_week` tinyint UNSIGNED NOT NULL,
         `day` tinyint UNSIGNED NOT NULL,
@@ -105,6 +107,7 @@ class Positives extends Base
         KEY `age_group_high` (`age_group_high`),
         KEY `age_group2_low` (`age_group2_low`),
         KEY `age_group2_high` (`age_group2_high`),
+        KEY `timestamp_represent` (`timestamp_represent`),
         KEY `date_rep` (`date_rep`),
         KEY `foreign_identifier` (`foreign_identifier`)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

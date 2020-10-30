@@ -340,6 +340,7 @@ class DataHandler
                             $obj->day = (int)date("j", $timets);
                             $obj->day_of_week = (int)date("w", $timets);
                             $obj->date_rep = date("Y-m-d", $timets);
+                            $obj->timestamp_represent = date("Y-m-d H:i:s", $timets);
                         }
                         
                         unset($timets);
