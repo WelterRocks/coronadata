@@ -72,7 +72,7 @@ abstract class Base
         return true;
     }
     
-    protected function update_clause($update = null)
+    protected function update_clause($update = null, $zero_as_null = false)
     {
         $update_clause = "";
         $worker_count = 0;
@@ -119,9 +119,11 @@ abstract class Base
                 $worker_count++;
               }
             }
-            elseif ((($val === 0) || ($val === false) || ($val !== "")) && ($val !== null))
+            elseif (($val !== null) && ($val != ""))
             {
-              if ((($val === 0) || ($val === false)) && ($val !== null))
+              if (($val == 0) && ($zero_as_null))
+                $update_clause .= ", `".$key."` = NULL";
+              elseif ((($val === 0) || ($val === false)) && ($val !== null))
                 $update_clause .= ", `".$key."` = ".$val;
               elseif (is_numeric($val))
                 $update_clause .= ", `".$key."` = ".$val;
@@ -140,7 +142,7 @@ abstract class Base
         return $update_clause;    
     }
     
-    protected function on_duplicate_key($data = null)
+    protected function on_duplicate_key($data = null, $zero_as_null = false)
     {
         $on_duplicate_key = "";
         
@@ -150,7 +152,7 @@ abstract class Base
         }
         elseif (((is_array($data)) && (count($data) > 0)) || (is_object($data)) || ($data === "self"))
         {
-          $update_clause = $this->update_clause((($data == "self") ? null : $data));
+          $update_clause = $this->update_clause((($data == "self") ? null : $data), $zero_as_null);
           
           $on_duplicate_key = (($update_clause === null) ? "" : " ON DUPLICATE KEY ".$update_clause);
         }
@@ -434,7 +436,7 @@ abstract class Base
         return true;
     }
 
-    public function insert($prefix = null, $ignore = false, $partitions = null, $on_duplicate_key_data = null, $autoselect_fields_only = false, &$error = null, &$sql = null)
+    public function insert($prefix = null, $ignore = false, $partitions = null, $on_duplicate_key_data = null, $autoselect_fields_only = false, $zero_as_null = false, &$error = null, &$sql = null)
     {
         $error = null;
         $sql = null;
@@ -534,9 +536,14 @@ abstract class Base
         $sql .= "(".substr($keys, 1).") VALUES (".substr($vals, 1).")";
 
         if ($on_duplicate_key_data !== null)
-            $sql .= $this->on_duplicate_key($on_duplicate_key_data);
+            $sql .= $this->on_duplicate_key($on_duplicate_key_data, $zero_as_null);
 
         $retval = null;
+        
+        if (($this->get_tablename() == "nowcasts") && ($this->esteem_7day_r_value == 0))
+        {
+          echo $sql."\n";exit;
+        }
         
         if ($insert = $this->__db->query($sql))
         {
@@ -570,9 +577,9 @@ abstract class Base
         return $retval;
     }
     
-    public function save($prefix = null, $partitions = null, $autoselect_fields_only = false, &$error = null, &$sql = null)
+    public function save($prefix = null, $partitions = null, $autoselect_fields_only = false, $zero_as_null = false, &$error = null, &$sql = null)
     {
-        $retval = $this->insert($prefix, null, $partitions, "self", $autoselect_fields_only, $error, $sql);
+        $retval = $this->insert($prefix, null, $partitions, "self", $autoselect_fields_only, $zero_as_null, $error, $sql);
 
         return $retval;
     }

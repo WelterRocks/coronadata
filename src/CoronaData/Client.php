@@ -529,7 +529,7 @@ class Client
                 $continent->geo_id = self::threeletter_encode($record->continent);
                 $continent->country_code = $continent->geo_id;
                 
-                if (true === $continent->uid = $this->database->register_object("Locations", $continent, true, false, $error, $sql))
+                if (true === $continent->uid = $this->database->register_object("Locations", $continent, true, false, false, $error, $sql))
                 {
                     $errcount++;
                     
@@ -567,7 +567,7 @@ class Client
             $errobj->location = $location;
             $errobj->record = $record;
             
-            if (true === $datacast->locations_uid = $this->database->register_object("Locations", $location, true, false, $error, $sql))
+            if (true === $datacast->locations_uid = $this->database->register_object("Locations", $location, true, false, false, $error, $sql))
             {
                 $errcount++;
                 
@@ -611,7 +611,7 @@ class Client
                     $datacast->$key = $val;
                 }
                 
-                if (true === $datacast->uid = $this->database->register_object("Datacasts", $datacast, true, $disable_datacast_autoexec, $error, $sql))
+                if (true === $datacast->uid = $this->database->register_object("Datacasts", $datacast, true, $disable_datacast_autoexec, false, $error, $sql))
                 {
                     $errcount++;
                     
@@ -724,7 +724,7 @@ class Client
                 $state->parent_uid = $location->uid;
                 $state->location_type = 'state';
                 
-                if (true === $state->uid = $this->database->register_object("Locations", $state, true, false, $error, $sql))
+                if (true === $state->uid = $this->database->register_object("Locations", $state, true, false, false, $error, $sql))
                 {
                     $errcount++;
                     
@@ -767,7 +767,7 @@ class Client
                 $district->parent_uid = $shadow_store->states[$record->state_id]->uid;
                 $district->location_type = 'district';
                 
-                if (true === $district->uid = $this->database->register_object("Locations", $district, true, false, $error, $sql))
+                if (true === $district->uid = $this->database->register_object("Locations", $district, true, false, false, $error, $sql))
                 {
                     $errcount++;
                     
@@ -825,7 +825,7 @@ class Client
                 $obj->new_recovered = $record->recovered_new;
                 $obj->flag_is_disease_beginning = $record->flag_is_disease_beginning;
                 
-                if (true === $obj->uid = $this->database->register_object("Positives", $obj, true, false, $error, $sql))
+                if (true === $obj->uid = $this->database->register_object("Positives", $obj, true, false, false, $error, $sql))
                 {
                     $errcount++;
                     
@@ -962,7 +962,7 @@ class Client
                 continue;
             }
 */                
-            if (true === $nowcast->uid = $this->database->register_object("Nowcasts", $nowcast, true, false, $error, $sql))
+            if (true === $nowcast->uid = $this->database->register_object("Nowcasts", $nowcast, true, false, true, $error, $sql))
             {
                 $errcount++;
                 
@@ -1070,7 +1070,7 @@ class Client
                     $continent->geo_id = self::threeletter_encode($data->continent);
                     $continent->country_code = $continent->geo_id;
                     
-                    if (true === $continent->uid = $this->database->register_object("Locations", $continent, true, false, $error, $sql))
+                    if (true === $continent->uid = $this->database->register_object("Locations", $continent, true, false, false, $error, $sql))
                     {
                         $errcount++;
                         
@@ -1131,7 +1131,7 @@ class Client
             $errobj->location = $location;
 //            $errobj->data = $data;
             
-            if (true === $infocast->locations_uid = $this->database->register_object("Locations", $location, true, false, $error, $sql))
+            if (true === $infocast->locations_uid = $this->database->register_object("Locations", $location, true, false, false, $error, $sql))
             {
                 $errcount += count($data->data);
                 
@@ -1208,7 +1208,7 @@ class Client
                         }
                     }
 
-                    if (true === $infocast->uid = $this->database->register_object("Infocasts", $infocast, true, false, $error, $sql))
+                    if (true === $infocast->uid = $this->database->register_object("Infocasts", $infocast, true, false, false, $error, $sql))
                     {
                         $errcount++;
                     

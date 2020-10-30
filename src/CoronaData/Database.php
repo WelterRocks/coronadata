@@ -408,7 +408,7 @@ class Database
         return $this->select($object_name, "*", substr($conditions, 5), null, true, false, false, $resultcount, $error, $sql);
     }
     
-    public function register_object($object_name, object $data, $select_required_fields_only = false, $disable_autoexec = false, &$error = null, &$sql = null)
+    public function register_object($object_name, object $data, $select_required_fields_only = false, $disable_autoexec = false, $zero_as_null = false, &$error = null, &$sql = null)
     {
         $error = null;
         $sql = null;
@@ -432,7 +432,7 @@ class Database
         foreach ($data as $key => $val)
           $obj->$key = $val;
                   
-        return $obj->insert(null, false, null, "self", $select_required_fields_only, $error, $sql);
+        return $obj->insert(null, false, null, "self", $select_required_fields_only, $zero_as_null, $error, $sql);
     }
     
     public function install($force_install = false, &$errors = null, &$sqls = null)
