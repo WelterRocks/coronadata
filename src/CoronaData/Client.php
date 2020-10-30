@@ -345,6 +345,7 @@ class Client
         }
         
         $callbacks = new \stdClass;
+        $callbacks->calculate_child_values = array("continent");
         $callbacks->calculate_contamination = array();
         $callbacks->save = array(null, null, false);
 

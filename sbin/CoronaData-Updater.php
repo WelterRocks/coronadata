@@ -395,7 +395,7 @@ function worker_loop(Client $client, $oneshot = false)
             unset($errordata);
         }
         
-        // If something has probably changed, recalculate the location contamination
+        // If something has probably changed, recalculate the location data
         if ($did_updates)
         {
             $cli->log("Updating location contamination");

@@ -134,6 +134,105 @@ class Locations extends Base
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
     }
     
+    public function calculate_child_values($filter = null)
+    {
+        $this->check_view_and_uid();
+        
+        if (($filter) && ($filter != $this->location_type))
+          return null;
+        
+        switch ($this->location_type)
+        {
+          case "continent":
+            $sublevel = "country";
+            break;
+          case "country":
+            $sublevel = "state";
+            break;
+          case "state":
+            $sublevel = "district";
+            break;
+          case "district":
+            $sublevel = "location";
+            break;
+          case "location":
+            return null;
+          default:
+            throw new Exception("Unknown location type detected '".$this->location_type."'");
+            return;
+        }
+        
+        $sql = "";
+        
+        $fields = array(
+          "uid" => "count",
+          "population" => "sum",
+          "population_year" => "as is",
+          "population_density" => "avg",
+          "population_expected" => "sum",
+          "population_expected_worldwide" => "sum",
+          "population_expected_share" => "sum",
+          "median_age" => "avg",
+          "aged_65_older" => "sum",
+          "aged_70_older" => "sum",
+          "life_expectancy" => "avg",
+          "human_development_index" => 0,
+          "gdp_per_capita" => 0,
+          "handwashing_facilities" => 0,
+          "hospital_beds_per_thousand" => 0,
+          "male_smokers" => 0,
+          "female_smokers" => 0,
+          "cardiovasc_death_rate" => 0,
+          "diabetes_prevalence" => 0,
+          "extreme_poverty" => 0,
+          "infection_density" => 0,
+          "average_cases_per_day" => 0,
+          "average_cases_per_week" => 0,
+          "average_cases_per_month" => 0,
+          "average_cases_per_year" => 0,
+          "contamination_runtime" => 0,
+          "contamination_value" => 0,
+          "contamination_target" => 0
+        );
+        
+        foreach ($fields as $field => $type)
+        {
+          switch ($type)
+          {
+            case "count":
+            case "avg":
+            case "sum":
+            case "max":
+            case "min":
+              $sql .= ", ".strtoupper($type)."(`".$field."`) as '".$field."'";
+              break;
+            default:
+              $sql .= ", `".$field."`";
+              break;
+          }
+        }
+        
+        $sql = "SELECT `parent_uid`".$sql." FROM `".$this->get_tablename()."` WHERE `parent_uid` = ".$this->uid." AND location_type = '".$sublevel."' GROUP BY `parent_uid`";
+        
+        $result = $this->get_db()->query($sql);
+        
+        if (!$result)
+          return null;
+          
+        if ($result->num_rows == 0)
+          return false;
+          
+        if ($obj = $result->fetch_object())
+        {
+          foreach ($obj as $key => $val)
+            $this->$key = $val;
+        }
+        
+        $result->free();
+                
+        return true;
+    }
+    
     public function calculate_contamination()
     {
         $sql = "SELECT SUM(cases) AS cases_total, AVG(population_used) as population_average, AVG(exponence_1day) as exponence_average, COUNT(uid) AS days FROM `datacasts` WHERE `flag_disabled` = 0 AND `flag_deleted` = 0 AND `locations_uid` = ".$this->uid;
