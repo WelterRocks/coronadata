@@ -112,7 +112,7 @@ class Positives extends Base
       ALTER TABLE `positives`
         ADD CONSTRAINT `positive_continent_uid` FOREIGN KEY (`continent_uid`) REFERENCES `locations` (`uid`) ON DELETE CASCADE ON UPDATE CASCADE,
         ADD CONSTRAINT `positive_country_uid` FOREIGN KEY (`country_uid`) REFERENCES `locations` (`uid`) ON DELETE CASCADE ON UPDATE CASCADE,
-        ADD CONSTRAINT `positive_district_uid` FOREIGN KEY (`district_uid`) REFERENCES `locations` (`uid`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+        ADD CONSTRAINT `positive_district_uid` FOREIGN KEY (`district_uid`) REFERENCES `locations` (`uid`) ON DELETE CASCASE ON UPDATE RESTRICT,
         ADD CONSTRAINT `positive_state_uid` FOREIGN KEY (`state_uid`) REFERENCES `locations` (`uid`) ON DELETE CASCADE ON UPDATE CASCADE,
         ADD CONSTRAINT `positive_location_uid` FOREIGN KEY (`location_uid`) REFERENCES `locations` (`uid`) ON DELETE CASCADE ON UPDATE CASCADE;";
     }    

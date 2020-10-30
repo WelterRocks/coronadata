@@ -473,10 +473,43 @@ class Client
                 }
             }
             
-            // Remove _ from country names
-            $record->country = str_replace("_", " ", $record->country);
+            // Check, if the continent exists in database
+            $continent_count = 0;
+            $continent = $this->database->select("*", "location = '".$this->database->esc($record->continent)."' AND country = location AND continent = location AND location_type = 'continent'", null, true, false, false, $continent_count, $error, $sql);
 
+            if ((!$continent) || (is_object($continent) == false))
+            {
+                // Do not create an error object, just create the continent
+                $continent = new \stdClass;
+                $continent->continent = $record->continent;
+                $continent->country = $record->continent;
+                $continent->location = $record->continent;
+                $continent->location_type = 'continent';
+                $continent->geo_id = strtoupper(substr($record->continent, 0, 3));
+                $continent->country_code = $continent->geo_id;
+                
+                if (true === $continent->uid = $this->database->register_object("Locations", $continent, true, false, $error, $sql))
+                {
+                    $errcount++;
+                    
+                    $errobj->error = "Unable to fetch UID of location object";
+                    $errobj->sql = $sql;
+                    
+                    array_push($errstore, $errobj);
+                }	
+                elseif (($continent->uid === false) || ($continent->uid === null))
+                {
+                    $errcount++;
+                
+                    $errobj->error = $error;
+                    $errobj->sql = $sql;
+                    
+                    array_push($errstore, $errobj);                
+                }         
+            }            
+            
             $location = new \stdClass;
+            $location->parent_uid = $continent->uid;
             $location->continent = $record->continent;
             $location->country = $record->country;
             $location->location = $record->location;
@@ -725,6 +758,7 @@ class Client
             {
                 $obj = new \stdClass;
                 
+                $obj->continent_uid = $location->parent_uid;
                 $obj->country_uid = $location->uid;
                 $obj->state_uid = $shadow_store->states[$record->state_id]->uid;
                 $obj->district_uid = $shadow_store->districts[$record->state_id][$record->district_id]->uid;
@@ -977,6 +1011,44 @@ class Client
 
             $location = new \stdClass;
             
+            // Check, if the continent exists in database, if object is set
+            if (isset($data->continent))
+            {
+                $continent_count = 0;
+                $continent = $this->database->select("*", "location = '".$this->database->esc($data->continent)."' AND country = location AND continent = location AND location_type = 'continent'", null, true, false, false, $continent_count, $error, $sql);
+                
+                if ((!$continent) || (is_object($continent) == false))
+                {
+                    // Do not create an error object, just create the continent
+                    $continent = new \stdClass;
+                    $continent->continent = $data->continent;
+                    $continent->country = $data->continent;
+                    $continent->location = $data->continent;
+                    $continent->location_type = 'continent';
+                    $continent->geo_id = strtoupper(substr($data->continent, 0, 3));
+                    $continent->country_code = $continent->geo_id;
+                    
+                    if (true === $continent->uid = $this->database->register_object("Locations", $continent, true, false, $error, $sql))
+                    {
+                        $errcount++;
+                        
+                        $errobj->error = "Unable to fetch UID of location object";
+                        $errobj->sql = $sql;
+                        
+                        array_push($errstore, $errobj);
+                    }	
+                    elseif (($continent->uid === false) || ($continent->uid === null))
+                    {
+                        $errcount++;
+                    
+                        $errobj->error = $error;
+                        $errobj->sql = $sql;
+                        
+                        array_push($errstore, $errobj);                
+                    }         
+                }            
+            }
+            
             // We only set location, country, country code, geo id (generated) and continent (if it exists) manually
             $data->location = str_replace("_", " ", $data->location);
 
@@ -987,7 +1059,12 @@ class Client
             $location->location_type = 'country';
             
             if (isset($data->continent))
+            {
                 $location->continent = $data->continent;
+                
+                if (isset($continent->uid))
+                    $location->parent_uid = $continent->uid;
+            }
                         
             foreach ($data as $key => $val)
             {

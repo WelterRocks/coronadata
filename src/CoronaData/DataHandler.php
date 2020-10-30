@@ -211,9 +211,12 @@ class DataHandler
                     if ($val === null)
                         $val = "";
                     
-                    // Because EU datacast has no location field, we set it to current country.
+                    // Because EU datacast has no location field, we set it to current country and replace the _ to space
                     if ($new_key == "country")
+                    {
+                        $val = str_replace("_", " ", $val);
                         $this->data->records[$id]->location = $val;
+                    }
                         
                     if ($new_key == "date_rep")
                     {
