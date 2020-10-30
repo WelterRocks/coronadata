@@ -109,8 +109,7 @@ class Positives extends Base
         KEY `age_group2_low` (`age_group2_low`),
         KEY `age_group2_high` (`age_group2_high`),
         KEY `timestamp_represent` (`timestamp_represent`),
-        KEY `date_rep` (`date_rep`),
-        KEY `foreign_identifier` (`foreign_identifier`)
+        KEY `date_rep` (`date_rep`)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
       ALTER TABLE `positives`
