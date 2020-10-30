@@ -26,6 +26,7 @@ use WelterRocks\CoronaData\Table\Nowcasts;
 use WelterRocks\CoronaData\Table\Infocasts;
 use WelterRocks\CoronaData\Table\Positives;
 use WelterRocks\CoronaData\Table\Combined;
+use WelterRocks\CoronaData\Table\Positivestat;
 use WelterRocks\CoronaData\Config;
 use WelterRocks\CoronaData\Exception;
 
@@ -469,7 +470,8 @@ class Database
           "Datacasts" => true,
           "Infocasts" => true,
           "Positives" => true,
-          "Combined" => false
+          "Combined" => false,
+          "Positivestat" => false
         );
         
         $errorcount = 0;
