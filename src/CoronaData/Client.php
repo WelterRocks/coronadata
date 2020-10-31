@@ -384,6 +384,7 @@ class Client
         $result_count = -1;
         $result_count1 = -1;
         $result_count2 = -1;
+        $result_count3 = -1;
         
         $update_results = null;
         
@@ -404,19 +405,50 @@ class Client
 
         $none = null;
         
-        $update_results1 = $this->database->select("locations", "location_type != 'continent'", '1', $callbacks, false, false, false, $none, $result_count1, $error, $sql);
+        $update_results1 = $this->database->select("locations", "*", "location_type != 'continent'", $callbacks, false, false, false, $none, $result_count1, $error, $sql);
+/* Hmm.... this destroys the country real values. The summaries are too small... why??        
+        // In phase 2 we recalculate the childs of countries to surly have the contamination in parent fields
+        $callbacks = new \stdClass;
+        $callbacks->calculate_child_values = array("country");
+        $callbacks->save = array(null, null, false);
+
+        $none = null;
         
-        // In phase 2 we calculate the childs of continents to surly have the contamination in parent fields
+        $update_results2 = $this->database->select("locations", "*", "location_type = 'country'", $callbacks, false, false, false, $none, $result_count2, $error, $sql);
+*/      
+        // Set this to null / 0, while the above stuff is disabled  
+        $update_results2 = null;
+        $result_count2 = 0;
+        
+        // In phase 3 we calculate the childs of continents to surly have the contamination in parent fields
         $callbacks = new \stdClass;
         $callbacks->calculate_child_values = array("continent");
         $callbacks->save = array(null, null, false);
 
         $none = null;
         
-        $update_results2 = $this->database->select("locations", "*", "location_type = 'continent'", $callbacks, false, false, false, $none, $result_count2, $error, $sql);
+        $update_results3 = $this->database->select("locations", "*", "location_type = 'continent'", $callbacks, false, false, false, $none, $result_count3, $error, $sql);
         
-        $update_results = array_merge($update_results1, $update_results2);
-        $result_count = $result_count1 + $result_count2;
+        if (!$update_results1)
+            $update_results1 = array();
+            
+        if (!$update_results2)
+            $update_results2 = array();
+            
+        if (!$update_results3)
+            $update_results3 = array();
+            
+        if (!$result_count1)
+            $result_count1 = 0;
+        
+        if (!$result_count2)
+            $result_count2 = 0;
+        
+        if (!$result_count3)
+            $result_count3 = 0;
+        
+        $update_results = array_merge($update_results1, $update_results2, $update_results3);
+        $result_count = $result_count1 + $result_count2 + $result_count3;
             
         if (($this->transaction_name) && ($autocommit))
             return $this->database_transaction_commit($transaction_name);

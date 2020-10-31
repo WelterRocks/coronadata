@@ -118,6 +118,22 @@ class Combined extends Base
     protected $weekly_hosp_admissions_per_million = null;
     protected $weekly_icu_admissions = null;
     protected $weekly_icu_admissions_per_million = null;
+    protected $infection_density = null;
+    protected $average_cases_per_day = null;
+    protected $average_cases_per_week = null;
+    protected $average_cases_per_month = null;
+    protected $average_cases_per_year = null;
+    protected $average_deaths_per_day = null;
+    protected $average_deaths_per_week = null;
+    protected $average_deaths_per_month = null;
+    protected $average_deaths_per_year = null;
+    protected $average_recovered_per_day = null;
+    protected $average_recovered_per_week = null;
+    protected $average_recovered_per_month = null;
+    protected $average_recovered_per_year = null;
+    protected $contamination_runtime = null;
+    protected $contamination_value = null;
+    protected $contamination_target = null;
     protected $flag_data_incomplete = null;
     protected $flag_no_longer_updated = null;
     protected $flag_virus_free = null;
@@ -222,6 +238,14 @@ class Combined extends Base
       `locations`.`average_cases_per_week`,
       `locations`.`average_cases_per_month`,
       `locations`.`average_cases_per_year`,
+      `locations`.`average_deaths_per_day`,
+      `locations`.`average_deaths_per_week`,
+      `locations`.`average_deaths_per_month`,
+      `locations`.`average_deaths_per_year`,
+      `locations`.`average_recovered_per_day`,
+      `locations`.`average_recovered_per_week`,
+      `locations`.`average_recovered_per_month`,
+      `locations`.`average_recovered_per_year`,
       `locations`.`contamination_runtime`,
       `locations`.`contamination_value`,
       `locations`.`contamination_target`,

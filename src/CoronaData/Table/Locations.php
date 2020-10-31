@@ -60,6 +60,14 @@ class Locations extends Base
     protected $average_cases_per_week = null;
     protected $average_cases_per_month = null;
     protected $average_cases_per_year = null;
+    protected $average_deaths_per_day = null;
+    protected $average_deaths_per_week = null;
+    protected $average_deaths_per_month = null;
+    protected $average_deaths_per_year = null;
+    protected $average_recovered_per_day = null;
+    protected $average_recovered_per_week = null;
+    protected $average_recovered_per_month = null;
+    protected $average_recovered_per_year = null;
     protected $contamination_runtime = null;
     protected $contamination_value = null;
     protected $contamination_target = null;
@@ -112,6 +120,14 @@ class Locations extends Base
         `average_cases_per_week` float NOT NULL DEFAULT '0',
         `average_cases_per_month` float NOT NULL DEFAULT '0',
         `average_cases_per_year` float NOT NULL DEFAULT '0',
+        `average_deaths_per_day` float NOT NULL DEFAULT '0',
+        `average_deaths_per_week` float NOT NULL DEFAULT '0',
+        `average_deaths_per_month` float NOT NULL DEFAULT '0',
+        `average_deaths_per_year` float NOT NULL DEFAULT '0',
+        `average_recovered_per_day` float NOT NULL DEFAULT '0',
+        `average_recovered_per_week` float NOT NULL DEFAULT '0',
+        `average_recovered_per_month` float NOT NULL DEFAULT '0',
+        `average_recovered_per_year` float NOT NULL DEFAULT '0',
         `contamination_runtime` INT UNSIGNED NOT NULL DEFAULT '0',
         `contamination_value` float NOT NULL DEFAULT '0',
         `contamination_target` date DEFAULT NULL,
@@ -134,16 +150,29 @@ class Locations extends Base
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
     }
     
-    private function process_contamination($cases_total, $days = 0, $population_average = 0)
+    private function process_contamination($cases_total, $deaths_total, $recovered_total, $days = 0, $population_average = 0)
     {
+        if (($days <= 0) && ($this->contamination_runtime > 0))
+          $days = $this->contamination_runtime;
+        elseif ($days > 0)
+          $this->contamination_runtime = $days;
+    
         if ($days != 0)
         {
-          $this->contamination_runtime = $days;
-            
           $this->average_cases_per_day = ($cases_total / $days);
           $this->average_cases_per_week = ($this->average_cases_per_day * 7);
           $this->average_cases_per_month = ($this->average_cases_per_day * 30);
           $this->average_cases_per_year = ($this->average_cases_per_day * 365);
+          
+          $this->average_deaths_per_day = ($deaths_total / $days);
+          $this->average_deaths_per_week = ($this->average_deaths_per_day * 7);
+          $this->average_deaths_per_month = ($this->average_deaths_per_day * 30);
+          $this->average_deaths_per_year = ($this->average_deaths_per_day * 365);
+          
+          $this->average_recovered_per_day = ($recovered_total / $days);
+          $this->average_recovered_per_week = ($this->average_recovered_per_day * 7);
+          $this->average_recovered_per_month = ($this->average_recovered_per_day * 30);
+          $this->average_recovered_per_year = ($this->average_recovered_per_day * 365);
         }
         
         if ($population_average == 0)
@@ -176,7 +205,6 @@ class Locations extends Base
     {
         $error = null;
         
-        /* For future use. Nowadays we just use what we need here.
         $fields = array(
           "SUM(datasets_total)" => "datasets_total",
           "SUM(days_total)" => "days_total",
@@ -195,14 +223,7 @@ class Locations extends Base
           "SUM(new_deaths_total)" => "new_deaths_total",
           "SUM(new_recovered_total)" => "new_recovered_total"
         );
-        */
-        
-        $fields = array(
-          "MIN(date_rep_first)" => "date_rep_first",
-          "MAX(date_rep_last)" => "date_rep_last",
-          "SUM(cases_total)" => "cases_total"          
-        );
-        
+                
         $sql = "";
         
         foreach ($fields as $key => $val)
@@ -262,15 +283,8 @@ class Locations extends Base
         $diff = $startdate->diff($enddate);
         $days = $diff->days;
         
-        if ($days > 0)
-        {
-          $this->average_cases_per_day = ($obj->cases_total / $days);
-          $this->average_cases_per_week = ($this->average_cases_per_day * 7);
-          $this->average_cases_per_month = ($this->average_cases_per_day * 30);
-          $this->average_cases_per_year = ($this->average_cases_per_day * 365);
-          
-          $this->process_contamination($obj->cases_total, $days);
-        }
+        if ($days > 0)          
+          $this->process_contamination($obj->cases_total, $obj->deaths_total, $obj->recovered_total, $days);
         
         return true;
     }
@@ -334,6 +348,14 @@ class Locations extends Base
           "average_cases_per_week" => "avg",
           "average_cases_per_month" => "avg",
           "average_cases_per_year" => "avg",
+          "average_deaths_per_day" => "avg",
+          "average_deaths_per_week" => "avg",
+          "average_deaths_per_month" => "avg",
+          "average_deaths_per_year" => "avg",
+          "average_recovered_per_day" => "avg",
+          "average_recovered_per_week" => "avg",
+          "average_recovered_per_month" => "avg",
+          "average_recovered_per_year" => "avg",
           "contamination_runtime" => "avg",
           "contamination_value" => "avg"
         );
@@ -382,15 +404,17 @@ class Locations extends Base
         $result->free();
         
         $cases_total = $this->average_cases_per_day * $this->contamination_runtime;
+        $deaths_total = $this->average_deaths_per_day * $this->contamination_runtime;
+        $recovered_total = $this->average_recovered_per_day * $this->contamination_runtime;
         
-        $this->process_contamination($cases_total);
+        $this->process_contamination($cases_total, $deaths_total, $recovered_total);
                 
         return true;
     }
     
     public function calculate_contamination()
     {
-        $sql = "SELECT SUM(cases) AS cases_total, AVG(population_used) as population_average, AVG(exponence_1day) as exponence_average, COUNT(uid) AS days FROM `datacasts` WHERE `flag_disabled` = 0 AND `flag_deleted` = 0 AND `locations_uid` = ".$this->uid;
+        $sql = "SELECT SUM(cases) AS cases_total, SUM(deaths) AS deaths_total, AVG(population_used) as population_average, COUNT(uid) AS days FROM `datacasts` WHERE `flag_disabled` = 0 AND `flag_deleted` = 0 AND `locations_uid` = ".$this->uid;
         
         $res = $this->get_db()->query($sql);
         
@@ -403,7 +427,7 @@ class Locations extends Base
         if ($obj->days == 0)
           return null;
           
-        return $this->process_contamination($obj->cases_total, $obj->days, $obj->population_average);
+        return $this->process_contamination($obj->cases_total, $obj->deaths_total, 0, $obj->days, $obj->population_average);
     }
     
     public function is_data_incomplete()
