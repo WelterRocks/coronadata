@@ -55,6 +55,8 @@ $skip_rki_positive = false;
 $skip_rki_rssfeed = false;
 $skip_cov_infocast = false;
 
+$oneshot = false;
+
 $pid = null;
 
 $log_options = LOG_CONS | LOG_NDELAY | LOG_PID;
@@ -450,7 +452,7 @@ function mother()
 // Daemon callback does the hard part
 function daemon()
 {
-    global $cli, $daemon_terminate, $worker_reload, $log_options;
+    global $cli, $daemon_terminate, $worker_reload, $log_options, $oneshot;
     
     // Register shutdown function
     register_shutdown_function("shutdown_daemon");
@@ -497,7 +499,7 @@ function daemon()
         $cli->log("Reached inner worker loop. Ready to serve :-)", LOG_INFO);
 
         // The worker loop. Just execute once on oneshot cli argument
-        if ($cli->has_argument("--oneshot"))
+        if ($oneshot)
         {
             worker_loop($client, true);
             $daemon_terminate = true;
@@ -552,6 +554,8 @@ if ($cli->has_argument("--skip-cov-infocast"))
     $skip_cov_infocast = true;
 if ($cli->has_argument("--skip-rki-positive"))
     $skip_rki_positive = true;
+if ($cli->has_argument("--oneshot"))
+    $oneshot = true;
 
 // Check usage
 if ($cli->has_argument("start"))
@@ -578,6 +582,21 @@ elseif ($cli->has_argument("foreground"))
     $log_options = LOG_CONS | LOG_NDELAY | LOG_PID | LOG_PERROR;
     
     // Start the daemon in foreground    
+    daemon();
+}
+elseif ($cli->has_argument("cron"))
+{
+    // Check for existing pid file and bound service
+    if ($cli->check_pid_from_pidfile(PID_FILE, $pid))
+        $cli->exit_error(CLI::COLOR_LIGHT_RED."Another instance of ".CLI::COLOR_LIGHT_YELLOW.PROG_NAME.CLI::COLOR_LIGHT_RED." is running at PID ".CLI::COLOR_LIGHT_GREEN.$pid.CLI::COLOR_EOL, 2);
+    elseif (!$cli->set_pidfile(PID_FILE, $cli->get_pid()))
+        $cli->exit_error(CLI::COLOR_LIGHT_RED."Unable to write PID file '".CLI::COLOR_LIGHT_YELLOW.PID_FILE.CLI::COLOR_LIGHT_RED."'".CLI::COLOR_EOL, 3);
+
+    // Redirect log to console
+    $log_options = LOG_CONS | LOG_NDELAY | LOG_PID | LOG_PERROR;
+    
+    // Start the daemon in foreground mode and use oneshot
+    $oneshot = true;
     daemon();
 }
 elseif ($cli->has_argument("stop"))
