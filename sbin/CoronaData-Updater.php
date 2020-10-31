@@ -412,19 +412,23 @@ function worker_loop(Client $client, $oneshot = false)
             unset($errordata);
         }
         
-        // If something has probably changed, recalculate the location data
+        // If something has probably changed, recalculate the location data and (re)cast positives
         if ($did_updates)
-        {
-            $cli->log("Updating location values");
-            
+        {            
             try
             {
+                $cli->log("Updating location values", LOG_INFO);
                 $client->recalculate_location_store_fields("location_contamination", true);
                 $cli->log("Update sequence finished.", LOG_INFO);
+                
+                $cli->log("Casting positives.", LOG_INFO);
+                $client->cast_rki_positives("cast_positives", true);
+                $cli->log("Casting positives done.", LOG_INFO);
+                
             }
             catch (Exception $ex)
             {
-                $cli->log("Unable to update location store: ".$ex->getMessage()." in ".$ex->getFile().", line ".$ex->getLine(), LOG_ALERT);            
+                $cli->log("Error: ".$ex->getMessage()." in ".$ex->getFile().", line ".$ex->getLine(), LOG_ALERT);            
             }
         }
         

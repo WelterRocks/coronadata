@@ -487,6 +487,57 @@ class Client
         return true;    
     }
     
+    public function cast_rki_positives($transaction_name = null, $autocommit = false, $incidence_factor = 100000, $r_value_skip_days = 3, &$result_count = null, &$update_results = null, &$error = null, &$sql = null)
+    {
+        $error = null;
+        $sql = null;
+        
+        $result_count = -1;
+        $update_results = null;
+        
+        if ($transaction_name)
+        {
+            if ($this->transaction_name)
+                throw new Exception("Transaction already open with ID '".$this->transaction_name."'");
+                
+            $this->transaction_name = $transaction_name;
+            $this->database->begin_transaction($transaction_name);
+        }
+        
+        $callbacks = new \stdClass;
+        $callbacks->cast_positives = array($incidence_factor, $r_value_skip_days);
+        $callbacks->save = array(null, null, false);
+
+        $none = null;
+        
+        $districts = $this->database->select("locations", "*", "location_type = 'district'"); //, $callbacks, false, false, false, $none, $result_count, $error, $sql);
+        
+        if (!$districts)
+        {
+            $error = "Districts not found";
+            
+            return false;
+        }
+        
+        foreach ($districts as $district)
+        {
+            $res = 0;
+            
+            if (!$this->database->new_datacast()->cast_positives($incidence_factor, $r_value_skip_days, $district->uid, $res, $error, $sql))
+            {
+                echo "SQL: ".$sql."\n";
+                echo "ERROR: ".$error."\n";
+            }
+                
+            $result_count += $res;
+        }
+        
+        if (($this->transaction_name) && ($autocommit))
+            return $this->database_transaction_commit($transaction_name);
+
+        return true;    
+    }
+    
     public function get_datetime_diff($date1, $date2 = "now")
     {
         $datetime1 = new \DateTime($date1);

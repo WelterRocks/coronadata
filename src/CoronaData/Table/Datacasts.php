@@ -448,8 +448,13 @@ class Datacasts extends Base
         return true;
     }
     
-    public function cast_positives($incidence_factor = 100000, $r_value_skip_days = 3, $location_uid = null, &$error = null, &$sql = null)
+    public function cast_positives($incidence_factor = 100000, $r_value_skip_days = 3, $location_uid = null, &$resultcount = 0, &$error = null, &$sql = null)
     {   
+        $resultcount = 0;
+        
+        $error = null;
+        $sql = null;
+        
         if ((!$this->uid) && (!$location_uid))
             throw new Exception("Empty object. Need an existing datacast or a valid location_uid.");
         
@@ -491,16 +496,16 @@ class Datacasts extends Base
         foreach ($fields as $key => $val)
           $sql .= ", ".$key." as ".$val;
         
-        $sql = "SELECT".substr($sql, 1)." FROM `positivestat` WHERE ";
+        $sql = "SELECT".substr($sql, 1)." FROM `positives` WHERE ";
         
-        switch ($location_type)
+        switch ($loc->location_type)
         {
             case "continent":
             case "country":
             case "state":
             case "district":
             case "location":
-                $sql .= "`".$location_type."_uid` = ".$loc->uid;
+                $sql .= "`".$loc->location_type."_uid` = ".$loc->uid;
                 break;
             default:
                 $sql .= "'1'";
@@ -524,7 +529,7 @@ class Datacasts extends Base
         
         while ($obj = $result->fetch_object())
         {
-            $cast = new Datacast($this->get_db());
+            $cast = new Datacasts($this->get_db());
             
             $cast->locations_uid = $loc->uid;
             $cast->flag_is_positive_cast = 1;
@@ -540,6 +545,7 @@ class Datacasts extends Base
             if ($uid = $cast->save(null, null, false, false, $error, $sql))
             {
                 $cast->recalculate($incidence_factor, $r_value_skip_days);
+                $resultcount++;
             }
             else
             {

@@ -46,6 +46,41 @@ class Database
     {
         return $this->db->escape_string($str);
     }
+    
+    public function new_location()
+    {
+        return new Locations($this->db);
+    }
+    
+    public function new_datacast()
+    {
+        return new Datacasts($this->db);
+    }
+    
+    public function new_nowcast()
+    {
+        return new Nowcasts($this->db);
+    }
+    
+    public function new_infocast()
+    {
+        return new Infocasts($this->db);
+    }
+    
+    public function new_positive()
+    {
+        return new Positives($this->db);
+    }
+    
+    public function new_combined()
+    {
+        return new Combined($this->db);
+    }
+    
+    public function new_positivestat()
+    {
+        return new Positivestat($this->db);
+    }
         
     private function check_init()
     {    

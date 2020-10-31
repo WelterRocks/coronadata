@@ -251,20 +251,15 @@ class Combined extends Base
       `locations`.`contamination_target`,
       `locations`.`flag_data_incomplete` AS `flag_data_incomplete`,
       `locations`.`flag_no_longer_updated` AS `flag_no_longer_updated`,
-      `locations`.`flag_virus_free` AS `flag_virus_free` 
+      `locations`.`flag_virus_free` AS `flag_virus_free`,
+      (`locations`.`flag_disabled` | `infocasts`.`flag_disabled` | `datacasts`.`flag_disabled`) as flag_disabled,
+      (`locations`.`flag_deleted` | `infocasts`.`flag_deleted` | `datacasts`.`flag_deleted`) as flag_deleted
       from (
         (`datacasts` left join `locations` on ((`datacasts`.`locations_uid` = `locations`.`uid`))) 
-        left join `infocasts` on (
+        left outer join `infocasts` on (
           ((`datacasts`.`locations_uid` = `infocasts`.`locations_uid`) and (`datacasts`.`date_rep` = `infocasts`.`date_rep`))
         )
       ) 
-      where (
-        (`locations`.`flag_disabled` = 0) and 
-        (`datacasts`.`flag_disabled` = 0) and 
-        (`infocasts`.`flag_disabled` = 0) and 
-        (`datacasts`.`flag_deleted` = 0) and 
-        (`locations`.`flag_deleted` = 0) and 
-        (`infocasts`.`flag_deleted` = 0)
-      ) ;";
+      where '1';";
     }    
 }
