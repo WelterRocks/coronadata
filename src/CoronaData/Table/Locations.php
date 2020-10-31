@@ -172,8 +172,114 @@ class Locations extends Base
         $this->contamination_target = date("Y-m-d", (time() + round($contamination_target_seconds)));
     }
     
-    public function calculate_child_values($filter = null)
+    public function calculate_positive_childs(&$error = null, &$sql = null)
     {
+        $error = null;
+        
+        /* For future use. Nowadays we just use what we need here.
+        $fields = array(
+          "SUM(datasets_total)" => "datasets_total",
+          "SUM(days_total)" => "days_total",
+          "MIN(date_rep_first)" => "date_rep_first",
+          "MAX(date_rep_last)" => "date_rep_last",
+          "SUM(cases_total)" => "cases_total",
+          "SUM(deaths_total)" => "deaths_total",
+          "SUM(recovered_total)" => "recovered_total",
+          "AVG(cases_average)" => "cases_average",
+          "AVG(deaths_average)" => "deaths_average",
+          "AVG(recovered_average)" => "recovered_average",
+          "MAX(cases_max)" => "cases_max",
+          "MAX(deaths_max)" => "deaths_max",
+          "MAX(recovered_max)" => "recovered_max",
+          "SUM(new_cases_total)" => "new_cases_total",
+          "SUM(new_deaths_total)" => "new_deaths_total",
+          "SUM(new_recovered_total)" => "new_recovered_total"
+        );
+        */
+        
+        $fields = array(
+          "MIN(date_rep_first)" => "date_rep_first",
+          "MAX(date_rep_last)" => "date_rep_last",
+          "SUM(cases_total)" => "cases_total"          
+        );
+        
+        $sql = "";
+        
+        foreach ($fields as $key => $val)
+          $sql .= ", ".$key." as ".$val;
+        
+        $sql = "SELECT".substr($sql, 1)." FROM `positivestat` WHERE ";
+        
+        switch ($this->location_type)
+        {
+          case "continent":
+            $sql .= "`continent_uid` = ".$this->uid. " GROUP BY `continent_uid`";
+            break;
+          case "country":
+            $sql .= "`continent_uid` = ".$this->parent_uid." AND `country_uid` = ".$this->uid." ";
+            $sql .= "GROUP BY `country_uid`";
+            break;
+          case "state":
+            $sql .= "`country_uid` = ".$this->parent_uid." AND `state_uid` = ".$this->uid." ";
+            $sql .= "GROUP BY `state_uid`";
+            break;
+          case "district":
+            $sql .= "`state_uid` = ".$this->parent_uid." AND `district_uid` = ".$this->uid." ";
+            $sql .= "GROUP BY `district_uid`";
+            break;
+          case "location":
+            // This is because, locations do not need to have a parent uid
+            $sql .= "`location_uid` = ".$this->uid." GROUP BY `location_uid`";
+            break;
+          default:
+            $sql = null;
+            $error = "Invalid location type";
+            return null;
+        }
+        
+        $result = $this->get_db()->query($sql);
+        
+        if (!$result)
+        {
+          $error = $this->get_db()->error;
+          
+          return null;
+        }
+        
+        if (!$result->num_rows)
+        {
+          $error = "No result";
+          
+          return null;
+        }
+          
+        $obj = $result->fetch_object();
+        
+        $result->free();
+        
+        $startdate = new \DateTime($obj->date_rep_first);
+        $enddate = new \DateTime($obj->date_rep_last);
+        $diff = $startdate->diff($enddate);
+        $days = $diff->days;
+        
+        if ($days > 0)
+        {
+          $this->average_cases_per_day = ($obj->cases_total / $days);
+          $this->average_cases_per_week = ($this->average_cases_per_day * 7);
+          $this->average_cases_per_month = ($this->average_cases_per_day * 30);
+          $this->average_cases_per_year = ($this->average_cases_per_day * 365);
+          
+          $this->process_contamination($obj->cases_total, $days);
+        }
+        
+        return true;
+    }
+    
+    public function calculate_child_values($filter = null, &$error = null, &$sql = null)
+    {
+        $error = null;
+        $sql = null;
+        
         $this->check_view_and_uid();
         
         if (($filter) && ($filter != $this->location_type))
@@ -254,10 +360,18 @@ class Locations extends Base
         $result = $this->get_db()->query($sql);
         
         if (!$result)
+        {
+          $error = $this->get_db()->error;
+          
           return null;
+        }
           
         if ($result->num_rows == 0)
+        {
+          $error = "No result";
+          
           return false;
+        }
           
         if ($obj = $result->fetch_object())
         {

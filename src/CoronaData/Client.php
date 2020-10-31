@@ -396,14 +396,15 @@ class Client
             $this->database->begin_transaction($transaction_name);
         }
         
-        // We calculate the contamination in phase 1
+        // We calculate the contamination and averages in phase 1
         $callbacks = new \stdClass;
+        $callbacks->calculate_positive_childs = array();
         $callbacks->calculate_contamination = array();
         $callbacks->save = array(null, null, false);
 
         $none = null;
         
-        $update_results1 = $this->database->select("locations", "*", '1', $callbacks, false, false, false, $none, $result_count1, $error, $sql);
+        $update_results1 = $this->database->select("locations", "location_type != 'continent'", '1', $callbacks, false, false, false, $none, $result_count1, $error, $sql);
         
         // In phase 2 we calculate the childs of continents to surly have the contamination in parent fields
         $callbacks = new \stdClass;
