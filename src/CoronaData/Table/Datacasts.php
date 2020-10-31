@@ -60,6 +60,7 @@ class Datacasts extends Base
     protected $condition_14day = null;
     protected $alert_condition = null;    
     protected $flag_calculated = null;
+    protected $flag_is_positive_cast = null;
 
     protected function get_install_sql()
     {
@@ -109,6 +110,7 @@ class Datacasts extends Base
           `flag_disabled` tinyint(1) NOT NULL DEFAULT '0',
           `flag_deleted` tinyint(1) NOT NULL DEFAULT '0',
           `flag_calculated` tinyint(1) NOT NULL DEFAULT '0',
+          `flag_is_positive_cast` tinyint(1) NOT NULL DEFAULT '0',
           PRIMARY KEY (`uid`),
           UNIQUE KEY `locations_uid_date_rep` (`locations_uid`,`date_rep`),
           KEY `day_of_week` (`day_of_week`),
@@ -442,6 +444,115 @@ class Datacasts extends Base
         
         $this->timestamp_last_calculated = date("Y-m-d H:i:s");
         $this->flag_calculated = 1;
+        
+        return true;
+    }
+    
+    public function cast_positives($incidence_factor = 100000, $r_value_skip_days = 3, $location_uid = null, &$error = null, &$sql = null)
+    {   
+        if ((!$this->uid) && (!$location_uid))
+            throw new Exception("Empty object. Need an existing datacast or a valid location_uid.");
+        
+        if (!$location_uid)
+            $location_uid = $this->uid;
+            
+        $sql = "SELECT * FROM `locations` WHERE uid = '".$this->esc($location_uid)."' LIMIT 1";
+        
+        $result = $this->get_db()->query($sql);
+        
+        if (!$result)
+        {
+            $error = $this->get_db()->error;            
+            return null;
+        }
+        
+        if (!$result->num_rows)
+        {
+            $error = "Location '".$location."' not found";            
+            return false;
+        }
+        
+        $loc = $result->fetch_object();
+        $result->free();
+        
+        $fields = array(
+            "timestamp_represent" => "timestamp_represent",
+            "date_rep" => "date_rep",
+            "day_of_week" => "day_of_week",
+            "`day`" => "'day'",
+            "`month`" => "'month'",
+            "`year`" => "'year'",
+            "SUM(cases)" => "cases_total",
+            "SUM(deaths)" => "deaths_total"
+        );
+
+        $sql = "";
+
+        foreach ($fields as $key => $val)
+          $sql .= ", ".$key." as ".$val;
+        
+        $sql = "SELECT".substr($sql, 1)." FROM `positivestat` WHERE ";
+        
+        switch ($location_type)
+        {
+            case "continent":
+            case "country":
+            case "state":
+            case "district":
+            case "location":
+                $sql .= "`".$location_type."_uid` = ".$loc->uid;
+                break;
+            default:
+                $sql .= "'1'";
+        }
+        
+        $sql .= " GROUP BY `date_rep` ORDER BY date_rep ASC";
+        
+        $result = $this->get_db()->query($sql);
+        
+        if (!$result)
+        {
+            $error = $this->get_db()->error;
+            return null;
+        }
+        
+        if (!$result->num_rows)
+        {
+            $error = "No positive result";
+            return false;
+        }
+        
+        while ($obj = $result->fetch_object())
+        {
+            $cast = new Datacast($this->get_db());
+            
+            $cast->locations_uid = $loc->uid;
+            $cast->flag_is_positive_cast = 1;
+            $cast->timestamp_represent = $obj->timestamp_represent;
+            $cast->date_rep = $obj->date_rep;
+            $cast->day_of_week = $obj->day_of_week;
+            $cast->day = $obj->day;
+            $cast->month = $obj->month;
+            $cast->year = $obj->year;
+            $cast->cases = $obj->cases_total;
+            $cast->deaths = $obj->deaths_total;
+            
+            if ($uid = $cast->save(null, null, false, false, $error, $sql))
+            {
+                $cast->recalculate($incidence_factor, $r_value_skip_days);
+            }
+            else
+            {
+                if (!$error)
+                    $error = "Unable to save casted positive with representative date ".$obj->date_rep;
+                    
+                return false;
+            }
+            
+            unset($cast);
+        }
+
+        $result->free();        
         
         return true;
     }
