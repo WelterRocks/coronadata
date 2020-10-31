@@ -504,13 +504,10 @@ class Client
             $this->database->begin_transaction($transaction_name);
         }
         
-        $callbacks = new \stdClass;
-        $callbacks->cast_positives = array($incidence_factor, $r_value_skip_days);
-        $callbacks->save = array(null, null, false);
-
         $none = null;
+        $none2 = null;
         
-        $districts = $this->database->select("locations", "*", "location_type = 'district'"); //, $callbacks, false, false, false, $none, $result_count, $error, $sql);
+        $districts = $this->database->select("locations", "*", "location_type = 'district'", null, false, false, false, $none, $none2, $error, $sql);
         
         if (!$districts)
         {
@@ -524,13 +521,36 @@ class Client
             $res = 0;
             
             if (!$this->database->new_datacast()->cast_positives($incidence_factor, $r_value_skip_days, $district->uid, $res, $error, $sql))
-            {
-                echo "SQL: ".$sql."\n";
-                echo "ERROR: ".$error."\n";
-            }
+                return false;
                 
             $result_count += $res;
         }
+        
+        $none = null;
+        $none2 = null;
+        
+        unset($districts);
+        
+        $states = $this->database->select("locations", "*", "location_type = 'state'", null, false, false, false, $none, $none2, $error, $sql);
+        
+        if (!$states)
+        {
+            $error = "States not found";
+            
+            return false;
+        }
+        
+        foreach ($states as $state)
+        {
+            $res = 0;
+            
+            if (!$this->database->new_datacast()->cast_positives($incidence_factor, $r_value_skip_days, $state->uid, $res, $error, $sql))
+                return false;
+                
+            $result_count += $res;
+        }
+        
+        unset($states);
         
         if (($this->transaction_name) && ($autocommit))
             return $this->database_transaction_commit($transaction_name);

@@ -533,6 +533,7 @@ class Datacasts extends Base
             
             $cast->locations_uid = $loc->uid;
             $cast->flag_is_positive_cast = 1;
+            $cast->population_used = $loc->population;
             $cast->timestamp_represent = $obj->timestamp_represent;
             $cast->date_rep = $obj->date_rep;
             $cast->day_of_week = $obj->day_of_week;
