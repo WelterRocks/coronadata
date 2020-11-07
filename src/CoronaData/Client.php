@@ -1066,10 +1066,7 @@ class Client
                 $datasets[$hash]->exponence_14day_smoothed = ($casecount_smoothed / $exp14_smoothed);
             }
         }
-        
-        print_r($datasets);
-        exit;
-            
+                    
         foreach ($this->cov_infocast->handler->get_data() as $country_code => $record)
         {
             if (!isset($record->continent))
@@ -1121,7 +1118,7 @@ class Client
                 $datasets[$dataset_hash] = $dataset;
             }
         }
-                    
+        
         // Free the memory, which is no longer need (if hold data is not requested)
         if (!$hold_data)
         {
@@ -1145,6 +1142,9 @@ class Client
         $europe_hash = self::hash_name("Europe");
         $germany_hash = self::hash_name("Germany");
         
+        $result_index = array();
+        
+        // No need for templates here, just clone data and add the hashes
         foreach($this->rki_positive->handler->get_data() as $data)
         {
             $result_hash = md5(self::hash_name($data->district_name).$data->date_rep);
@@ -1158,7 +1158,43 @@ class Client
             $testresult->country_hash = $germany_hash;
             $testresult->continent_hash = $europe_hash;
             
+            $index = $testresult->district_hash;
+            $ts = strtotime($testresult->timestamp_represent);
+            $date = date("Ymd", $ts);
+            
+            if (!isset($result_index[$index]))
+                $result_index[$index] = array();
+                
+            $result_index[$index][$date] = $result_hash;
+            
             $testresults[$result_hash] = $testresult;
+        }
+        
+        // Create a dataset template
+        $tmpl = new \stdClass;
+        $tmpl->dataset_hash = null;
+        $tmpl->country_hash = null;
+        $tmpl->continent_hash = null;
+        $tmpl->day_of_week = null;
+        $tmpl->day = null;
+        $tmpl->month = null;
+        $tmpl->year = null;
+        $tmpl->cases = null;
+        $tmpl->deaths = null;
+        $tmpl->timestamp_represent = null;
+        
+        $filter = self::get_infocast_filter("inner");
+        
+        foreach ($filter as $key => $type)
+            $tmpl->$key = null;
+                                
+        // Use result index to build district datasets
+        foreach ($result_index as $index => $data)
+        {
+            foreach ($data as $date => $hash)
+            {
+                // THIS WILL NOT WORK, BECAUSE OF MISSING ITERATIONS FOR DATES BUT FOR TODAY THATS IT
+            }
         }
         
         // Free the memory, which is no longer need (if hold data is not requested)
@@ -1166,15 +1202,14 @@ class Client
             $this->rki_positive->handler->free();
         
         $this->testresults = $testresults;
-print_r($this->testresults);
-exit;
+
         return true;        
     }
     
     public function load_stores($cache_timeout = 14400)
     {
         // We must speed things up, so the new idea is to preload all stores and make the primary calculations in memory
-        // This will consume much more ram (approx. 1g), but will speed up calculations by ~80%
+        // This will consume much more ram (approx. 1g, okay its more than 3g), but will speed up calculations by ~80%
         
         $this->stores_loaded_bytes = 0;
         $this->stores_loaded_count = 0;
