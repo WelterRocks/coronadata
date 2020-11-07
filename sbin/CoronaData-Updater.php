@@ -41,19 +41,8 @@ $worker_reload = false;
 
 $ticks_state = 0;
 
-$max_cast_age = 7200;
-
-$cachetime_eu_datacast = 7200;
-$cachetime_rki_datacast = 7200;
-$cachetime_rki_positive = 7200;
-$cachetime_rki_rssfeed = 7200;
-$cachetime_cov_infocast = 7200;
-
-$skip_eu_datacast = false;
-$skip_rki_nowcast = false;
-$skip_rki_positive = false;
-$skip_rki_rssfeed = false;
-$skip_cov_infocast = false;
+$max_cast_age = 18000;
+$global_cachetime = 14400;
 
 $oneshot = false;
 
@@ -129,13 +118,17 @@ function select_config_file()
     return $config_file;
 }
 
+// Worker startup
+$worker_startup = false;
+
+// Preload done
+$preload_done = false;
+
 // Worker loop
 function worker_loop(Client $client, $oneshot = false)
 {
-    global $ticks_state, $max_cast_age;
-    global $cli, $worker_reload, $daemon_terminate;
-    global $cachetime_eu_datacast, $cachetime_rki_nowcast, $cachetime_cov_infocast, $cachetime_rki_positive;
-    global $skip_eu_datacast, $skip_rki_nowcast, $skip_rki_positive, $skip_rki_rssfeed, $skip_cov_infocast;
+    global $ticks_state, $worker_startup, $preload_done;
+    global $cli, $worker_reload, $daemon_terminate, $global_cachetime;
     
     // Dispatch signals in inner loop
     $cli->signals_dispatch();
@@ -143,292 +136,49 @@ function worker_loop(Client $client, $oneshot = false)
     // Update ticks_state
     $ticks_state++;
     
-    if (($client->get_eu_datacast_size() == 0) || ($client->get_rki_nowcast_size() == 0) || ($client->get_cov_infocast_size() == 0))
+    if ($worker_startup)
+    {
+        $worker_startup = true;
 	$ticks_max_state = 1000;
+    }
     else
+    {
         $ticks_max_state = 25000;
+    }
         
     // Is datacast autoexec disabled? Probably first run
     $datacast_autoexec_disabled = false;
     
     if (($ticks_state == $ticks_max_state) || ($oneshot))
     {
+        // Reset update counter
         $did_updates = 0;
         
-        // Retrieve RKI RSS feed
-        if ((!$skip_rki_rssfeed) && (($client->get_rki_rssfeed_timestamp() + ($max_cast_age * 1000)) < Client::timestamp()))
-        {
-            $cli->log("Retrieving RKI RSS feed.", LOG_INFO);
-            $size = $client->retrieve_rki_rssfeed($cachetime_rki_nowcast);
-
-            if (!$size)
-                $cli->log("Unable to fetch RKI RSS feed. The result was empty.", LOG_ALERT);
+        // Preload all stores
+        if (!$preload_done)
+        {	
+            $cli->log("Preloading stores. This will take a while. Please be patient.", LOG_INFO);
+            $length = $client->load_stores($global_cachetime);
+            
+            if ($length > 0)
+            {
+                $cli->log("Preloading done. Got ".$length." bytes.", LOG_INFO);
+                
+                $cli->log("Extracting and mastering locations.", LOG_INFO);                
+                $client->master_locations();
+                
+                $cli->log("Extracting and mastering datasets.", LOG_INFO);                
+                $client->master_datasets();
+                
+                $cli->log("Extracting and mastering testresults.", LOG_INFO);                
+                $client->master_testresults();
+                
+                $cli->log("Data mastering succeeded.", LOG_INFO);                
+                $preload_done = true;
+            }
             else
-                $cli->log("RKI RSS feed with ".$size." bytes received.", LOG_INFO);
-        }
-                    
-        // Retrieve EU datacast
-        if ((!$skip_eu_datacast) && (($client->get_eu_datacast_timestamp() + ($max_cast_age * 1000)) < Client::timestamp()))
-        {
-            $cli->log("Retrieving EU datacast.", LOG_INFO);
-            $size = $client->retrieve_eu_datacast($cachetime_eu_datacast);
-            
-            if (!$size)
-                $cli->log("Unable to fetch EU datacast. The result was empty.", LOG_ALERT);
-            else
-                $cli->log("EU datacast with ".$size." bytes received.", LOG_INFO);
-
-            // Update the EU datacast store
-            $cli->log("Updating EU datacast store.", LOG_INFO);
-    
-            $totalcount = 0;
-            $successcount = 0;
-            $filtercount = 0;
-            $errorcount = 0;
-            $errordata = null;
-            
-            try
             {
-                // No filtering ("eu_datacast", null, null, null), so we can get worldwide datasets
-                $client->update_eu_datacast_store("eu_datacast", null, null, null, true, 25, $totalcount, $successcount, $errorcount, $errordata, $filtercount, $datacast_autoexec_disabled);
-                $cli->log("EU datacast store has been updated. Wrote ".$successcount." entries from ".$totalcount.", while ".$filtercount." were filtered.", LOG_INFO);
-                
-                if ($errorcount)
-                {
-                    $cli->log("There were problems writing EU datacast data. ".$errorcount." record(s) could not be written.", LOG_ALERT);
-                    
-                    if ($dumpfile = $client->create_error_dump("eu-datacast-error-", $errordata))
-                        $cli->log("Dump file written to '".$dumpfile."'", LOG_ALERT);
-                    else
-                        $cli->log("Unable to write dumpfile.", LOG_ALERT);
-                        
-                    unset($dumpfile);
-                }
-                
-                $did_updates++;
-            }
-            catch (Exception $ex)
-            {
-                $cli->log("Unable to update EU datacast store: ".$ex->getMessage()." in ".$ex->getFile().", line ".$ex->getLine(), LOG_ALERT);
-            }
-            
-            unset($totalcount);
-            unset($successcount);
-            unset($filtercount);
-            unset($errorcount);
-            unset($errordata);
-        }
-
-        // Retrieve RKI nowcast
-        if ((!$skip_rki_nowcast) && (($client->get_rki_nowcast_timestamp() + ($max_cast_age * 1000)) < Client::timestamp()))
-        {
-            $cli->log("Retrieving RKI nowcast.", LOG_INFO);
-            $size = $client->retrieve_rki_nowcast($cachetime_rki_nowcast);
-
-            if (!$size)
-                $cli->log("Unable to fetch RKI nowcast. The result was empty.", LOG_ALERT);
-            else
-                $cli->log("RKI nowcast with ".$size." bytes received.", LOG_INFO);
-            
-            // Update the RKI nowcast store
-            $cli->log("Updating RKI nowcast store.", LOG_INFO);
-    
-            $totalcount = 0;
-            $successcount = 0;
-            $filtercount = 0;
-            $errorcount = 0;
-            $errordata = null;
-            
-            try
-            {
-                // Europe, Germany is currently hardcoded, because it is the only country known to produce compatible nowcasts
-                $client->update_rki_nowcast_store("rki_nowcast", "Europe", "Germany", "Germany", true, 25, $totalcount, $successcount, $errorcount, $errordata, $filtercount);
-                $cli->log("RKI nowcast store has been updated. Wrote ".$successcount." entries from ".$totalcount.", while ".$filtercount." were filtered.", LOG_INFO);
-                
-                if ($errorcount)
-                {
-                    $cli->log("There were problems writing RKI nowcast data. ".$errorcount." esteem dataset(s) could not be written.", LOG_ALERT);
-                    
-                    if ($dumpfile = $client->create_error_dump("rki-nowcast-error-", $errordata))
-                        $cli->log("Dump file written to '".$dumpfile."'", LOG_ALERT);
-                    else
-                        $cli->log("Unable to write dumpfile.", LOG_ALERT);
-                        
-                    unset($dumpfile);
-                }
-                
-                $did_updates++;
-            }
-            catch (Exception $ex)
-            {
-                $cli->log("Unable to update RKI nowcast store: ".$ex->getMessage()." in ".$ex->getFile().", line ".$ex->getLine(), LOG_ALERT);
-            }
-            
-            unset($totalcount);
-            unset($successcount);
-            unset($errorcount);
-            unset($errordata);
-        }
-        
-        // Retrieve COV infocast
-        if ((!$skip_cov_infocast) && (($client->get_cov_infocast_timestamp() + ($max_cast_age * 1000)) < Client::timestamp()))
-        {
-            $cli->log("Retrieving COV infocast.", LOG_INFO);
-            $size = $client->retrieve_cov_infocast($cachetime_cov_infocast);
-
-            if (!$size)
-                $cli->log("Unable to fetch COV infocast. The result was empty.", LOG_ALERT);
-            else
-                $cli->log("COV infocast with ".$size." bytes received.", LOG_INFO);
-            
-            // Update the COV infocast store
-            $cli->log("Updating COV infocast store.", LOG_INFO);
-    
-            $totalcount = 0;
-            $successcount = 0;
-            $filtercount = 0;
-            $errorcount = 0;
-            $errordata = null;
-            
-            try
-            {
-                // No filtering ("eu_datacast", null, null, null), so we can get worldwide datasets
-                $client->update_cov_infocast_store("cov_infocast", null, null, null, true, 25, $totalcount, $successcount, $errorcount, $errordata, $filtercount);
-                $cli->log("COV infocast store has been updated. Wrote ".$successcount." entries from ".$totalcount.", while ".$filtercount." were filtered.", LOG_INFO);
-                
-                if ($errorcount)
-                {
-                    $cli->log("There were problems writing COV infocast data. ".$errorcount." informative dataset(s) could not be written.", LOG_ALERT);
-                    
-                    if ($dumpfile = $client->create_error_dump("cov-infocast-error-", $errordata))
-                        $cli->log("Dump file written to '".$dumpfile."'", LOG_ALERT);
-                    else
-                        $cli->log("Unable to write dumpfile.", LOG_ALERT);
-                        
-                    unset($dumpfile);
-                }
-                
-                $did_updates++;
-            }
-            catch (Exception $ex)
-            {
-                $cli->log("Unable to update COV infocast store: ".$ex->getMessage()." in ".$ex->getFile().", line ".$ex->getLine(), LOG_ALERT);
-            }
-            
-            unset($totalcount);
-            unset($successcount);
-            unset($errorcount);
-            unset($errordata);
-        }
-        
-        // Datacast autoexec disabled, do recalculation
-        if ((!$skip_eu_datacast) && ($datacast_autoexec_disabled))
-        {
-            // Update the EU datacast store
-            $cli->log("Recalculating EU datacast store.", LOG_INFO);
-    
-            $resultcount = 0;            
-            $errordata = null;
-            $updatedata = null;
-            
-            try
-            {
-                // No filtering ("eu_datacast", null, null, null), so we can get worldwide datasets
-                $client->recalculate_eu_datacast_store_fields("recalc_eu_datacast", true, 100000, 3, $resultcount, $updatedata, $errordata);
-                $cli->log("EU datacast store has been recalculated.", LOG_INFO);
-                
-                if ((is_array($errordata)) && (count($errordata) > 0))
-                {
-                    $cli->log("There were problems recalculating EU datacast data. ".count($errordata)." record(s) could not be updated.", LOG_ALERT);
-                    
-                    if ($dumpfile = $client->create_error_dump("eu-datacast-recalc-error-", $errordata))
-                        $cli->log("Dump file written to '".$dumpfile."'", LOG_ALERT);
-                    else
-                        $cli->log("Unable to write dumpfile.", LOG_ALERT);
-                        
-                    unset($dumpfile);
-                }
-            }
-            catch (Exception $ex)
-            {
-                $cli->log("Unable to update EU datacast store: ".$ex->getMessage()." in ".$ex->getFile().", line ".$ex->getLine(), LOG_ALERT);
-            }
-            
-            unset($totalcount);
-            unset($successcount);
-            unset($filtercount);
-            unset($errorcount);
-            unset($errordata);
-        }
-
-        // Retrieve RKI positive data
-        if ((!$skip_rki_positive) && (($client->get_rki_positive_timestamp() + ($max_cast_age * 1000)) < Client::timestamp()))
-        {
-            $cli->log("Retrieving RKI positive data.", LOG_INFO);
-            $size = $client->retrieve_rki_positive($cachetime_rki_positive);
-
-            if (!$size)
-                $cli->log("Unable to fetch RKI positive data. The result was empty.", LOG_ALERT);
-            else
-                $cli->log("RKI positive data with ".$size." bytes received.", LOG_INFO);
-            
-            // Update the RKI positive store
-            $cli->log("Updating RKI positive data store.", LOG_INFO);
-    
-            $totalcount = 0;
-            $successcount = 0;
-            $filtercount = 0;
-            $errorcount = 0;
-            $errordata = null;
-            
-            try
-            {
-                // Europe, Germany is currently hardcoded, because it is the only country known to produce compatible nowcasts
-                $client->update_rki_positive_store("rki_positive", "Europe", "Germany", true, 25, $totalcount, $successcount, $errorcount, $errordata, $filtercount);
-                $cli->log("RKI positive data store has been updated. Wrote ".$successcount." entries from ".$totalcount.", while ".$filtercount." were filtered.", LOG_INFO);
-                
-                if ($errorcount)
-                {
-                    $cli->log("There were problems writing RKI positive data. ".$errorcount." dataset(s) could not be written.", LOG_ALERT);
-                    
-                    if ($dumpfile = $client->create_error_dump("rki-positive-error-", $errordata))
-                        $cli->log("Dump file written to '".$dumpfile."'", LOG_ALERT);
-                    else
-                        $cli->log("Unable to write dumpfile.", LOG_ALERT);
-                        
-                    unset($dumpfile);
-                }
-                
-                $did_updates++;
-            }
-            catch (Exception $ex)
-            {
-                $cli->log("Unable to update RKI positive store: ".$ex->getMessage()." in ".$ex->getFile().", line ".$ex->getLine(), LOG_ALERT);
-            }
-            
-            unset($totalcount);
-            unset($successcount);
-            unset($errorcount);
-            unset($errordata);
-        }
-        
-        // If something has probably changed, recalculate the location data and (re)cast positives
-        if ($did_updates)
-        {            
-            try
-            {
-                $cli->log("Updating location values", LOG_INFO);
-                $client->recalculate_location_store_fields("location_contamination", true);
-                $cli->log("Update sequence finished.", LOG_INFO);
-                
-                $cli->log("Casting positives.", LOG_INFO);
-                $client->cast_rki_positives("cast_positives", true);
-                $cli->log("Casting positives done.", LOG_INFO);
-                
-            }
-            catch (Exception $ex)
-            {
-                $cli->log("Error: ".$ex->getMessage()." in ".$ex->getFile().", line ".$ex->getLine(), LOG_ALERT);            
+                $cli->log("Preloading failed. Retrying later.", LOG_ALERT);
             }
         }
         
@@ -547,17 +297,7 @@ function shutdown_daemon()
     remove_pid();
 }
 
-// Checkm, whether we have to skip something
-if ($cli->has_argument("--skip-eu-datacast"))
-    $skip_eu_datacast = true;
-if ($cli->has_argument("--skip-rki-nowcast"))
-    $skip_rki_nowcast = true;
-if ($cli->has_argument("--skip-rki-rssfeed"))
-    $skip_rki_rssfeed = true;
-if ($cli->has_argument("--skip-cov-infocast"))
-    $skip_cov_infocast = true;
-if ($cli->has_argument("--skip-rki-positive"))
-    $skip_rki_positive = true;
+// Check, whether we have to setup some things
 if ($cli->has_argument("--oneshot"))
     $oneshot = true;
 

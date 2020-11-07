@@ -20,46 +20,45 @@
 
 *******************************************************************************/
 
-use \WelterRocks\CoronaData\Config;
-use \WelterRocks\CoronaData\DataHandler;
-use \WelterRocks\CoronaData\Database;
-use \WelterRocks\CoronaData\Exception;
+use WelterRocks\CoronaData\Config;
+use WelterRocks\CoronaData\DataHandler;
+use WelterRocks\CoronaData\Database;
+use WelterRocks\CoronaData\Genesis;
+use WelterRocks\CoronaData\Exception;
     
 class Client
 {
     private $config = null;
     private $config_file = null;
     
-    private $eu_datacast = null;
-    private $eu_datacast_size = null;
-    private $eu_datacast_timestamp = null;
-    private $eu_datacast_filename = null;
-    
-    private $rki_positive = null;
-    private $rki_positive_size = null;
-    private $rki_positive_timestamp = null;
-    private $rki_positive_filename = null;
-    
-    private $rki_nowcast = null;
-    private $rki_nowcast_size = null;
-    private $rki_nowcast_timestamp = null;
-    private $rki_nowcast_filename = null;
-    
-    private $rki_rssfeed = null;
-    private $rki_rssfeed_size = null;
-    private $rki_rssfeed_timestamp = null;
-    private $rki_rssfeed_filename = null;
-    
+    private $stores_loaded_count = null;
+    private $stores_loaded_bytes = null;
+        
+    private $eu_datacast = null;    
+    private $rki_positive = null;    
+    private $rki_nowcast = null;    
+    private $rki_rssfeed = null;    
     private $cov_infocast = null;
-    private $cov_infocast_size = null;
-    private $cov_infocast_timestamp = null;
-    private $cov_infocast_filename = null;
     
-    private $database = null;
+    private $gen_territory_area = null;
+    private $gen_territory_district_area = null;
+    private $gen_population = null;
+    private $gen_population_by_state = null;
+    private $gen_population_by_district = null;
     
+    private $database = null;    
     private $transaction_name = null;
     
-    public static function threeletter_encode($str)
+    private $continents = null;
+    private $countries = null;
+    private $states = null;
+    private $districts = null;
+    private $locations = null;
+    
+    private $datasets = null;
+    private $testresults = null;
+    
+    public static function clean_str($str)
     {
         $allowed = "abcdefghijklmnopqrstuvwxyz";
         $retval = "";
@@ -68,18 +67,27 @@ class Client
         
         for ($i = 0; $i < strlen($str); $i++)
         {
-            $c = substr($str, 0, 1);
+            $c = substr($str, $i, 1);
             
-            if (!stripos($allowed, $str))
+            if (!stristr($allowed, $c))
                 continue;
                 
-            $retval = strtoupper($c);
-            
-            if (strlen($retval) == 3)
-                break;
+            $retval .= strtoupper($c);             
         }
+
+        return $retval;
+    }
+    
+    public static function hash_name($str)
+    {
+        $retval = md5(self::clean_str($str));
         
-        $retval = str_pad($retval, 3, "0");
+        return $retval;
+    }
+    
+    public static function threeletter_encode($str)
+    {
+        $retval = substr(str_pad(self::clean_str($str), 3, "0"), 0, 3);
         
         return $retval;
     }
@@ -113,6 +121,36 @@ class Client
         return true;
     }
     
+    private function get_template(DataHandler $handler)
+    {
+        $tmpl = new \stdClass;
+        $tmpl->handler = $handler;
+        $tmpl->timestamp = -1;
+        $tmpl->size = -1;
+        $tmpl->filename = $tmpl->handler->get_cache_filename();
+        
+        return $tmpl;
+    }
+    
+    private function retrieve_obj_data(\stdClass $obj, $transform = null, $cache_timeout = 14400, $target_filename = true, $target_compression_level = 9, $not_json_encoded = false)
+    {
+       if ($retval = $obj->handler->retrieve($target_filename, $cache_timeout, $target_compression_level, $not_json_encoded))
+       {
+           if ($transform)
+           {
+               if (!$obj->handler->$transform())
+                   return null;
+           }
+               
+           $obj->timestamp = self::timestamp();
+           $obj->size = $retval;
+           
+           return $retval;
+       }
+       
+       return null;
+    }
+    
     public function create_error_dump($prefix = "errordump-", $data)
     {
         $filename = $this->config->data_store."/".$prefix.self::timestamp().".log";
@@ -127,120 +165,98 @@ class Client
         
         return $filename;
     }
+
+    public function retrieve_gen_territory_area($cache_timeout = 14400)
+    {
+       return $this->retrieve_obj_data($this->gen_territory_area, "transform_gen_territory_area", $cache_timeout);
+    }
+    
+    public function retrieve_gen_territory_district_area($cache_timeout = 14400)
+    {
+       return $this->retrieve_obj_data($this->gen_territory_district_area, "transform_gen_territory_district_area", $cache_timeout);
+    }
+    
+    public function retrieve_gen_population($cache_timeout = 14400)
+    {
+       return $this->retrieve_obj_data($this->gen_population, "transform_gen_population", $cache_timeout);
+    }
+    
+    public function retrieve_gen_population_by_state($cache_timeout = 14400)
+    {
+       return $this->retrieve_obj_data($this->gen_population_by_state, "transform_gen_population_by_state", $cache_timeout);
+    }
+    
+    public function retrieve_gen_population_by_district($cache_timeout = 14400)
+    {
+       return $this->retrieve_obj_data($this->gen_population_by_district, "transform_gen_population_by_district", $cache_timeout);
+    }
     
     public function retrieve_eu_datacast($cache_timeout = 14400)
     {
-       if ($retval = $this->eu_datacast->retrieve($this->eu_datacast_filename, $cache_timeout))
-       {
-           if (!$this->eu_datacast->transform_eu_datacast())
-               return null;
-               
-           $this->eu_datacast_timestamp = self::timestamp();
-           $this->eu_datacast_size = $retval;
-           
-           return $retval;
-       }
+       return $this->retrieve_obj_data($this->eu_datacast, "transform_eu_datacast", $cache_timeout);
     }
     
     public function retrieve_rki_positive($cache_timeout = 14400)
     {
-        if ($retval = $this->rki_positive->retrieve($this->rki_positive_filename, $cache_timeout))
-        {
-            if (!$this->rki_positive->transform_rki_positive())
-                return null;
-            
-            $this->rki_positive_timestamp = self::timestamp();
-            $this->rki_positive_size = $retval;
-            
-            return $retval;
-        }
-        
-        return null;
+       return $this->retrieve_obj_data($this->rki_positive, "transform_rki_positive", $cache_timeout);
     }
     
     public function retrieve_rki_nowcast($cache_timeout = 14400)
     {
-        if ($retval = $this->rki_nowcast->retrieve($this->rki_nowcast_filename, $cache_timeout))
-        {
-            if (!$this->rki_nowcast->transform_rki_nowcast())
-                return null;
-            
-            $this->rki_nowcast_timestamp = self::timestamp();
-            $this->rki_nowcast_size = $retval;
-            
-            return $retval;
-        }
-        
-        return null;
+       return $this->retrieve_obj_data($this->rki_nowcast, "transform_rki_nowcast", $cache_timeout);       
     }
     
-    public function retrieve_rki_rssfeed($cache_timeout = 14400)
+    public function retrieve_rki_rssfeed($cache_timeout = 14400, $target_filename = null)
     {
-        if ($retval = $this->rki_rssfeed->retrieve($this->rki_rssfeed_filename, $cache_timeout, -1, true))
-        {
-            $this->rki_rssfeed_timestamp = self::timestamp();
-            $this->rki_rssfeed_size = $retval;
-            
-            return $retval;
-        }
-        
-        return null;
+       if (!$target_filename)
+           $target_filename = realpath($this->config->data_store)."/rki_rssfeed.xml";
+           
+       return $this->retrieve_obj_data($this->rki_rssfeed, null, $cache_timeout, $target_filename, -1, true);
     }
     
     public function retrieve_cov_infocast($cache_timeout = 14400)
     {
-        if ($retval = $this->cov_infocast->retrieve($this->cov_infocast_filename, $cache_timeout))
-        {
-            if (!$this->cov_infocast->transform_cov_infocast())
-                return null;
-            
-            $this->cov_infocast_timestamp = self::timestamp();
-            $this->cov_infocast_size = $retval;
-            
-            return $retval;
-        }
-        
-        return null;
+       return $this->retrieve_obj_data($this->cov_infocast, "transform_cov_infocast", $cache_timeout);       
     }
     
     public function export_eu_datacast(&$length = null, &$timestamp = null)
     {
-        $length = $this->eu_datacast->get_length();
-        $timestamp = $this->eu_datacast->get_timestamp();
+        $length = $this->eu_datacast->handler->get_length();
+        $timestamp = $this->eu_datacast->handler->get_timestamp();
         
-        return $this->eu_datacast->get_data();
+        return $this->eu_datacast->handler->get_data();
     }
     
     public function export_rki_nowcast(&$length = null, &$timestamp = null)
     {
-        $length = $this->rki_nowcast->get_length();
-        $timestamp = $this->rki_nowcast->get_timestamp();
+        $length = $this->rki_nowcast->handler->get_length();
+        $timestamp = $this->rki_nowcast->handler->get_timestamp();
         
-        return $this->rki_nowcast->get_data();
+        return $this->rki_nowcast->handler->get_data();
     }
     
     public function export_rki_positive(&$length = null, &$timestamp = null)
     {
-        $length = $this->rki_positive->get_length();
-        $timestamp = $this->rki_positive->get_timestamp();
+        $length = $this->rki_positive->handler->get_length();
+        $timestamp = $this->rki_positive->handler->get_timestamp();
         
-        return $this->rki_positive->get_data();
+        return $this->rki_positive->handler->get_data();
     }
     
     public function export_rki_rssfeed(&$length = null, &$timestamp = null)
     {
-        $length = $this->rki_rssfeed->get_length();
-        $timestamp = $this->rki_rssfeed->get_timestamp();
+        $length = $this->rki_rssfeed->handler->get_length();
+        $timestamp = $this->rki_rssfeed->handler->get_timestamp();
         
-        return $this->rki_rssfeed->get_data();
+        return $this->rki_rssfeed->handler->get_data();
     }
     
     public function export_cov_infocast(&$length = null, &$timestamp = null)
     {
-        $length = $this->cov_infocast->get_length();
-        $timestamp = $this->cov_infocast->get_timestamp();
+        $length = $this->cov_infocast->handler->get_length();
+        $timestamp = $this->cov_infocast->handler->get_timestamp();
         
-        return $this->cov_infocast->get_data();
+        return $this->cov_infocast->handler->get_data();
     }
     
     public function database_check_installation(&$error = null)
@@ -255,307 +271,39 @@ class Client
         return $this->database->clear_records();
     }
     
-    public function get_eu_datacast_timestamp()
+    public function get_eu_datacast()
     {
-        return $this->eu_datacast_timestamp;
+        return $this->eu_datacast;
     }
     
-    public function get_eu_datacast_size()
+    public function get_rki_positive()
     {
-        return $this->eu_datacast_size;
+       return $this->rki_positive; 
     }
     
-    public function get_eu_datacast_filename()
+    public function get_rki_nowcast()
     {
-        return $this->eu_datacast_filename;
+       return $this->rki_nowcast;
     }
     
-    public function get_rki_positive_timestamp()
+    public function get_rki_rssfeed()
     {
-       return $this->rki_positive_timestamp; 
+       return $this->rki_rssfeed; 
     }
     
-    public function get_rki_positive_size()
+    public function get_cov_infocast()
     {
-        return $this->rki_positive_size;
+       return $this->cov_infocast;
     }
     
-    public function get_rki_positive_filename()
+    public function get_gen_territory_area()
     {
-        return $this->rki_positive_filename;
-    }
-    
-    public function get_rki_nowcast_timestamp()
-    {
-       return $this->rki_nowcast_timestamp; 
-    }
-    
-    public function get_rki_rssfeed_timestamp()
-    {
-       return $this->rki_rssfeed_timestamp; 
-    }
-    
-    public function get_rki_rssfeed_filename()
-    {
-        return $this->rki_rssfeed_filename;
-    }
-    
-    public function get_rki_rssfeed_size()
-    {
-        return $this->rki_rssfeed_size;
-    }
-    
-    public function get_rki_nowcast_size()
-    {
-        return $this->rki_nowcast_size;
-    }
-    
-    public function get_rki_nowcast_filename()
-    {
-        return $this->rki_nowcast_filename;
-    }
-    
-    public function get_cov_infocast_timestamp()
-    {
-       return $this->cov_infocast_timestamp; 
-    }
-    
-    public function get_cov_infocast_size()
-    {
-        return $this->cov_infocast_size;
-    }
-    
-    public function get_cov_infocast_filename()
-    {
-        return $this->cov_infocast_filename;
+       return $this->gen_territory_area;
     }
     
     public function get_table_status()
     {
         return $this->database->get_table_status();
-    }
-    
-    public function is_ready_for_calculation(&$results = null)
-    {
-        $results = new \stdClass;
-        $results->datacasts = false;
-        $results->infocasts = false;
-        $results->nowcasts = false;
-        
-        $this->database->analyze();
-        
-        $status = $this->get_table_status();
-        
-        $min_rows = 0;
-        
-        foreach ($status as $name => $table)
-        {
-            if ($name == "locations")
-            {
-                $min_rows = ($table->Rows * 15);
-                break;
-            }
-        }
-        
-        if (!$min_rows)
-            return false;
-            
-        foreach ($status as $name => $table)
-        {
-            switch ($name)
-            {
-                case "datacasts":
-                case "infocasts":
-                case "nowcasts":
-                    if ($table->Rows >= $min_rows)
-                        $results->$name = true;
-                    break;
-            }
-        }
-        
-        return $results->datacasts;
-    }
-    
-    public function recalculate_location_store_fields($transaction_name = null, $autocommit = false, &$result_count = null, &$update_results = null, &$error = null, &$sql = null)
-    {
-        $error = null;
-        $sql = null;
-        
-        $result_count = -1;
-        $result_count1 = -1;
-        $result_count2 = -1;
-        $result_count3 = -1;
-        
-        $update_results = null;
-        
-        if ($transaction_name)
-        {
-            if ($this->transaction_name)
-                throw new Exception("Transaction already open with ID '".$this->transaction_name."'");
-                
-            $this->transaction_name = $transaction_name;
-            $this->database->begin_transaction($transaction_name);
-        }
-        
-        // We calculate the contamination and averages in phase 1
-        $callbacks = new \stdClass;
-        $callbacks->calculate_positive_childs = array();
-        $callbacks->calculate_contamination = array();
-        $callbacks->save = array(null, null, false);
-
-        $none = null;
-        
-        $update_results1 = $this->database->select("locations", "*", "location_type != 'continent'", $callbacks, false, false, false, $none, $result_count1, $error, $sql);
-/* Hmm.... this destroys the country real values. The summaries are too small... why??        
-        // In phase 2 we recalculate the childs of countries to surly have the contamination in parent fields
-        $callbacks = new \stdClass;
-        $callbacks->calculate_child_values = array("country");
-        $callbacks->save = array(null, null, false);
-
-        $none = null;
-        
-        $update_results2 = $this->database->select("locations", "*", "location_type = 'country'", $callbacks, false, false, false, $none, $result_count2, $error, $sql);
-*/      
-        // Set this to null / 0, while the above stuff is disabled  
-        $update_results2 = null;
-        $result_count2 = 0;
-        
-        // In phase 3 we calculate the childs of continents to surly have the contamination in parent fields
-        $callbacks = new \stdClass;
-        $callbacks->calculate_child_values = array("continent");
-        $callbacks->save = array(null, null, false);
-
-        $none = null;
-        
-        $update_results3 = $this->database->select("locations", "*", "location_type = 'continent'", $callbacks, false, false, false, $none, $result_count3, $error, $sql);
-        
-        if (!$update_results1)
-            $update_results1 = array();
-            
-        if (!$update_results2)
-            $update_results2 = array();
-            
-        if (!$update_results3)
-            $update_results3 = array();
-            
-        if (!$result_count1)
-            $result_count1 = 0;
-        
-        if (!$result_count2)
-            $result_count2 = 0;
-        
-        if (!$result_count3)
-            $result_count3 = 0;
-        
-        $update_results = array_merge($update_results1, $update_results2, $update_results3);
-        $result_count = $result_count1 + $result_count2 + $result_count3;
-            
-        if (($this->transaction_name) && ($autocommit))
-            return $this->database_transaction_commit($transaction_name);
-
-        return true;    
-    }
-
-    public function recalculate_eu_datacast_store_fields($transaction_name = null, $autocommit = false, $incidence_factor = 100000, $r_value_skip_days = 3, &$result_count = null, &$update_results = null, &$error = null, &$sql = null)
-    {
-        $error = null;
-        $sql = null;
-        
-        $result_count = -1;
-        $update_results = null;
-        
-        if ($transaction_name)
-        {
-            if ($this->transaction_name)
-                throw new Exception("Transaction already open with ID '".$this->transaction_name."'");
-                
-            $this->transaction_name = $transaction_name;
-            $this->database->begin_transaction($transaction_name);
-        }
-        
-        $callbacks = new \stdClass;
-        $callbacks->recalculate = array($incidence_factor, $r_value_skip_days);
-        $callbacks->save = array(null, null, false);
-
-        $none = null;
-        
-        $update_results = $this->database->select("datacasts", "*", '1', $callbacks, false, false, false, $none, $result_count, $error, $sql);
-            
-        if (($this->transaction_name) && ($autocommit))
-            return $this->database_transaction_commit($transaction_name);
-
-        return true;    
-    }
-    
-    public function cast_rki_positives($transaction_name = null, $autocommit = false, $incidence_factor = 100000, $r_value_skip_days = 3, &$result_count = null, &$update_results = null, &$error = null, &$sql = null)
-    {
-        $error = null;
-        $sql = null;
-        
-        $result_count = -1;
-        $update_results = null;
-        
-        if ($transaction_name)
-        {
-            if ($this->transaction_name)
-                throw new Exception("Transaction already open with ID '".$this->transaction_name."'");
-                
-            $this->transaction_name = $transaction_name;
-            $this->database->begin_transaction($transaction_name);
-        }
-        
-        $none = null;
-        $none2 = null;
-        
-        $districts = $this->database->select("locations", "*", "location_type = 'district'", null, false, false, false, $none, $none2, $error, $sql);
-        
-        if (!$districts)
-        {
-            $error = "Districts not found";
-            
-            return false;
-        }
-        
-        foreach ($districts as $district)
-        {
-            $res = 0;
-            
-            if (!$this->database->new_datacast()->cast_positives($incidence_factor, $r_value_skip_days, $district->uid, $res, $error, $sql))
-                return false;
-                
-            $result_count += $res;
-        }
-        
-        $none = null;
-        $none2 = null;
-        
-        unset($districts);
-        
-        $states = $this->database->select("locations", "*", "location_type = 'state'", null, false, false, false, $none, $none2, $error, $sql);
-        
-        if (!$states)
-        {
-            $error = "States not found";
-            
-            return false;
-        }
-        
-        foreach ($states as $state)
-        {
-            $res = 0;
-            
-            if (!$this->database->new_datacast()->cast_positives($incidence_factor, $r_value_skip_days, $state->uid, $res, $error, $sql))
-                return false;
-                
-            $result_count += $res;
-        }
-        
-        unset($states);
-        
-        if (($this->transaction_name) && ($autocommit))
-            return $this->database_transaction_commit($transaction_name);
-
-        return true;    
     }
     
     public function get_datetime_diff($date1, $date2 = "now")
@@ -566,834 +314,6 @@ class Client
         $datediff = $datetime1->diff($datetime2);
 
         return $datediff;    
-    }
-    
-    public function update_eu_datacast_store($transaction_name = null, $filter_continent = null, $filter_country = null, $filter_location = null, $autocommit = false, $throttle_usecs = 1, &$totalcount = null, &$successcount = null, &$errcount = null, &$errstore = null, &$filtercount = null, &$disable_datacast_autoexec = null)
-    {
-        $successcount = 0;
-        $totalcount = 0;
-        $filtercount = 0;
-        $errcount = 0;
-        $errstore = array();
-        
-        if ($this->eu_datacast_size == 0)
-            throw new Exception("EU datacast store is empty");
-        
-        $disable_datacast_autoexec = false;
-        
-        if (!$this->is_ready_for_calculation())
-            $disable_datacast_autoexec = true;
-        
-        $no_result = null;
-        $db_empty = false;
-        
-        $latest_ts = $this->database->get_latest("datacasts", "'1'", $no_result);
-        
-        if ($no_result)
-        {
-            // For future use
-            $db_empty = true;
-        }
-        else
-        {        
-            $earliest_ts = $this->database->get_earliest("datacasts", "flag_calculated = 0", $no_result);
-        
-            // We have uncalculated datasets, set earliest date_rep as reference for latest timestamp, to make sure, all relevant datasets are updated
-            if (!$no_result)
-                $latest_ts = $earliest_ts;
-        }
-        
-        if ($transaction_name)
-        {
-            if ($this->transaction_name)
-                throw new Exception("Transaction already open with ID '".$this->transaction_name."'");
-                
-            $this->transaction_name = $transaction_name;
-            $this->database->begin_transaction($transaction_name);
-        }
-            
-        foreach ($this->eu_datacast->get_data()->records as $id => $record)
-        {
-            $error = null;
-            $sql = null;
-            
-            if ($throttle_usecs)
-                usleep($throttle_usecs);
-                
-            $totalcount++;
-            
-            $recorddate = $record->date_rep;
-            
-            if (!$recorddate)
-            {
-                $errcount++;
-                
-                $errobj = new \stdClass;
-                $errobj->error = "Missing record date";
-                
-                array_push($errstore, $errobj);
-                continue;
-            }
-            
-            $datediff = $this->get_datetime_diff($latest_ts, $recorddate." 00:00:00");
-
-            if ($datediff->invert == 1)
-            {
-                $filtercount++;
-                continue;
-            }
-                            
-            if (($filter_continent) && ($filter_continent != $record->continent))
-            {
-                if (!$filter_country)
-                {
-                    $filtercount++;
-                    continue;
-                }
-                elseif ($filter_country != $record->country)
-                {
-                    if (!$filter_location)
-                    {
-                        $filtercount++;
-                        continue;
-                    }
-                    elseif ($filter_location != $record->country)
-                    {
-                        // Yes! filter_location = record->country is correct, because eu datacast has no location value set.
-                        // Therefore location is automatically set to country, to tell the database, that the hole country is meant.
-                        $filtercount++;
-                        continue;
-                    }
-                }
-            }
-            
-            // Check, if the continent exists in database
-            $continent_count = 0;
-            $continent = $this->database->select("*", "location = '".$this->database->esc($record->continent)."' AND country = location AND continent = location AND location_type = 'continent'", null, true, false, false, $continent_count, $error, $sql);
-
-            if ((!$continent) || (is_object($continent) == false))
-            {
-                // Do not create an error object, just create the continent
-                $continent = new \stdClass;
-                $continent->continent = $record->continent;
-                $continent->country = $record->continent;
-                $continent->location = $record->continent;
-                $continent->location_type = 'continent';
-                $continent->geo_id = self::threeletter_encode($record->continent);
-                $continent->country_code = $continent->geo_id;
-                
-                if (true === $continent->uid = $this->database->register_object("Locations", $continent, true, false, false, $error, $sql))
-                {
-                    $errcount++;
-                    
-                    $errobj->error = "Unable to fetch UID of location object";
-                    $errobj->sql = $sql;
-                    
-                    array_push($errstore, $errobj);
-                }	
-                elseif (($continent->uid === false) || ($continent->uid === null))
-                {
-                    $errcount++;
-                
-                    $errobj->error = $error;
-                    $errobj->sql = $sql;
-                    
-                    array_push($errstore, $errobj);                
-                }         
-            }            
-            
-            $location = new \stdClass;
-            $location->parent_uid = $continent->uid;
-            $location->continent = $record->continent;
-            $location->country = $record->country;
-            $location->location = $record->location;
-            $location->country_code = $record->country_code;
-            $location->geo_id = $record->geo_id;
-            $location->population = $record->population;
-            $location->population_year = $record->population_year;
-            $location->location_type = 'country';
-            
-            $datacast = new \stdClass;
-
-            $errobj = new \stdClass;
-            $errobj->id = $id;
-            $errobj->location = $location;
-            $errobj->record = $record;
-            
-            if (true === $datacast->locations_uid = $this->database->register_object("Locations", $location, true, false, false, $error, $sql))
-            {
-                $errcount++;
-                
-                $errobj->error = "Unable to fetch UID of location object";
-                $errobj->sql = $sql;
-                
-                array_push($errstore, $errobj);
-            }
-            elseif (($datacast->locations_uid === false) || ($datacast->locations_uid === null))
-            {
-                $errcount++;
-                
-                $errobj->error = $error;
-                $errobj->sql = $sql;
-                
-                array_push($errstore, $errobj);                
-            }
-            else
-            {                
-                foreach ($record as $key => $val)
-                {
-                    if (($key == "uid") || ($key == "locations_uid"))
-                        continue;
-                        
-                    switch ($key)
-                    {
-                        case "population":
-                            $datacast->population_used = $val;
-                            continue(2);
-                        case "continent":
-                        case "country":
-                        case "location":
-                        case "country_code":
-                        case "geo_id":
-                        case "population_year":
-                            continue(2);
-                        default:
-                            break;
-                    }
-                        
-                    $datacast->$key = $val;
-                }
-                
-                if (true === $datacast->uid = $this->database->register_object("Datacasts", $datacast, true, $disable_datacast_autoexec, false, $error, $sql))
-                {
-                    $errcount++;
-                    
-                    $errobj->error = $error;
-                    $errobj->sql = $sql;
-                    $errobj->datacast = $datacast;
-                    
-                    array_push($errstore, $errobj);
-                }
-                elseif (($datacast->uid !== false) && ($datacast->uid !== null))
-                {
-                    $successcount++;
-                }
-                else
-                {                
-                    $errcount++;
-                    
-                    $errobj->error = $error;
-                    $errobj->sql = $sql;
-                    $errobj->datacast = $datacast;
-                    
-                    array_push($errstore, $errobj);
-                }
-            }
-        }
-        
-        if (($this->transaction_name) && ($autocommit))
-            return $this->database_transaction_commit($transaction_name);
-
-        return true;
-    }
-    
-    public function update_rki_positive_store($transaction_name = null, $continent = "Europe", $country = "Germany", $autocommit = false, $throttle_usecs = 1, &$totalcount = null, &$successcount = null, &$errcount = null, &$errstore = null, &$filtercount = null)
-    {
-        $successcount = 0;
-        $totalcount = 0;
-        $filtercount = 0;
-        
-        $errcount = 0;
-        $errstore = array();
-        
-        if ($this->rki_positive_size == 0)
-            throw new Exception("RKI positive store is empty");
-            
-        $latest_ts = $this->database->get_latest("positives");
-        
-        if ($transaction_name)
-        {
-            if ($this->transaction_name)
-                throw new Exception("Transaction already open with ID '".$this->transaction_name."'");
-                
-            $this->transaction_name = $transaction_name;
-            $this->database->begin_transaction($transaction_name);
-        }
-        
-        // Shadow store for internal stats
-        $shadow_store = new \stdClass;
-        $shadow_store->states = array();
-        $shadow_store->districts = array();
-        
-        // Phase 1: Get the main location object to set states parent UIDs
-        $error = null;
-        $sql = null;
-        $resultcount = 0;
-        
-        $location = $this->database->select("locations", "*", "continent = '".$this->database->esc($continent)."' AND country = '".$this->database->esc($country)."' AND location = '".$this->database->esc($country)."'", null, true, false, false, $resultcount, $error, $sql);
-        
-        if (!$resultcount)
-            throw new Exception("Unable to find parent location for positive data");
-                                
-        // Phase 2: Get states and districts and create all data objects
-        foreach ($this->rki_positive->get_data() as $id => $record)
-        {
-            // Check, whether we have to hrottle the processing
-            if ($throttle_usecs)
-                usleep($throttle_usecs);
-                
-            $totalcount++;
-                
-            $recorddate = $record->timestamp_represent;
-            
-            if (!$recorddate)
-            {
-                $errcount++;
-                
-                $errobj = new \stdClass;
-                $errobj->error = "Missing record date";
-                
-                array_push($errstore, $errobj);
-                continue;
-            }
-            
-            $datediff = $this->get_datetime_diff($latest_ts, $recorddate);
-
-            if ($datediff->invert == 1)
-            {
-                $filtercount++;
-                continue;
-            }
-                            
-            if (!isset($shadow_store->states[$record->state_id]))
-            {
-                $state = new \stdClass;
-                
-                $state->uid = null;
-                $state->location = $record->state;
-                $state->country = $country;
-                $state->continent = $continent;
-                $state->geo_id = self::threeletter_encode($record->state).$record->state_id;
-                $state->parent_uid = $location->uid;
-                $state->location_type = 'state';
-                
-                if (true === $state->uid = $this->database->register_object("Locations", $state, true, false, false, $error, $sql))
-                {
-                    $errcount++;
-                    
-                    $errobj = new \stdClass;
-                    
-                    $errobj->error = "Unable to fetch UID of location object";
-                    $errobj->sql = $sql;
-                    
-                    array_push($errstore, $errobj);
-                }
-                elseif (($state->uid === false) || ($state->uid === null))
-                {
-                    $errcount++;
-                    
-                    $errobj = new \stdClass;
-                    
-                    $errobj->error = $error;
-                    $errobj->sql = $sql;
-                    
-                    array_push($errstore, $errobj);                
-                }
-
-                $shadow_store->states[$record->state_id] = clone $state;
-                
-                unset($state);
-            }
-                
-            if (!isset($shadow_store->districts[$record->state_id]))
-                $shadow_store->districts[$record->state_id] = array();
-            
-            if ((!isset($shadow_store->districts[$record->state_id][$record->district_id])) && ($shadow_store->states[$record->state_id]->uid))
-            {
-                $district = new \stdClass;
-                
-                $district->uid = null;
-                $district->location = $record->district;
-                $district->country = $country;
-                $district->continent = $continent;
-                $district->geo_id = self::threeletter_encode($record->state).$record->state_id.".".$record->district_id;
-                $district->parent_uid = $shadow_store->states[$record->state_id]->uid;
-                $district->location_type = 'district';
-                
-                if (true === $district->uid = $this->database->register_object("Locations", $district, true, false, false, $error, $sql))
-                {
-                    $errcount++;
-                    
-                    $errobj = new \stdClass;
-                    
-                    $errobj->error = "Unable to fetch UID of location object";
-                    $errobj->sql = $sql;
-                    
-                    array_push($errstore, $errobj);
-                }
-                elseif (($district->uid === false) || ($district->uid === null))
-                {
-                    $errcount++;
-                    
-                    $errobj = new \stdClass;
-                    
-                    $errobj->error = $error;
-                    $errobj->sql = $sql;
-                    
-                    array_push($errstore, $errobj);                
-                }
-
-                $shadow_store->districts[$record->state_id][$record->district_id] = clone $district;
-                
-                unset($district);
-            }            
-        
-            if ($shadow_store->districts[$record->state_id][$record->district_id]->uid)
-            {
-                $obj = new \stdClass;
-                
-                $obj->continent_uid = $location->parent_uid;
-                $obj->country_uid = $location->uid;
-                $obj->state_uid = $shadow_store->states[$record->state_id]->uid;
-                $obj->district_uid = $shadow_store->districts[$record->state_id][$record->district_id]->uid;
-                $obj->foreign_identifier = $record->foreign_identifier;
-                $obj->timestamp_dataset = $record->timestamp_dataset;
-                $obj->timestamp_reported = $record->timestamp_reported;
-                $obj->timestamp_referenced = $record->timestamp_referenced;
-                $obj->timestamp_represent = $record->timestamp_represent;
-                $obj->date_rep = $record->date_rep;
-                $obj->day_of_week = $record->day_of_week;
-                $obj->day = $record->day;
-                $obj->month = $record->month;
-                $obj->year = $record->year;
-                $obj->age_group_low = $record->age_group->lower;
-                $obj->age_group_high = $record->age_group->upper;
-                $obj->age_group2_low = $record->age_group2->lower;
-                $obj->age_group2_high = $record->age_group2->upper;
-                $obj->gender = $record->gender;
-                $obj->cases = $record->cases_count;
-                $obj->deaths = $record->deaths_count;
-                $obj->recovered = $record->recovered_count;
-                $obj->new_cases = $record->cases_new;
-                $obj->new_deaths = $record->deaths_new;
-                $obj->new_recovered = $record->recovered_new;
-                $obj->flag_is_disease_beginning = $record->flag_is_disease_beginning;
-                
-                if (true === $obj->uid = $this->database->register_object("Positives", $obj, true, false, false, $error, $sql))
-                {
-                    $errcount++;
-                    
-                    $errobj = new \stdClass;
-                    
-                    $errobj->error = "Unable to fetch UID of positive object";
-                    $errobj->sql = $sql;
-                    
-                    array_push($errstore, $errobj);
-                }
-                elseif (($obj->uid === false) || ($obj->uid === null))
-                {
-                    $errcount++;
-                    
-                    $errobj = new \stdClass;
-                    
-                    $errobj->error = $error;
-                    $errobj->sql = $sql;
-                    
-                    array_push($errstore, $errobj);                
-                }
-                else
-                {
-                    $successcount++;
-                }
-            }
-        }
-        
-        if (($this->transaction_name) && ($autocommit))
-            return $this->database_transaction_commit($transaction_name);
-
-        return true;            
-    }
-    
-    public function update_rki_nowcast_store($transaction_name = null, $continent = "Europe", $country = "Germany", $location = "Germany", $autocommit = false, $throttle_usecs = 1, &$totalcount = null, &$successcount = null, &$errcount = null, &$errstore = null, &$filtercount = null)
-    {
-        $successcount = 0;
-        $totalcount = 0;
-        $filtercount = 0;
-        
-        $errcount = 0;
-        $errstore = array();
-        
-        if ($this->rki_nowcast_size == 0)
-            throw new Exception("RKI nowcast store is empty");
-
-        // Seems that the RKI data is corrected after some days, so we will write all datasets, not only the latest        
-        // $latest_ts = $this->database->get_latest("nowcasts");
-        
-        if ($transaction_name)
-        {
-            if ($this->transaction_name)
-                throw new Exception("Transaction already open with ID '".$this->transaction_name."'");
-                
-            $this->transaction_name = $transaction_name;
-            $this->database->begin_transaction($transaction_name);
-        }
-
-        // We load the location outside the loop, because we need this only once for the RKI stuff.            
-        $loc = new \stdClass;
-        
-        $loc->continent = $continent;
-        $loc->country = $country;
-        $loc->location = $location;
-        
-        $error = null;
-        $sql = null;
-        
-        $location = $this->database->get_object("locations", $loc, $error, $sql);
-        
-        if (!$location)
-        {
-            $errcount++;
-            
-            $errobj = new \stdClass;
-            $errobj->error = $error;
-            $errobj->sql = $sql;
-            
-            array_push($errstore, $errobj);
-            
-            return false;
-        }
-
-        foreach ($this->rki_nowcast->get_data() as $id => $record)
-        {
-            $error = null;
-            $sql = null;
-            
-            $errobj = new \stdClass;
-            $errobj->error = $error;
-            $errobj->sql = $sql;
-            $errobj->id = $id;
-            $errobj->location = $location;
-            $errobj->record = $record;
-            
-            $nowcast = new \stdClass;
-            $nowcast->locations_uid = $location->uid;
-            
-            if ($throttle_usecs)
-                usleep($throttle_usecs);
-                
-            foreach ($record as $key => $val)
-            {
-                if (($key == "uid") || ($key == "locations_uid"))
-                    continue;
-                     
-                if (isset($location->$key))
-                    continue;
-                
-                if ($val !== null)
-                    $nowcast->$key = $val;
-            }
-            
-            $totalcount++;
-            
-            $recorddate = $record->date_rep;
-            
-            if (!$recorddate)
-            {
-                $errcount++;
-                
-                $errobj = new \stdClass;
-                $errobj->error = "Missing record date";
-                
-                array_push($errstore, $errobj);
-                continue;
-            }
-/* DISABLED, BECAUSE OF THE RKI CORRECTED OLD DATASETS, THAT MUST BE UPDATED            
-            $datediff = $this->get_datetime_diff($latest_ts, $recorddate." 00:00:00");
-            
-            if ($datediff->invert == 1)
-            {
-                $filtercount++;
-                continue;
-            }
-*/                
-            if (true === $nowcast->uid = $this->database->register_object("Nowcasts", $nowcast, true, false, true, $error, $sql))
-            {
-                $errcount++;
-                
-                $errobj->error = $error;
-                $errobj->sql = $sql;
-                $errobj->nowcast = $nowcast;
-                
-                array_push($errstore, $errobj);
-            }
-            elseif (($nowcast->uid !== false) && ($nowcast->uid !== null))
-            {
-                $successcount++;
-            }
-            else
-            {
-                $errcount++;
-                
-                $errobj->error = $error;
-                $errobj->sql = $sql;
-                $errobj->nowcast = $nowcast;
-                
-                array_push($errstore, $errobj);
-            }
-        }
-        
-        if (($this->transaction_name) && ($autocommit))
-            return $this->database_transaction_commit($transaction_name);
-            
-        return true;
-    }
-    
-    public function update_cov_infocast_store($transaction_name = null, $filter_continent = null, $filter_country = null, $filter_location = null, $autocommit = false, $throttle_usecs = 1, &$totalcount = null, &$successcount = null, &$errcount = null, &$errstore = null, &$filtercount = null)
-    {
-        $successcount = 0;
-        $totalcount = 0;
-        $filtercount = 0;
-        $errcount = 0;
-        $errstore = array();
-        
-        if ($this->cov_infocast_size == 0)
-            throw new Exception("COV infocast store is empty");
-            
-        $latest_ts = $this->database->get_latest("infocasts");
-        
-        if ($transaction_name)
-        {
-            if ($this->transaction_name)
-                throw new Exception("Transaction already open with ID '".$this->transaction_name."'");
-                
-            $this->transaction_name = $transaction_name;
-            $this->database->begin_transaction($transaction_name);
-        }
-            
-        foreach ($this->cov_infocast->get_data() as $country_code => $data)
-        {
-            $error = null;
-            $sql = null;
-            
-            if ($throttle_usecs)
-                usleep($throttle_usecs);
-                
-            if (($filter_continent) && ($filter_continent != $data->continent))
-            {
-                if (!$filter_country)
-                {
-                    $filtercount += count($data->data);
-                    $totalcount += count($data->data);
-                    continue;
-                }
-                elseif ($filter_country != $data->location)
-                {
-                    // Yes! filter_country = data->location is correct, because cov infocast has no location value set.
-                    // Therefore country is automatically set to location, to tell the database, that the hole country is meant.
-                    if (!$filter_location)
-                    {
-                        $filtercount += count($data->data);
-                        $totalcount += count($data->data);
-                        continue;
-                    }
-                    elseif ($filter_location != $data->location)
-                    {
-                        $filtercount += count($data->data);
-                        $totalcount += count($data->data);
-                        continue;
-                    }
-                }
-            }
-
-            $location = new \stdClass;
-            
-            // Check, if the continent exists in database, if object is set
-            if (isset($data->continent))
-            {
-                $continent_count = 0;
-                $continent = $this->database->select("*", "location = '".$this->database->esc($data->continent)."' AND country = location AND continent = location AND location_type = 'continent'", null, true, false, false, $continent_count, $error, $sql);
-                
-                if ((!$continent) || (is_object($continent) == false))
-                {
-                    // Do not create an error object, just create the continent
-                    $continent = new \stdClass;
-                    $continent->continent = $data->continent;
-                    $continent->country = $data->continent;
-                    $continent->location = $data->continent;
-                    $continent->location_type = 'continent';
-                    $continent->geo_id = self::threeletter_encode($data->continent);
-                    $continent->country_code = $continent->geo_id;
-                    
-                    if (true === $continent->uid = $this->database->register_object("Locations", $continent, true, false, false, $error, $sql))
-                    {
-                        $errcount++;
-                        
-                        $errobj->error = "Unable to fetch UID of location object";
-                        $errobj->sql = $sql;
-                        
-                        array_push($errstore, $errobj);
-                    }	
-                    elseif (($continent->uid === false) || ($continent->uid === null))
-                    {
-                        $errcount++;
-                    
-                        $errobj->error = $error;
-                        $errobj->sql = $sql;
-                        
-                        array_push($errstore, $errobj);                
-                    }         
-                }            
-            }
-            
-            // We only set location, country, country code, geo id (generated) and continent (if it exists) manually
-            $data->location = str_replace("_", " ", $data->location);
-
-            $location->location = $data->location;
-            $location->country = $data->location;
-            $location->country_code = $country_code;
-            $location->geo_id = substr($country_code, 0, 2);
-            $location->location_type = 'country';
-            
-            if (isset($data->continent))
-            {
-                $location->continent = $data->continent;
-                
-                if (isset($continent->uid))
-                    $location->parent_uid = $continent->uid;
-            }
-                        
-            foreach ($data as $key => $val)
-            {
-                switch ($key)
-                {
-                    case "continent":
-                    case "location":
-                    case "data":
-                        continue(2);
-                    default:
-                        break;
-                }
-                
-                if (($val !== null) && ($val != ""))
-                    $location->$key = $val;
-            }
-            
-            $infocast = new \stdClass;
-
-            $errobj = new \stdClass;
-            $errobj->country_code = $country_code;
-            $errobj->location = $location;
-//            $errobj->data = $data;
-            
-            if (true === $infocast->locations_uid = $this->database->register_object("Locations", $location, true, false, false, $error, $sql))
-            {
-                $errcount += count($data->data);
-                
-                $errobj->error = "Unable to fetch UID of location object";
-                $errobj->sql = $sql;
-                
-                $totalcount += count($data->data);
-                array_push($errstore, $errobj);
-            }
-            elseif (($infocast->locations_uid === false) || ($infocast->locations_uid === null))
-            {
-                $errcount += count($data->data);
-                
-                $errobj->error = $error;
-                $errobj->sql = $sql;
-                
-                $totalcount += count($data->data);
-                array_push($errstore, $errobj);                
-            }
-            else
-            {                
-                foreach ($data->data as $id => $obj)
-                {
-                    $errobj = new \stdClass;
-                    $errobj->country_code = $country_code;
-                    $errobj->location = $location;
-//                    $errobj->data = $data;
-                    $errobj->id = $id;
-                    
-                    $totalcount++;
-            
-                    $recorddate = $obj->date;
-            
-                    if (!$recorddate)
-                    {
-                        $errcount++;
-                        
-                        $errobj->error = "Missing record date";
-                        
-                        array_push($errstore, $errobj);
-                        continue;
-                    }
-            
-                    $datediff = $this->get_datetime_diff($latest_ts, $recorddate." 00:00:00");
-            
-                    if ($datediff->invert == 1)
-                    {
-                        $filtercount++;
-                        continue;
-                    }
-                
-                    foreach ($obj as $key => $val)
-                    {
-                        // Preventive protection against uid override attacks
-                        if (($key == "uid") || ($key == "locations_uid"))
-                            continue;
-                            
-                        // Because of global warming and efficiency reasons, we transform the date field at this point and not within a DataHandlers transform routine :-)
-                        if ($key == "date")
-                        {
-                            $infocast->date_rep = $val;
-                            
-                            $ts = strtotime($val." 23:59:59");
-                            
-                            $infocast->timestamp_represent = date("Y-m-d H:i:s", $ts);
-                            $infocast->day_of_week = (int)date("w", $ts);
-                            $infocast->day = (int)date("j", $ts);
-                            $infocast->month = (int)date("n", $ts);
-                            $infocast->year = (int)date("Y", $ts);
-                        }
-                        elseif (($val !== null) && ($val != ""))
-                        {
-                            $infocast->$key = $val;
-                        }
-                    }
-
-                    if (true === $infocast->uid = $this->database->register_object("Infocasts", $infocast, true, false, false, $error, $sql))
-                    {
-                        $errcount++;
-                    
-                        $errobj->error = $error;
-                        $errobj->sql = $sql;
-                        $errobj->infocast = $infocast;
-                        
-                        array_push($errstore, $errobj);
-                    }
-                    elseif (($infocast->uid !== false) && ($infocast->uid !== null))
-                    {
-                        $successcount++;
-                    }
-                    else
-                    {
-                        $errcount++;
-                    
-                        $errobj->error = $error;
-                        $errobj->sql = $sql;
-                        $errobj->infocast = $infocast;
-                        
-                        array_push($errstore, $errobj);                    
-                    }
-                }                    
-            }
-        }
-        
-        if (($this->transaction_name) && ($autocommit))
-            return $this->database_transaction_commit($transaction_name);
-            
-        return true;
     }
     
     public function database_transaction_commit($transaction_name, $flags = 0)
@@ -1422,40 +342,909 @@ class Client
         return $retval;
     }
     
-    function __construct($config = ".coronadatarc", $eu_datacast_filename = "eu_datacast.jgz", $rki_positive_filename = "rki_positive.jgz", $rki_nowcast_filename = "rki_nowcast.jgz", $rki_rssfeed_filename = "rki_rssfeed.xml", $cov_infocast_filename = "cov_infocast.jgz")
+    public static function get_infocast_filter($type = "outer")
+    {
+       $filter = null;
+
+        if ($type == "outer")
+            $filter = array(
+                "aged_65_older",
+                "aged_70_older",
+                "cardiovasc_death_rate",
+                "diabetes_prevalence",
+                "extreme_poverty",
+                "female_smokers",
+                "gdp_per_capita",
+                "handwashing_facilities",
+                "hospital_beds_per_thousand",
+                "human_development_index",
+                "life_expectancy",
+                "male_smokers",
+                "median_age",
+                "population_density"
+            );
+        
+        if ($type == "inner")
+            $filter = array(
+                "hosp_patients" => "sum",
+                "hosp_patients_per_million" => "avg",
+                "icu_patients" => "sum",
+                "icu_patients_per_million" => "avg",
+                "new_cases" => "sum",
+                "new_cases_per_million" => "avg",
+                "new_cases_smoothed" => "sum",
+                "new_cases_smoothed_per_million" => "avg",
+                "new_deaths" => "sum",
+                "new_deaths_per_million" => "avg",
+                "new_deaths_smoothed" => "sum",
+                "new_deaths_smoothed_per_million" => "avg",
+                "new_tests" => "sum",
+                "new_tests_per_thousand" => "avg",
+                "new_tests_smoothed" => "sum",
+                "new_tests_smoothed_per_thousand" => "avg",
+                "positive_rate" => "avg",
+                "stringency_index" => "avg",
+                "tests_per_case" => "sum",
+                "tests_units" => "str",
+                "total_cases" => "sum",
+                "total_cases_per_million" => "avg",
+                "total_deaths" => "sum",
+                "total_deaths_per_million" => "avg",
+                "total_tests" => "sum",
+                "total_tests_per_thousand" => "avg",
+                "weekly_hosp_admissions" => "sum",
+                "weekly_hosp_admissions_per_million" => "avg",
+                "weekly_icu_admissions" => "sum",
+                "weekly_icu_admissions_per_million" => "avg" 
+            );
+            
+       return $filter;     
+    }
+    
+    public function master_locations($hold_data = false)
+    {
+        // After stores are loaded, extract locations from all data sources and build a standardized tree
+        
+        if ($this->stores_loaded_count < 10)
+            return false;
+            
+        // Create in-memory stores
+        $continents = array();
+        $countries = array();
+        $districts = array();
+        $states = array();
+        $locations = array();
+        
+        // Create an index for districts, so that RKI positives can be assigned faster
+        $district_index = array();
+        
+        // Create a template
+        $tmpl = new \stdClass;
+        $tmpl->continent_id = null;
+        $tmpl->continent_hash = null;
+        $tmpl->continent_name = null;
+        $tmpl->country_id = null;
+        $tmpl->country_hash = null;
+        $tmpl->country_name = null;
+        $tmpl->state_id = null;
+        $tmpl->state_hash = null;
+        $tmpl->state_name = null;
+        $tmpl->district_id = null;
+        $tmpl->district_hash = null;
+        $tmpl->district_name = null;
+        $tmpl->district_type = null;
+        $tmpl->district_fullname = null;
+        $tmpl->location_id = null;
+        $tmpl->location_hash = null;
+        $tmpl->location_name = null;
+        $tmpl->location_type = null;
+        $tmpl->geo_id = null;
+        $tmpl->population_year = 0;
+        $tmpl->population_count = 0;
+        $tmpl->population_females = 0;
+        $tmpl->population_males = 0;
+        $tmpl->area = 0;
+        $tmpl->deaths_count = 0;
+        $tmpl->deaths_min = 999999999999;
+        $tmpl->deaths_max = 0;
+        $tmpl->cases_count = 0;
+        $tmpl->cases_min = 999999999999;
+        $tmpl->cases_max = 0;
+        $tmpl->timestamp_min = (time() + 86400);
+        $tmpl->timestamp_max = 0;
+
+        // First, we use the EU datacast
+        foreach ($this->eu_datacast->handler->get_data()->records as $id => $record)
+        {
+            $continent_hash = self::hash_name($record->continent);
+            $country_hash = self::hash_name($record->country);
+            
+            if (!isset($continents[$continent_hash]))                
+                $continent = clone $tmpl;
+            else
+                $continent = $continents[$continent_hash];
+            
+            $continent->continent_id = self::threeletter_encode($record->continent);
+            $continent->geo_id = substr($continent->continent_id, 0, 2);
+            $continent->continent_hash = $continent_hash;
+            $continent->continent_name = $record->continent;
+            $continent->location_type = 'continent';
+            $continent->population_count += $record->population;
+            $continent->deaths_count += $record->deaths;
+            $continent->cases_count += $record->cases;
+            
+            if ($continent->population_year > $record->population_year)
+                $continent->population_year = $record->population_year;
+            
+            $timestamp = strtotime($record->timestamp_represent);
+            
+            if ($continent->timestamp_min > $timestamp)
+                $continent->timestamp_min = $timestamp;
+                
+            if ($continent->timestamp_max < $timestamp)
+                $continent->timestamp_max = $timestamp;
+                
+            if ($continent->deaths_min > $record->deaths)
+                $continent->deaths_min = $record->deaths;
+
+            if ($continent->deaths_max < $record->deaths)
+                $continent->deaths_max = $record->deaths;
+
+            if ($continent->cases_min > $record->cases)
+                $continent->cases_min = $record->cases;
+
+            if ($continent->cases_max < $record->cases)
+                $continent->cases_max = $record->cases;
+                
+            if (!isset($countries[$country_hash]))
+                $country = clone $tmpl;
+            else
+                $country = $countries[$country_hash];
+                
+            $country->continent_id = self::threeletter_encode($record->continent);
+            $country->continent_hash = $continent_hash;
+            $country->continent_name = $record->continent;
+            $country->country_id = $record->country_code ?: self::threeletter_encode($record->country);
+            $country->country_hash = $country_hash;
+            $country->country_name = $record->country;
+            $country->location_type = 'country';
+            $country->geo_id = $record->geo_id ?: substr($record->country, 0, 2);
+            $country->population_count += $record->population;
+            $country->deaths_count += $record->deaths;
+            $country->cases_count += $record->cases;
+            
+            if ($country->population_year > $record->population_year)
+                $country->population_year = $record->population_year;
+            
+            $timestamp = strtotime($record->timestamp_represent);
+            
+            if ($country->timestamp_min > $timestamp)
+                $country->timestamp_min = $timestamp;
+                
+            if ($country->timestamp_max < $timestamp)
+                $country->timestamp_max = $timestamp;
+                
+            if ($country->deaths_min > $record->deaths)
+                $country->deaths_min = $record->deaths;
+
+            if ($country->deaths_max < $record->deaths)
+                $country->deaths_max = $record->deaths;
+
+            if ($country->cases_min > $record->cases)
+                $country->cases_min = $record->cases;
+
+            if ($country->cases_max < $record->cases)
+                $country->cases_max = $record->cases;            
+                
+            $countries[$country_hash] = $country;
+            $continents[$continent_hash] = $continent;
+        }
+        
+        // Setup inner and outer iteration filters
+        $filter_outer = self::get_infocast_filter("outer");        
+        $filter_inner = self::get_infocast_filter("inner");
+        
+        // Second, we use the COV infocast to extend, but EU has always preference, because it is an official data source
+        foreach ($this->cov_infocast->handler->get_data() as $country_code => $record)
+        {
+            // This will also skip "WORLD", but we dont need it
+            if (!isset($record->continent))
+                continue;
+                
+            // We have to make sure, America is set properly, so we merge north and south together for EU datacast compat
+            if (stristr($record->continent, "America"))
+                $record->continent = "America";
+            
+            $continent_hash = self::hash_name($record->continent);
+            $country_hash = self::hash_name($record->location);
+            
+            $continent_created = false;
+            $country_created = false;
+            
+            if (!isset($continents[$continent_hash]))
+            {
+                $continent = clone $tmpl;
+                $continent_created = true;
+            }
+            else
+            {
+                $continent = $continents[$continent_hash];
+            }
+            
+            if ($continent_created)
+            {
+                $continent->continent_id = self::threeletter_encode($record->continent);
+                $continent->geo_id = substr($continent->continent_id, 0, 2);
+                $continent->continent_hash = $continent_hash;
+                $continent->continent_name = $record->continent;
+                $continent->location_type = 'continent';
+            }
+
+            $continent->population_count += $record->population;
+            
+            if (!isset($countries[$country_hash]))
+            {
+                $country = clone $tmpl;
+                $country_created = true;
+            }
+            else
+            {
+                $country = $countries[$country_hash];
+            }
+            
+            if ($country_created)
+            {
+                $country->continent_id = self::threeletter_encode($record->continent);
+                $country->geo_id = substr($country->continent_id, 0, 2);
+                $country->continent_hash = $continent_hash;
+                $country->continent_name = $record->continent;
+                $country->country_hash = $country_hash;
+                $country->country_id = $country_code ?: self::threeletter_encode($record->location);
+                $country->country_name = $record->location;
+                $country->location_type = 'country';
+                $country->population_count += $record->population;
+            }
+
+            foreach ($filter_outer as $filter)
+            {
+                if (!isset($record->$filter))
+                    continue;
+                    
+                if (!isset($continent->$filter))
+                    $continent->$filter = $record->$filter;
+                    
+                $continent->$filter = (($continent->$filter + $record->$filter) / 2);
+
+                if (!isset($country->$filter))
+                    $country->$filter = $record->$filter;
+                    
+                $country->$filter = (($country->$filter + $record->$filter) / 2);
+            }
+            
+            // We only need the last dataset to update the location objects
+            $last_index = (count($record->data) - 1);            
+            $data = $record->data[$last_index];
+            
+            foreach ($filter_inner as $filter => $type)
+            {
+                if (!isset($data->$filter))
+                    continue;
+                    
+                if (!isset($continent->$filter))
+                {
+                    if ($type != "sum")
+                        $continent->$filter = $data->$filter;
+                    else
+                        $continent->$filter = 0;
+                }
+            
+                if (is_numeric($data->$filter))
+                {
+                    if ($type == "avg")
+                        $continent->$filter = (($continent->$filter + $data->$filter) / 2);
+                    elseif ($type == "sum")
+                        $continent->$filter += $data->$filter;
+                }
+
+                if (!isset($country->$filter))
+                {
+                    if ($type != "sum")
+                        $country->$filter = $data->$filter;
+                    else
+                        $country->$filter = 0;
+                }
+                    
+                if (is_numeric($data->$filter))
+                {
+                    if ($type == "avg")
+                        $country->$filter = (($country->$filter + $data->$filter) / 2);
+                    elseif ($type == "sum")
+                        $country->$filter += $data->$filter;
+                }
+            }
+            
+            unset($data);
+            unset($last_index);
+
+            // We must override the used addressed space, if objects just have been created, they will get lost if we dont force this
+            $countries[$country_hash] = $country;
+            $continents[$continent_hash] = $continent;
+        }
+
+        // No longer needed, so clean them up        
+        unset($filter_inner);
+        unset($filter_outer);
+        
+        // Third, we add the german states
+        $europe_hash = self::hash_name("Europe");
+        $germany_hash = self::hash_name("Germany");
+                
+        $europe = $continents[$europe_hash];
+        $germany = $countries[$germany_hash];
+
+        // If we dont have europe or germany at this point, things went wrong
+        if ((!$europe) || (!$germany))
+            throw new Exception("Europe and/or Germany could not be found in data stores");
+        
+        // Set area size
+        $germany->area = $this->gen_territory_area->handler->get_data()->area;
+        
+        $german_states_area = $this->gen_territory_area->handler->get_data()->states_area;
+        
+        if (is_array($german_states_area))
+        {
+            foreach ($german_states_area as $state_name => $area)
+            {
+                $state_hash = self::hash_name($state_name);
+                
+                if (!isset($states[$state_hash]))
+                    $state = clone $tmpl;
+                else
+                    $state = $states[$state_hash];
+                
+                $real_state_name = null;
+                    
+                $state->geo_id = DataHandler::german_state_id_by_name($state_name, $real_state_name);
+                $state->continent_id = $europe->continent_id;
+                $state->continent_hash = $europe->continent_hash;
+                $state->continent_name = $europe->continent_name;
+                $state->country_id = $germany->country_id;
+                $state->country_hash = $germany->country_hash;
+                $state->country_name = $germany->country_name;
+                $state->state_id = self::threeletter_encode($state_name);
+                $state->state_hash = $state_hash;
+                $state->state_name = $real_state_name ?: $state_name;
+                $state->location_type = 'state';
+                $state->area = $area;
+                
+                if (!isset($germany->area))
+                    $germany->area = 0;
+                                
+                $germany->area += $area;
+                
+                $states[$state_hash] = $state;
+            }
+        }
+        
+        unset($german_states_area);
+        
+        $german_states_population = $this->gen_population_by_state->handler->get_data()->states;
+
+        if (is_array($german_states_population))
+        {
+            foreach ($german_states_population as $state_name => $data)
+            {
+                $state_hash = self::hash_name($state_name);
+                $state_created = false;
+                
+                if (!isset($states[$state_hash]))
+                {
+                    $state = clone $tmpl;
+                    $state_created = true;
+                }
+                else
+                {
+                    $state = $states[$state_hash];
+                }
+                
+                if ($state_created)
+                {
+                    $real_state_name = null;
+                        
+                    $state->geo_id = DataHandler::german_state_id_by_name($state_name, $real_state_name);
+                    $state->continent_id = $europe->continent_id;
+                    $state->continent_hash = $europe->continent_hash;
+                    $state->continent_name = $europe->continent_name;
+                    $state->country_id = $germany->country_id;
+                    $state->country_hash = $germany->country_hash;
+                    $state->country_name = $germany->country_name;
+                    $state->state_id = self::threeletter_encode($state_name);
+                    $state->state_hash = $state_hash;
+                    $state->state_name = $real_state_name ?: $state_name;
+                    $state->location_type = 'state';
+                }
+                
+                $state->population_males = $data->males;
+                $state->population_females = $data->females;
+                $state->population_count = $data->totals;
+                
+                if (!isset($germany->population_females))
+                    $germany->population_females = 0;
+                    
+                if (!isset($germany->population_males))
+                    $germany->population_males = 0;
+                    
+                $germany->population_females += $data->females;
+                $germany->population_males += $data->males;
+                
+                $state->population_year = $data->date->format("Y");
+                
+                $states[$state_hash] = $state;
+            }            
+        }
+        
+        unset($german_states_population);
+        
+        // Forth, we add the german districts
+        $german_districts_area = $this->gen_territory_district_area->handler->get_data()->districts_area;
+        $german_districts_population = $this->gen_population_by_district->handler->get_data()->districts;
+
+        if (is_array($german_districts_area))
+        {
+            foreach ($german_districts_area as $district_id => $data)
+            {	
+                $state_name = DataHandler::german_state_by_district_geo_id($data->id);                
+                $state_hash = self::hash_name($state_name);
+                
+                $district_hash = self::hash_name($data->fullname);
+                
+                if (!isset($states[$state_hash]))
+                    continue;
+                else
+                    $state = $states[$state_hash];
+                
+                if (!isset($districts[$district_hash]))
+                    $district = clone $tmpl;
+                else
+                    $district = $districts[$district_hash];
+                    
+                $district_index[$district_id] = $district_hash;
+                    
+                $district->geo_id = $district_id;
+                $district->continent_id = $europe->continent_id;
+                $district->continent_hash = $europe->continent_hash;
+                $district->continent_name = $europe->continent_name;
+                $district->country_id = $germany->country_id;
+                $district->country_hash = $germany->country_hash;
+                $district->country_name = $germany->country_name;
+                $district->state_id = $state->state_id;
+                $district->state_hash = $state->state_hash;
+                $district->state_name = $state->state_name;
+                $district->district_id = self::threeletter_encode($data->name);
+                $district->district_hash = $district_hash;
+                $district->district_name = $data->name;
+                $district->district_type = $data->type;
+                $district->district_fullname = $data->fullname;
+                $district->location_type = 'district';
+                $district->area = $data->area;
+                
+                if (is_array($german_districts_population))
+                {
+                    if (isset($german_districts_population[$district_id]))
+                    {
+                        $data2 = $german_districts_population[$district_id];
+                        
+                        $district->population_females = $data2->females;
+                        $district->population_males = $data2->males;
+                        $district->population_count = $data2->totals;
+                        $district->population_year = $data2->date->format("Y");
+                        
+                        unset($data2);
+                    }
+                }
+                                
+                $districts[$district_hash] = $district;
+            }
+        }
+        
+        unset($german_districts_area);
+        unset($german_districts_population);        
+
+        // Fifth, get the RKI nowcasting data and push the latest entry to the germany object
+        $max_timestamp = -1;
+        $max_data = null;
+        
+        foreach ($this->rki_nowcast->handler->get_data() as $id => $data)
+        {
+            $ts = strtotime($data->timestamp_represent);
+            
+            if ($ts > $max_timestamp)
+            {
+                $max_timestamp = $ts;
+                $max_data = $data;
+            }
+        }
+        
+        foreach ($max_data as $key => $val)
+        {
+            if ($key == "timestamp_represent")
+                continue;
+                
+            if ($key == "date_rep")
+                $key = "date_nowcast";
+                
+            $germany->$key = $val;
+        }
+        
+        unset($max_data);
+        
+        // Force update of the "germany" object
+        $countries[$germany_hash] = $germany;
+        
+        $this->continents = $continents;
+        $this->countries = $countries;
+        $this->states = $states;
+        $this->districts = $districts;
+        $this->locations = $locations;
+        
+        // Free the memory, which is no longer need (if hold data is not requested)
+        if (!$hold_data)
+        {
+            $this->rki_nowcast->handler->free();
+            $this->gen_territory_area->handler->free();
+            $this->gen_territory_district_area->handler->free();
+            $this->gen_population->handler->free();
+            $this->gen_population_by_state->handler->free();
+            $this->gen_population_by_district->handler->free();
+        }
+    
+        return true;
+    }
+    
+    public function master_datasets($hold_data = false)
+    {
+        // After stores are loaded, create the data pool with common fields
+        $datasets = array();
+        
+        if ($this->stores_loaded_count < 10)
+            return false;
+            
+        // Create a template
+        $tmpl = new \stdClass;
+        $tmpl->dataset_hash = null;
+        $tmpl->country_hash = null;
+        $tmpl->continent_hash = null;
+        $tmpl->day_of_week = null;
+        $tmpl->day = null;
+        $tmpl->month = null;
+        $tmpl->year = null;
+        $tmpl->cases = null;
+        $tmpl->deaths = null;
+        $tmpl->timestamp_represent = null;
+        
+        $filter = self::get_infocast_filter("inner");
+        
+        foreach ($filter as $key => $type)
+            $tmpl->$key = null;
+            
+        $dataset_index = array();
+            
+        foreach ($this->eu_datacast->handler->get_data()->records as $id => $record)
+        {
+            $country_hash = self::hash_name($record->country);
+            $continent_hash = self::hash_name($record->continent);
+            $dataset_hash = md5(self::hash_name($record->country).$record->date_rep);
+            
+            if (!isset($datasets[$dataset_hash]))
+                $dataset = clone $tmpl;
+            else
+                $dataset = $datasets[$dataset_hash];
+                
+            $dataset->dataset_hash = $dataset_hash;
+            $dataset->country_hash = $country_hash;
+            $dataset->continent_hash = $continent_hash;
+            $dataset->day_of_week = $record->day_of_week;
+            $dataset->day = $record->day;
+            $dataset->month = $record->month;
+            $dataset->year = $record->year;
+            $dataset->cases = $record->cases;
+            $dataset->deaths = $record->deaths;
+            $dataset->timestamp_represent = $record->timestamp_represent;
+            
+            $index = $dataset->continent_hash.$dataset->country_hash;
+            
+            if (!isset($dataset_index[$index]))
+                $dataset_index[$index] = array();
+                
+            $date = date("Ymd", strtotime($record->timestamp_represent));
+                
+            $dataset_index[$index][$date] = $dataset_hash;
+            
+            krsort($dataset_index[$index]);
+            
+            $datasets[$dataset_hash] = $dataset;
+        }
+        
+        foreach ($dataset_index as $index => $data)
+        {
+            $cases = array();
+            
+            foreach ($data as $date => $hash)
+            {
+                $incidence7 = 0;
+                $incidence14 = 0;
+
+                $incidence7_smoothed = 0;
+                $incidence14_smoothed = 0;
+                
+                $casecount = 0;
+                $casecount_smoothed = 0;
+                                        
+                foreach ($data as $date2 => $hash2)
+                {
+                    if ($date2 < $date)
+                        continue;
+                        
+                    array_push($cases, $datasets[$hash2]->cases);
+                
+                    if (count($cases) == 18)
+                    {
+                        break;
+                    }
+                }
+
+                $top7 = 8;
+                $top14 = 15;
+                $top7_smoothed = 11;
+                $top14_smoothed = 18;
+                
+                if (count($cases) < 8)
+                    $top7 = count($cases) - 1;
+                    
+                if (count($cases) < 15)
+                    $top14 = count($cases) - 1;
+                    
+                if (count($cases) < 11)
+                    $top7_smoothed = count($cases) - 1;
+                
+                if (count($cases) < 18)
+                    $top14_smoothed = count($cases) - 1;
+                    
+                $casebase = 0;
+                $casebase_smoothed = 3;
+                
+                if ((count($cases) + 1) < $casebase_smoothed)
+                    $casebase_smoothed = (count($cases) - 1);
+
+                for ($i = $casebase; $i < $top7; $i++)
+                    $incidence7 += $cases[$i];
+                            
+                for ($i = $casebase; $i < $top14; $i++)
+                    $incidence14 += $cases[$i];
+                            
+                for ($i = $casebase_smoothed; $i < $top7_smoothed; $i++)
+                    $incidence7_smoothed += $cases[$i];
+                            
+                for ($i = $casebase_smoothed; $i < $top14_smoothed; $i++)
+                    $incidence14_smoothed += $cases[$i];
+                            
+                $casecount = $cases[0];
+                
+                if (count($cases) > 3)
+                    $casecount_smoothed = $cases[3];
+                else
+                    $casecount_smoothed = count($cases);
+                                    
+                $exp7 = (($incidence7 - $casecount) / 6);
+                $exp14 = (($incidence14 - $casecount) / 13);
+                
+                if ($exp7 == 0)
+                    $exp7 = 1;
+                
+                if ($exp14 == 0)
+                    $exp14 = 1;
+                
+                $exp7_smoothed = (($incidence7_smoothed - $casecount_smoothed) / 6);
+                $exp14_smoothed = (($incidence14_smoothed - $casecount_smoothed) / 13);
+                                
+                if ($exp7_smoothed == 0)
+                    $exp7_smoothed = 1;
+                
+                if ($exp14_smoothed == 0)
+                    $exp14_smoothed = 1;
+                
+                $datasets[$hash]->incidence_7day = $incidence7 / 7;
+                $datasets[$hash]->incidence_14day = $incidence14 / 14;
+                
+                $datasets[$hash]->incidence_7day_smoothed = $incidence7_smoothed / 7;
+                $datasets[$hash]->incidence_14day_smoothed = $incidence14_smoothed / 14;
+                
+                $datasets[$hash]->exponence_7day = ($casecount / $exp7);
+                $datasets[$hash]->exponence_14day = ($casecount / $exp14);
+
+                $datasets[$hash]->exponence_7day_smoothed = ($casecount_smoothed / $exp7_smoothed);
+                $datasets[$hash]->exponence_14day_smoothed = ($casecount_smoothed / $exp14_smoothed);
+            }
+        }
+        
+        print_r($datasets);
+        exit;
+            
+        foreach ($this->cov_infocast->handler->get_data() as $country_code => $record)
+        {
+            if (!isset($record->continent))
+                continue;
+                
+            $country_hash = self::hash_name($record->location);
+            $continent_hash = self::hash_name($record->continent);
+            
+            foreach ($record->data as $data)
+            {
+                $dataset_hash = md5(self::hash_name($record->location).$data->date);
+                $dataset_created = false;
+                
+                if (!isset($datasets[$dataset_hash]))
+                {
+                    $dataset = clone $tmpl;
+                    $dataset_created = true;
+                }
+                else
+                {
+                    $dataset = $datasets[$dataset_hash];
+                }
+        
+                if ($dataset_created)
+                {
+                    $ts = strtotime($data->date." 23:59:59");
+                        
+                    $dataset->dataset_hash = $dataset_hash;
+                    $dataset->country_hash = $country_hash;
+                    $dataset->continent_hash = $continent_hash;
+                    $dataset->day_of_week = date("w", $ts);
+                    $dataset->day = date("j", $ts);
+                    $dataset->month = date("m", $ts);
+                    $dataset->year = date("Y", $ts);
+                    $dataset->timestamp_represent = date("Y-m-d H:i:s", $ts);
+                }
+                
+                foreach ($filter as $key => $type)
+                {
+                    if (!isset($data->$key))
+                        continue;
+                        
+                    if ($key == "date")
+                        continue;
+                        
+                    $dataset->$key = $data->$key;
+                }
+                
+                $datasets[$dataset_hash] = $dataset;
+            }
+        }
+                    
+        // Free the memory, which is no longer need (if hold data is not requested)
+        if (!$hold_data)
+        {
+            $this->eu_datacast->handler->free();
+            $this->cov_infocast->handler->free();
+        }
+        
+        $this->datasets = $datasets;
+
+        return true;
+    }
+    
+    public function master_testresults($hold_data = false)
+    {
+        // After stores are loaded, create the testresult pool with common fields
+        $testresults = array();
+        
+        if ($this->stores_loaded_count < 10)
+            return false;
+            
+        $europe_hash = self::hash_name("Europe");
+        $germany_hash = self::hash_name("Germany");
+        
+        foreach($this->rki_positive->handler->get_data() as $data)
+        {
+            $result_hash = md5(self::hash_name($data->district_name).$data->date_rep);
+            $district_hash = self::hash_name($data->district_name);
+            $state_hash = self::hash_name($data->state);
+            
+            $testresult = clone $data;
+            $testresult->result_hash = $result_hash;
+            $testresult->district_hash = $district_hash;
+            $testresult->state_hash = $state_hash;
+            $testresult->country_hash = $germany_hash;
+            $testresult->continent_hash = $europe_hash;
+            
+            $testresults[$result_hash] = $testresult;
+        }
+        
+        // Free the memory, which is no longer need (if hold data is not requested)
+        if (!$hold_data)
+            $this->rki_positive->handler->free();
+        
+        $this->testresults = $testresults;
+print_r($this->testresults);
+exit;
+        return true;        
+    }
+    
+    public function load_stores($cache_timeout = 14400)
+    {
+        // We must speed things up, so the new idea is to preload all stores and make the primary calculations in memory
+        // This will consume much more ram (approx. 1g), but will speed up calculations by ~80%
+        
+        $this->stores_loaded_bytes = 0;
+        $this->stores_loaded_count = 0;
+        
+        try
+        {
+            $this->stores_loaded_bytes += $this->retrieve_eu_datacast($cache_timeout);
+            $this->stores_loaded_count++;
+            
+            $this->stores_loaded_bytes += $this->retrieve_cov_infocast($cache_timeout);
+            $this->stores_loaded_count++;
+                       
+            $this->stores_loaded_bytes += $this->retrieve_rki_rssfeed($cache_timeout);
+            $this->stores_loaded_count++;
+                       
+            $this->stores_loaded_bytes += $this->retrieve_rki_nowcast($cache_timeout);
+            $this->stores_loaded_count++;
+
+            $this->stores_loaded_bytes += $this->retrieve_rki_positive($cache_timeout);
+            $this->stores_loaded_count++;
+                                   
+            $this->stores_loaded_bytes += $this->retrieve_gen_territory_area($cache_timeout);
+            $this->stores_loaded_count++;
+                       
+            $this->stores_loaded_bytes += $this->retrieve_gen_territory_district_area($cache_timeout);
+            $this->stores_loaded_count++;
+                       
+            $this->stores_loaded_bytes += $this->retrieve_gen_population($cache_timeout);
+            $this->stores_loaded_count++;
+                       
+            $this->stores_loaded_bytes += $this->retrieve_gen_population_by_state($cache_timeout);
+            $this->stores_loaded_count++;
+                       
+            $this->stores_loaded_bytes += $this->retrieve_gen_population_by_district($cache_timeout);
+            $this->stores_loaded_count++;                                   
+        }
+        catch(Exception $ex)
+        {
+            throw new Exception("Unable to retrieve data store.", 0, $ex);
+        }
+        
+        return $this->stores_loaded_bytes;
+    }
+    
+    function __construct($config = ".coronadatarc")
     {
         $this->config_file = $config;
         
         $this->config = new Config($this->config_file);
         
         $this->create_datastore();
-        
-        $this->eu_datacast_filename = $this->config->data_store."/".$eu_datacast_filename;
-        $this->rki_positive_filename = $this->config->data_store."/".$rki_positive_filename;
-        $this->rki_nowcast_filename = $this->config->data_store."/".$rki_nowcast_filename;
-        $this->rki_rssfeed_filename = $this->config->data_store."/".$rki_rssfeed_filename;
-        $this->cov_infocast_filename = $this->config->data_store."/".$cov_infocast_filename;
-        
-        $this->eu_datacast = new DataHandler($this->config->url_eu_datacast);
-        $this->rki_positive = new DataHandler($this->config->url_rki_positive);
-        $this->rki_nowcast = new DataHandler($this->config->url_rki_nowcast);
-        $this->rki_rssfeed = new DataHandler($this->config->url_rki_rssfeed);
-        $this->cov_infocast = new DataHandler($this->config->url_cov_infocast);
-        
-        $this->eu_datacast_timestamp = 0;
-        $this->eu_datacast_size = 0;
-        
-        $this->rki_positive_timestamp = 0;
-        $this->rki_positive_size = 0;
-        
-        $this->rki_nowcast_timestamp = 0;
-        $this->rki_nowcast_size = 0;
-        
-        $this->rki_rssfeed_timestamp = 0;
-        $this->rki_rssfeed_size = 0;
-        
-        $this->cov_infocast_timestamp = 0;
-        $this->cov_infocast_size = 0;
+
+        try
+        {        
+            $this->eu_datacast = $this->get_template(new DataHandler($this->config, $this->config->url_eu_datacast));
+            $this->rki_positive = $this->get_template(new DataHandler($this->config, $this->config->url_rki_positive));
+            $this->rki_nowcast = $this->get_template(new DataHandler($this->config, $this->config->url_rki_nowcast));
+            $this->rki_rssfeed = $this->get_template(new DataHandler($this->config, $this->config->url_rki_rssfeed));
+            $this->cov_infocast = $this->get_template(new DataHandler($this->config, $this->config->url_cov_infocast));
+            
+            $this->gen_territory_area = $this->get_template(new DataHandler($this->config, null, "territory", "area"));
+            $this->gen_territory_district_area = $this->get_template(new DataHandler($this->config, null, "territory", "district_area"));
+            $this->gen_population = $this->get_template(new DataHandler($this->config, null, "population", "total"));
+            $this->gen_population_by_state = $this->get_template(new DataHandler($this->config, null, "population", "by_state"));
+            $this->gen_population_by_district = $this->get_template(new DataHandler($this->config, null, "population", "by_district"));
+        }
+        catch (Exception $ex)
+        {
+            throw new Exception("Problem creating datahandler object", 0, $ex);
+        }
         
         $this->transaction_name = null;
         

@@ -91,12 +91,15 @@ class Combined extends Base
     protected $continent = null;
     protected $country = null;
     protected $location = null;
+    protected $location_area = null;
+    protected $location_prefix = null;
+    protected $location_type = null;
     protected $population = null;
     protected $population_year = null;
     protected $population_density = null;
-    protected $population_expected = null;
-    protected $population_expected_worldwide = null;
-    protected $population_expected_share = null;
+    protected $population_males = null;
+    protected $population_females = null;
+    protected $population_asterisks = null;
     protected $median_age = null;
     protected $aged_65_older = null;
     protected $aged_70_older = null;
@@ -214,12 +217,15 @@ class Combined extends Base
       `locations`.`continent` AS `continent`,
       `locations`.`country` AS `country`,
       `locations`.`location` AS `location`,
+      `locations`.`location_area` AS `location_area`,
+      `locations`.`location_prefix` AS `location_prefix`,
+      `locations`.`location_type` AS `location_type`,
       `locations`.`population` AS `population`,
       `locations`.`population_year` AS `population_year`,
       `locations`.`population_density` AS `population_density`,
-      `locations`.`population_expected` AS `population_expected`,
-      `locations`.`population_expected_worldwide` AS `population_expected_worldwide`,
-      `locations`.`population_expected_share` AS `population_expected_share`,
+      `locations`.`population_males` AS `population_males`,
+      `locations`.`population_females` AS `population_females`,
+      `locations`.`population_asterisks` AS `population_asterisks`,
       `locations`.`median_age` AS `median_age`,
       `locations`.`aged_65_older` AS `aged_65_older`,
       `locations`.`aged_70_older` AS `aged_70_older`,

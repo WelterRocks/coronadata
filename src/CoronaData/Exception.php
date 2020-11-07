@@ -22,7 +22,7 @@
 
 final class Exception extends \exception
 {
-    function __construct(string $message, int $code = 0, Throwable $previous = null)
+    function __construct(string $message, int $code = 0, \Throwable $previous = null)
     {        
         parent::__construct($message, $code, $previous);
 

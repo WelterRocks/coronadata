@@ -31,6 +31,8 @@ class Locations extends Base
     protected $timestamp_data_complete = null;
     protected $parent_uid = null;
     protected $location_type = null;
+    protected $location_prefix = null;
+    protected $location_area = null;
     protected $geo_id = null;
     protected $country_code = null;
     protected $continent = true;
@@ -39,9 +41,9 @@ class Locations extends Base
     protected $population = null;
     protected $population_year = null;
     protected $population_density = null;
-    protected $population_expected = null;
-    protected $population_expected_worldwide = null;
-    protected $population_expected_share = null;
+    protected $population_males = null;
+    protected $population_females = null;
+    protected $population_asterisks = null;
     protected $median_age = null;
     protected $aged_65_older = null;
     protected $aged_70_older = null;
@@ -91,6 +93,8 @@ class Locations extends Base
         `timestamp_data_complete` timestamp NULL DEFAULT NULL,
         `parent_uid` bigint UNSIGNED DEFAULT NULL,
         `location_type` ENUM('continent','country','state','district','location') NOT NULL DEFAULT 'location',
+        `location_prefix` VARCHAR(64) NULL,
+        `location_area` FLOAT NOT NULL DEFAULT '0',
         `geo_id` varchar(16) CHARACTER SET utf8mb4 DEFAULT NULL,
         `country_code` varchar(16) CHARACTER SET utf8mb4 DEFAULT NULL,
         `continent` varchar(32) NOT NULL,
@@ -99,9 +103,9 @@ class Locations extends Base
         `population` bigint DEFAULT NULL,
         `population_year` year DEFAULT NULL,
         `population_density` float DEFAULT NULL,
-        `population_expected` bigint DEFAULT NULL,
-        `population_expected_worldwide` bigint DEFAULT NULL,
-        `population_expected_share` float DEFAULT NULL,
+        `population_males` bigint DEFAULT NULL,
+        `population_females` bigint DEFAULT NULL,
+        `population_asterisks` bigint DEFAULT NULL,
         `median_age` float DEFAULT NULL,
         `aged_65_older` float DEFAULT NULL,
         `aged_70_older` float DEFAULT NULL,
@@ -327,9 +331,9 @@ class Locations extends Base
           "population" => "sum",
           "population_year" => "as is",
           "population_density" => "avg",
-          "population_expected" => "sum",
-          "population_expected_worldwide" => "sum",
-          "population_expected_share" => "sum",
+          "population_males" => "sum",
+          "population_females" => "sum",
+          "population_asterisks" => "sum",
           "median_age" => "avg",
           "aged_65_older" => "sum",
           "aged_70_older" => "sum",

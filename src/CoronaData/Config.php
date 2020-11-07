@@ -27,6 +27,10 @@ final class Config
     private $url_rki_nowcast = 'https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/Nowcasting_Zahlen_csv.csv?__blob=publicationFile';
     private $url_rki_rssfeed = 'https://www.rki.de/SiteGlobals/Functions/RSSFeed/RSSGenerator_nCoV.xml';
     private $url_cov_infocast = 'https://github.com/owid/covid-19-data/raw/master/public/data/owid-covid-data.json';
+    private $url_genesis_api = 'https://www-genesis.destatis.de/genesisWS/rest/2020/';
+    
+    private $genesis_username = "DEXXXXXXXXX";
+    private $genesis_password = null;
     
     private $data_store = './data';
     
@@ -100,9 +104,9 @@ final class Config
     
     function __construct($config_file = ".coronadatarc")
     {
-        $this->dynamic_keys = array("data_store", "mysql_hostname", "mysql_username", "mysql_password", "mysql_database", "mysql_socket", "mysql_hostport", "mqtt_hostname", "mqtt_hostport", "mqtt_username", "mqtt_password", "mqtt_client_id", "mqtt_topic");
+        $this->dynamic_keys = array("data_store", "genesis_username", "genesis_password", "mysql_hostname", "mysql_username", "mysql_password", "mysql_database", "mysql_socket", "mysql_hostport", "mqtt_hostname", "mqtt_hostport", "mqtt_username", "mqtt_password", "mqtt_client_id", "mqtt_topic");
         $this->allow_override = false;
-        
+
         if (file_exists($config_file))
         {
             $ini = json_decode(json_encode(parse_ini_file($config_file)));

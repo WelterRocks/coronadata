@@ -83,7 +83,7 @@ class HttpHandler
         
         if ($query)
         {
-            if (is_array($query))
+            if ((is_array($query)) || (is_object($query)))
                 $query = http_build_query($query);
                 
             if (isset($this->url->query))
@@ -122,7 +122,7 @@ class HttpHandler
         return $this->error_number;
     }
     
-    private function set_return_header()
+    public function set_return_header()
     {
         if (!is_resource($this->handle))
             throw new Exception("Uninitialized");
@@ -132,7 +132,7 @@ class HttpHandler
         return $this->return_header;
     }
     
-    private function get_options()
+    public function get_options()
     {
         $options = array(
             CURLOPT_RETURNTRANSFER => true,         
@@ -152,7 +152,7 @@ class HttpHandler
         return $options;
     }
     
-    private function set_options($add_options = null)
+    public function set_options($add_options = null)
     {
         if (!is_resource($this->handle))
             throw new Exception("Uninitialized");
@@ -170,7 +170,21 @@ class HttpHandler
         return curl_setopt_array($this->handle, $options);
     }
     
-    private function post($postfields = null, &$is_json = null)
+    public function put($jsondata = null)
+    {
+        $is_json = null;
+        
+        return $this->post($jsondata, $is_json, "PUT");
+    }
+    
+    public function objget($obj)
+    {
+        curl_setopt($this->handle, CURLOPT_URL, $this->get_url($obj));
+            
+        return $this->get();
+    }
+    
+    public function post($postfields = null, &$is_json = null, $method = "POST")
     {
         if (!is_resource($this->handle))
             throw new Exception("Uninitialized");
@@ -186,8 +200,12 @@ class HttpHandler
             
         if ($is_json)
             $postfields = json_encode($postfields);
+        
+        if ((!$method) && ($method == "POST"))
+            curl_setopt($this->handle, CURLOPT_POST, 1);
+        else
+            curl_setopt($this->handle, CURLOPT_CUSTOMREQUEST, $method);
             
-        curl_setopt($this->handle, CURLOPT_POST, 1);
         curl_setopt($this->handle, CURLOPT_SAFE_UPLOAD, true);
         curl_setopt($this->handle, CURLOPT_POSTFIELDS, $postfields);
         
@@ -202,7 +220,7 @@ class HttpHandler
         return $this->length;
     }
     
-    private function get()
+    public function get()
     {
         if (!is_resource($this->handle))
             throw new Exception("Uninitialized");
@@ -215,7 +233,7 @@ class HttpHandler
         return $this->length;
     }
     
-    private function init($query = null)
+    public function init($query = null)
     {
         if (is_resource($this->handle))
             throw new Exception("Already initialized");
@@ -226,7 +244,7 @@ class HttpHandler
         return $this->handle;
     }
     
-    private function close()
+    public function close()
     {
         if (is_resource($this->handle))
         {
@@ -241,7 +259,7 @@ class HttpHandler
         return true;
     }
     
-    private function parse_csv($csv_buffer, $eol = "\n")
+    public function parse_csv($csv_buffer, $eol = "\n")
     {
         $csv_data = str_getcsv($csv_buffer, $eol, $this->csv_enclosure, $this->csv_escape);
         
@@ -269,6 +287,11 @@ class HttpHandler
     public function get_length()
     {
         return $this->length;
+    }
+    
+    public function get_data(&$content_type = null)
+    {
+        return json_decode($this->get_result(true, $content_type));
     }
     
     public function get_result($raw = false, &$content_type = null)
@@ -316,8 +339,10 @@ class HttpHandler
         return $this->transfertime;
     }
     
-    public function retrieve($method = "get", $query = null, $postdata = null, $add_options = null)
+    public function retrieve($method = "get", $query = null, $postdata = null, $add_options = null, &$data = null)
     {
+        $data = null;
+        
         switch ($method)
         {
             case "get":
@@ -326,7 +351,7 @@ class HttpHandler
                     $this->set_options($add_options);
                 break;
             default:
-                throw new Exeception("Invalid method requested");
+                throw new Exception("Invalid method requested");
                 return;
         }        
         
@@ -338,6 +363,8 @@ class HttpHandler
         $this->set_error();
         $this->set_return_header();
         $this->close();
+        
+        $data = $this->get_result();
                 
         return $length;
     }
@@ -348,7 +375,7 @@ class HttpHandler
         
         if (!$this->url)
             throw new Exception("Unable to parse URL");
-            
+
         if ((isset($this->url->path)) && ($this->url->path == $url))
             throw new Exception("Invalid URL");
             

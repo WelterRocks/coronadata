@@ -76,19 +76,21 @@ function init_config()
     if (!is_resource($fd))
         $cli->exit_error("Unable to open configuration file '".$config_file, 2);
     
-    @fwrite($fd, "data_store=".realpath(__DIR__."/../data")."\n");
-    @fwrite($fd, "mysql_hostname=localhost\n");
-    @fwrite($fd, "mysql_hostport=3306\n");
-    @fwrite($fd, "mysql_username=root\n");
-    @fwrite($fd, "mysql_password=\n");
-    @fwrite($fd, "mysql_database=corona\n");
-    @fwrite($fd, "mysql_socket=\n");
-    @fwrite($fd, "mqtt_hostname=localhost\n");
-    @fwrite($fd, "mqtt_hostport=1883\n");
-    @fwrite($fd, "mqtt_username=mqtt\n");
-    @fwrite($fd, "mqtt_password=YOUR-MQTT-PASSWORD-HERE\n");
-    @fwrite($fd, "mqtt_client_id=CoronaData\n");
-    @fwrite($fd, "mqtt_topic=%prefix%/WelterRocks/CoronaData/Casting/%suffix%\n");
+    @fwrite($fd, "data_store=\"".realpath(__DIR__."/../data")."\"\n");
+    @fwrite($fd, "genesis_username=\"DEXXXXXXXX\"\n");
+    @fwrite($fd, "genesis_password=\"\"\n");
+    @fwrite($fd, "mysql_hostname=\"localhost\"\n");
+    @fwrite($fd, "mysql_hostport=\"3306\"\n");
+    @fwrite($fd, "mysql_username=\"root\"\n");
+    @fwrite($fd, "mysql_password=\"\"\n");
+    @fwrite($fd, "mysql_database=\"corona\"\n");
+    @fwrite($fd, "mysql_socket=\"\"\n");
+    @fwrite($fd, "mqtt_hostname=\"localhost\"\n");
+    @fwrite($fd, "mqtt_hostport=\"1883\"\n");
+    @fwrite($fd, "mqtt_username=\"mqtt\"\n");
+    @fwrite($fd, "mqtt_password=\"YOUR-MQTT-PASSWORD-HERE\"\n");
+    @fwrite($fd, "mqtt_client_id=\"CoronaData\"\n");
+    @fwrite($fd, "mqtt_topic=\"%prefix%/WelterRocks/CoronaData/Casting/%suffix%\"\n");
 
     @fclose($fd);
 }
@@ -128,6 +130,14 @@ if (!$skip_config)
     {
         case "data_store":
             $text = CLI::COLOR_WHITE."Please enter the ".CLI::COLOR_LIGHT_GREEN."data store path".CLI::COLOR_WHITE." for the downloaded data files".CLI::COLOR_EOL;
+            break;
+        case "genesis_username":
+            $text = CLI::COLOR_WHITE."Please enter the ".CLI::COLOR_LIGHT_GREEN."username".CLI::COLOR_WHITE." of your Genesis account.".CLI::COLOR_EOL;
+            break;
+        case "genesis_password":
+            $cli->write("\n".CLI::COLOR_MAGENTA."WARNING: password characters are shown at console. Press ENTER only to leave to old one!".CLI::COLOR_EOL);
+            $text = CLI::COLOR_WHITE."Please enter your ".CLI::COLOR_LIGHT_GREEN."password".CLI::COLOR_WHITE." of your Genesis account.".CLI::COLOR_EOL;
+            $default = "";
             break;
         case "mysql_hostname":
             $text = CLI::COLOR_WHITE."Please enter the ".CLI::COLOR_LIGHT_GREEN."hostname".CLI::COLOR_WHITE." of your MySQL database".CLI::COLOR_EOL;

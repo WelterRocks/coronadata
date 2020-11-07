@@ -22,9 +22,13 @@
 
 use WelterRocks\CoronaData\Execption;
 use WelterRocks\CoronaData\HttpHandler;
+use WelterRocks\CoronaData\Genesis;
 
 class DataHandler
 {
+    private $config = null;
+    
+    private $genesis = null;
     private $http_handler = null;
     
     private $data = null;
@@ -33,6 +37,83 @@ class DataHandler
 
     private $timestamp = null;
     private $datasource = null;
+    private $use_genesis = null;
+    
+    private $genesis_code = null;
+    private $genesis_subcode = null;
+    private $genesis_area = null;
+    
+    private $http_url = null;
+    private $http_ssl_verifyhost = null;
+    private $http_ssl_verifypeer = null;
+    private $http_user_agent = null;
+    
+    public static function german_geo_id_table()
+    {
+        // Due to missing IDs in genesis state response, we must hard code this
+        
+        $transform = array(
+            "1" => "Schleswig-Holstein",
+            "2" => "Hamburg",
+            "3" => "Niedersachsen",
+            "4" => "Bremen",
+            "5" => "Nordrhein-Westfalen",
+            "6" => "Hessen",
+            "7" => "Rheinland-Pfalz",
+            "8" => "Baden-Württemberg",
+            "9" => "Bayern",
+            "10" => "Saarland",
+            "11" => "Berlin",
+            "12" => "Brandenburg",
+            "13" => "Mecklenburg-Vorpommern",
+            "14" => "Sachsen",
+            "15" => "Sachsen-Anhalt",
+            "16" => "Thüringen"
+        );
+        
+        return $transform;
+    }
+    
+    public static function german_state_by_district_geo_id($district_geo_id, &$found_id = null)
+    {
+        $found_id = (double)substr($district_geo_id, 0, 2);
+        
+        foreach (self::german_geo_id_table() as $id => $name)
+        {
+            if ($id == $found_id)
+                return $name;
+        }
+        
+        $found_id = null;
+        
+        return null;
+    }
+    
+    public static function german_state_id_by_name($state_name, &$real_name = null, &$exact_id = null, &$near_id = null)
+    {
+        // We do this in two phases: exact match and near match
+        $exact_id = null;
+        $near_id = null;
+        
+        $real_name = null;
+        
+        foreach (self::german_geo_id_table() as $id => $name)
+        {
+            if (strtolower($name) == strtolower($state_name))
+            {
+                $exact_id = $id;
+                $real_name = $name;
+            }
+            
+            if (soundex($name) == soundex($state_name))
+            {
+                $near_id = $id;
+                $real_name = $name;
+            }
+        }
+        
+        return (($exact_id) ? $exact_id : $near_id);
+    }
     
     public static function time_to_timestamp($time)
     {
@@ -186,11 +267,312 @@ class DataHandler
         return $this->data;
     }
     
+    public function free()
+    {
+        $this->timestamp = -1;
+        $this->length = -1;
+        $this->is_json = null;
+        $this->data = null;
+    }
+    
+    public function genesis_table_cache_filename($code, $subcode, $area)
+    {
+        return realpath($this->config->data_store)."/genesis_".sha1($code."-".$subcode."/".$area).".jgz";
+    }
+
+    public function genesis_logincheck()
+    {
+        return $this->genesis->logincheck();
+    }
+
+    public function genesis_whoami()
+    {
+        return $this->genesis->whoami();
+    }
+
+    public function genesis_get_table_data($code, $subcode, $area = "all", &$json = null, &$csv = null)
+    {
+        $json = null;
+        $csv = null;
+        
+        $ident = array();
+
+        switch($code)
+        {
+            case "territory":
+                array_push($ident, "11111");
+                switch ($subcode)
+                {
+                    case "area":
+                        array_push($ident, "0001");
+                        break;
+                    case "district_area":
+                        array_push($ident, "0002");
+                        break;
+                    default:
+                        return null;
+                }
+                break;
+            case "population":
+                array_push($ident, "12411");
+                switch ($subcode)
+                {
+                    case "total":
+                        array_push($ident, "0003");
+                        break;
+                    case "by_state":
+                        array_push($ident, "0011");
+                        break;
+                    case "by_district":
+                        array_push($ident, "0016");
+                        break;
+                    default:
+                        return null;
+                }
+                break;
+            default:
+                array_push($ident, $code);
+                array_push($ident, $subcode);
+                break;
+        }
+
+        if (!$this->genesis_logincheck())
+            return null;
+            
+        $res = $this->genesis->data_table(implode("-", $ident), $area);
+
+        if (!$res)
+            return null;
+
+        if (!is_object($res))
+            return null;
+
+        if ((!isset($res->Object)) || (!isset($res->Object->Content)))
+            return false;
+
+        $csv = $res->Object->Content;
+        $json = $this->genesis->parse_csv($csv);
+
+        return strlen(json_encode($json));
+    }
+    
+    public function http_handler_cache_filename($url, $ssl_verifyhost, $ssl_verifypeer, $user_agent)
+    {
+        return realpath($this->config->data_store)."/http_handler_".sha1($url."#".$ssl_verifyhost."#".$ssl_verifypeer."#".$user_agent).".jgz";
+    }
+    
+    public function http_handler_get_result(&$data = null)
+    {
+        $length = $this->http_handler->retrieve();
+        $data = $this->http_handler->get_result();
+        
+        return $length;
+    }
+    
+    public function transform_gen_population()
+    {
+        if ((is_object($this->data)) && (isset($this->data->date)))
+            return true;
+        
+        if (!is_array($this->data))
+            return false;
+            
+        if (!isset($this->data[7][3]))
+            return false;
+       
+        $data = new \stdClass;
+        $data->date = new \DateTime($this->data[7][0]);
+        $data->males = (int)$this->data[7][1];
+        $data->females = (int)$this->data[7][2];
+        $data->population = (int)$this->data[7][3];
+        
+        $this->data = clone $data;
+        
+        unset($data);
+        
+        return true;
+    }
+    
+    public function transform_gen_population_by_state()
+    {
+        if ((is_object($this->data)) && (isset($this->data->date)))
+            return true;
+        
+        if (!is_array($this->data))
+            return false;
+            
+        if (!isset($this->data[5][4]))
+            return false;
+       
+        $result = new \stdClass; 
+        $result->states = array();
+
+        foreach ($this->data as $index => $data)
+        {
+            if ($index < 6)
+                continue;
+            
+            if (count($data) != 5)
+                break;
+            
+            $state = new \stdClass;
+            $state->date = new \DateTime($data[0]);
+            $state->state = $data[1];
+            $state->males = $data[2];
+            $state->females = $data[3];
+            $state->totals = $data[4];
+            
+            $result->states[$state->state] = clone $state;
+        }
+        
+        $this->data = clone $result;
+
+        return true;
+    }
+    
+    public function transform_gen_population_by_district()
+    {
+        if ((is_object($this->data)) && (isset($this->data->date)))
+            return true;
+        
+        if (!is_array($this->data))
+            return false;
+            
+        if (!isset($this->data[5][2]))
+            return false;
+       
+        $result = new \stdClass; 
+        $result->districts = array();
+
+        foreach ($this->data as $index => $data)
+        {
+            if ($index < 6)
+                continue;
+            
+            if (count($data) != 6)
+                break;                
+                
+            $district = new \stdClass;                            
+            $district->date = new \DateTime($data[0]);
+            $district->id = $data[1];
+            $district->fullname = $data[2];
+            
+            $expl = explode("(", $data[2]);
+            
+            $name = explode(",", $data[2], 2);
+            $district->name = trim($name[0]);
+            
+            if (count($name) > 1)
+                $district->type = trim($name[1]);
+            else
+                $district->type = "Kreis";
+            
+            $district->males = (float)str_replace(",", ".", $data[3]);
+            $district->females = (float)str_replace(",", ".", $data[4]);
+            $district->totals = (float)str_replace(",", ".", $data[5]);
+            
+            $result->districts[$district->id] = clone $district;
+            
+            unset($district);
+        }
+
+        $this->data = clone $result;
+        
+        return true;        
+    }
+    
+    public function transform_gen_territory_area()
+    {
+        if ((is_object($this->data)) && (isset($this->data->date)))
+            return true;
+        
+        if (!is_array($this->data))
+            return false;
+            
+        if (!isset($this->data[5][1]))
+            return false;
+       
+        $result = new \stdClass; 
+        $result->date = new \DateTime($this->data[5][1]);        
+        $result->states_area = array();
+        $result->area = 0;
+
+        foreach ($this->data as $index => $data)
+        {
+            if ($index < 6)
+                continue;
+            
+            if (count($data) != 2)
+                break;
+                
+            $state = $data[0];
+            $area = (float)str_replace(",", ".", $data[1]);
+            
+            if ($state == "Insgesamt")
+            {
+                $result->area = $area;
+                continue;
+            }
+                
+            $result->states_area[$state] = $area;
+        }
+        
+        $this->data = clone $result;
+        
+        return true;
+    }
+    
+    public function transform_gen_territory_district_area()
+    {
+        if ((is_object($this->data)) && (isset($this->data->date)))
+            return true;
+        
+        if (!is_array($this->data))
+            return false;
+            
+        if (!isset($this->data[5][2]))
+            return false;
+       
+        $result = new \stdClass; 
+        $result->date = new \DateTime($this->data[5][2]);
+        $result->districts_area = array();
+
+        foreach ($this->data as $index => $data)
+        {
+            if ($index < 6)
+                continue;
+            
+            if (count($data) != 3)
+                break;                
+                
+            $district = new \stdClass;                            
+            $district->id = $data[0];
+            $district->fullname = $data[1];
+            
+            $expl = explode("(", $data[1]);
+            
+            $name = explode(",", $data[1], 2);
+            $district->name = trim($name[0]);
+            
+            if (count($name) > 1)
+                $district->type = trim($name[1]);
+            else
+                $district->type = "Kreis";
+            
+            $district->area = (float)str_replace(",", ".", $data[2]);
+            
+            $result->districts_area[$district->id] = clone $district;
+            
+            unset($district);
+        }
+        
+        $this->data = clone $result;
+        
+        return true;        
+    }
+    
     public function transform_cov_infocast()
     {
-        // Sometimes the content type is not application/json, so the HttpHandler could not detect the correct decoding mechanism.
-        // We will do this manually, if this->data is not an object.
-        
         if (is_object($this->data))
             return true;
             
@@ -317,6 +699,38 @@ class DataHandler
                     
                 switch ($key)
                 {
+                    case "district":
+                        $dst = explode(" ", $val, 2);
+                        
+                        if (count($dst) == 1)
+                        {
+                            $obj->district_name = $val;
+                            $obj->district_type = "Kreis";
+                            break;
+                        }
+                            
+                        $type = $dst[0];
+                        $name = $dst[1];
+                        
+                        switch (strtolower($type))
+                        {
+                            case "sk":
+                                $type = "Kreis";
+                                break;
+                            case "lk":
+                                $type = "Landkreis";
+                                break;
+                            case "stadtregion":
+                                $type = "Kreisfreie Stadt";
+                                break;
+                            default:
+                                break;
+                        }
+                        
+                        $obj->district_type = $type;
+                        $obj->district_name = $name;
+                        $obj->district_fullname = $val;
+                        continue(2);
                     case "gender":
                         $gender = strtolower($val);
                         
@@ -522,8 +936,24 @@ class DataHandler
         return true;
     }
     
+    public function get_cache_filename()
+    {
+        return 
+        (
+            ($this->use_genesis) 
+                ? 
+                $this->genesis_table_cache_filename($this->genesis_code, $this->genesis_subcode, $this->genesis_area) 
+                : 
+                $this->http_handler_cache_filename($this->http_url, $this->http_ssl_verifypeer, $this->http_ssl_verifyhost, $this->http_user_agent)
+        );
+    }
+    
     public function retrieve($target_file = null, $cache_time = 14400, $compression_level = 9, $not_json_encoded = false)
     {
+        // Use autogenerated cache id
+        if ($target_file === true)
+            $target_file = $this->get_cache_filename();         
+        
         if ($target_file)
         {
             if (file_exists($target_file))
@@ -560,8 +990,14 @@ class DataHandler
                 }
             }
         }
+        
+        $data = null;
+        $this->data = $data;
     
-        $length = $this->http_handler->retrieve();
+        if ($this->use_genesis)
+            $length = $this->genesis_get_table_data($this->genesis_code, $this->genesis_subcode, $this->genesis_area, $data);
+        else
+            $length = $this->http_handler->retrieve("get", null, null, null, $data);
         
         if ($length == 0)
             throw new Exception("No data received");
@@ -577,11 +1013,10 @@ class DataHandler
                 throw new Exception("Unable to open target file '".$target_file."'");
         }
         
-        $this->data = $this->http_handler->get_result();
-        
+        $this->data = $data;
         $this->timestamp = time();
         $this->length = $length;
-        $this->datasource = "url";
+        $this->datasource = (($this->use_genesis) ? "genesis" : "url");
         
         if ($target_file)
         {   
@@ -608,15 +1043,59 @@ class DataHandler
         return $length;
     }
     
-    function __construct($url, $ssl_verifyhost = 2, $ssl_verifypeer = 1, $user_agent = null)
+    public function set_retrieve($use_genesis = false)
+    {
+        $this->use_genesis = $use_genesis;
+    }
+    
+    public function init_genesis($code, $subcode, $area = "all")
     {
         try
         {
+            $this->genesis_code = $code;
+            $this->genesis_subcode = $subcode;
+            $this->genesis_area = $area;
+            
+            $this->genesis = new Genesis($this->config);
+            
+            $this->set_retrieve(true);
+        }
+        catch (Exception $ex)
+        {
+            throw new Exception("Genesis failed to construct.", 0, $ex);
+        }
+    }
+    
+    public function init_http_handler($url, $ssl_verifyhost = 2, $ssl_verifypeer = 1, $user_agent = null)
+    {
+        try
+        {
+            $this->http_url = $url;
+            $this->http_ssl_verifyhost = $ssl_verifypeer;
+            $this->http_ssl_verifypeer = $ssl_verifyhost;
+            $this->http_user_agent = $user_agent;
+            
             $this->http_handler = new HttpHandler($url, $ssl_verifyhost, $ssl_verifypeer, $user_agent);
+            
+            $this->set_retrieve(false);
         }
         catch (Exception $ex)
         {
             throw new Exception("HTTP handler failed to construct.", 0, $ex);
+        }
+    }
+    
+    function __construct(Config $config, $url = null, $code = null, $subcode = null, $area = "all", $ssl_verifyhost = 2, $ssl_verifypeer = 1, $user_agent = null)
+    {
+        $this->config = $config; 
+
+        if ($url)
+        {
+            $this->init_http_handler($url, $ssl_verifyhost, $ssl_verifypeer, $user_agent);
+        }
+        elseif (($code) && ($subcode))
+        {
+            $this->init_genesis($code, $subcode, $area);
         }
     }
 }
