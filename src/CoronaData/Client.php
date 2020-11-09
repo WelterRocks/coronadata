@@ -910,7 +910,6 @@ class Client
         // Free the memory, which is no longer need (if hold data is not requested)
         if (!$hold_data)
         {
-            $this->rki_nowcast->handler->free();
             $this->gen_territory_area->handler->free();
             $this->gen_territory_district_area->handler->free();
             $this->gen_population->handler->free();
@@ -1420,14 +1419,7 @@ class Client
                     
             if ($db_obj->save())
                 $count++;
-            else // For debugging only
-            {
-                $this->database_transaction_rollback("save_testresult");
-                
-                print_r($db_obj);
-                exit;
-            }
-                
+
             $any++;
         }
         
@@ -1455,18 +1447,77 @@ class Client
                     
             if ($db_obj->save())
                 $count++;
-            else // For debugging only
-            {
-                $this->database_transaction_rollback("save_dataset");
 
-                print_r($db_obj);
-                exit;
-            }
-                
             $any++;
         }
         
         $this->database_transaction_commit("save_dataset");
+        
+        return $count;
+    }
+    
+    public function save_nowcasts(&$count = null, &$any = null)
+    {
+        $count = 0;
+        $any = 0;
+        
+        if (!is_array($this->rki_nowcast->handler->get_data()))
+            return null;
+            
+        $this->database_transaction_begin("save_nowcast");
+        
+        $esteem_reproduction_r = 0;
+        $lower_reproduction_r = 0;
+        $upper_reproduction_r = 0;
+        
+        $esteem_7day_r_value = 0;
+        $lower_7day_r_value = 0;
+        $upper_7day_r_value = 0;
+        
+        $europe_hash = self::hash_name("Europe");
+        $germany_hash = self::hash_name("Germany");        
+        
+        foreach ($this->rki_nowcast->handler->get_data() as $obj)
+        {            
+            $db_obj = $this->database->new_nowcast();
+            
+            $db_obj->continent_hash = $europe_hash;
+            $db_obj->country_hash = $germany_hash;
+
+            foreach ($obj as $key => $val)
+            {
+                switch ($key)
+                {
+                    case "esteem_reproduction_r":
+                        if ($val > 0) $esteem_reproduction_r = $val; elseif ($val == 0) $val = $esteem_reproduction_r;
+                        break;
+                    case "lower_reproduction_r":
+                        if ($val > 0) $lower_reproduction_r = $val; elseif ($val == 0) $val = $lower_reproduction_r;
+                        break;
+                    case "upper_reproduction_r":
+                        if ($val > 0) $upper_reproduction_r = $val; elseif ($val == 0) $val = $upper_reproduction_r;
+                        break;
+                    case "esteem_7day_r_value":
+                        if ($val > 0) $esteem_7day_r_value = $val; elseif ($val == 0) $val = $esteem_7day_r_value;
+                        break;
+                    case "lower_7day_r_value":
+                        if ($val > 0) $lower_7day_r_value = $val; elseif ($val == 0) $val = $lower_7day_r_value;
+                        break;
+                    case "upper_7day_r_value":
+                        if ($val > 0) $upper_7day_r_value = $val; elseif ($val == 0) $val = $upper_7day_r_value;
+                        break;
+                }
+                
+                $db_obj->$key = $val;
+            }
+                    
+            if ($db_obj->save())
+                $count++;
+
+            $any++;
+        }
+        
+        $this->database_transaction_commit("save_nowcast");
         
         return $count;
     }

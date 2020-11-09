@@ -176,6 +176,9 @@ function worker_loop(Client $client, $oneshot = false)
                 $cli->log("Storing location records.", LOG_INFO);
                 $client->save_locations();
                 
+                $cli->log("Storing nowcast records.", LOG_INFO);
+                $client->save_nowcasts();
+                
                 $cli->log("Storing dataset records.", LOG_INFO);
                 $client->save_datasets();
                 

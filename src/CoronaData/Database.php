@@ -23,6 +23,7 @@
 use WelterRocks\CoronaData\Table\Locations;
 use WelterRocks\CoronaData\Table\Datasets;
 use WelterRocks\CoronaData\Table\Testresults;
+use WelterRocks\CoronaData\Table\Nowcasts;
 use WelterRocks\CoronaData\Config;
 use WelterRocks\CoronaData\Exception;
 
