@@ -172,8 +172,17 @@ function worker_loop(Client $client, $oneshot = false)
                 
                 $cli->log("Extracting and mastering testresults.", LOG_INFO);                
                 $client->master_testresults();
+                                
+                $cli->log("Storing location records.", LOG_INFO);
+                $client->save_locations();
                 
-                $cli->log("Data mastering succeeded.", LOG_INFO);                
+                $cli->log("Storing dataset records.", LOG_INFO);
+                $client->save_datasets();
+                
+                $cli->log("Storing testresult records.", LOG_INFO);
+                $client->save_testresults();
+                
+                $cli->log("Database updated.", LOG_INFO);
                 $preload_done = true;
             }
             else

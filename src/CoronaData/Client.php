@@ -1360,6 +1360,102 @@ class Client
         return true;        
     }
     
+    public function save_testresults(&$count = null, &$any = null)
+    {
+        $count = 0;
+        $any = 0;
+        
+        if (!is_array($this->testresults))
+            return null;
+        
+        foreach ($this->datasets as $hash => $obj)
+        {
+            $db_obj = $this->database->new_testresult();
+
+            foreach ($obj as $key => $val)
+                $db_obj->$key = $val;
+                    
+            if ($db_obj->save())
+                $count++;
+            else // For debugging only
+            {
+                print_r($db_obj);
+                exit;
+            }
+                
+            $any++;
+        }
+        
+        return $count;
+    }
+    
+    public function save_datasets(&$count = null, &$any = null)
+    {
+        $count = 0;
+        $any = 0;
+        
+        if (!is_array($this->datasets))
+            return null;
+        
+        foreach ($this->datasets as $hash => $obj)
+        {
+            $db_obj = $this->database->new_dataset();
+
+            foreach ($obj as $key => $val)
+                $db_obj->$key = $val;
+                    
+            if ($db_obj->save())
+                $count++;
+            else // For debugging only
+            {
+                print_r($db_obj);
+                exit;
+            }
+                
+            $any++;
+        }
+        
+        return $count;
+    }
+    
+    public function save_locations(&$count = null, &$any = null)
+    {
+        $stores = array(
+            "continents",
+            "countries",
+            "states",
+            "districts",
+            "locations"
+        );
+        
+        $count = 0;
+        $any = 0;
+        
+        foreach ($stores as $store)
+        {
+            if (!is_array($this->$store))
+                continue;
+                
+            if (!count($this->$store))
+                continue;
+                
+            foreach ($this->$store as $hash => $obj)
+            {
+                $db_obj = $this->database->new_location();
+                
+                foreach ($obj as $key => $val)
+                    $db_obj->$key = $val;
+                    
+                if ($db_obj->save())
+                    $count++;
+                
+                $any++;
+            }
+        }
+
+        return $count;        
+    }
+    
     public function load_stores($cache_timeout = 14400)
     {
         // We must speed things up, so the new idea is to preload all stores and make the primary calculations in memory
