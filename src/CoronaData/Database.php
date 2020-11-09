@@ -59,6 +59,11 @@ class Database
         return new Testresults($this->db);
     }
     
+    public function new_nowcast()
+    {
+        return new Nowcasts($this->db);
+    }
+    
     private function check_init()
     {    
         if (!is_object($this->db))
@@ -478,7 +483,8 @@ class Database
         $tables = array(
           "Locations" => true,
           "Datasets" => true,
-          "Testresults" => true
+          "Testresults" => true,
+          "Nowcasts" => true
         );
         
         $errorcount = 0;
