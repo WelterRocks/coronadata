@@ -1399,7 +1399,13 @@ class Client
                 switch ($key)
                 {
                     case "age_group":
+                        $db_obj->age_group_lower = $obj->age_group->lower;
+                        $db_obj->age_group_upper = $obj->age_group->upper;
+                        continue(2);
                     case "age_group2":
+                        $db_obj->age_group2_lower = $obj->age_group2->lower;
+                        $db_obj->age_group2_upper = $obj->age_group2->upper;
+                        continue(2);
                     case "district_id":
                     case "district_type":
                     case "district_name":
