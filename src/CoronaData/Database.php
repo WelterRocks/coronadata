@@ -21,12 +21,8 @@
 *******************************************************************************/
 
 use WelterRocks\CoronaData\Table\Locations;
-use WelterRocks\CoronaData\Table\Datacasts;
-use WelterRocks\CoronaData\Table\Nowcasts;
-use WelterRocks\CoronaData\Table\Infocasts;
-use WelterRocks\CoronaData\Table\Positives;
-use WelterRocks\CoronaData\Table\Combined;
-use WelterRocks\CoronaData\Table\Positivestat;
+use WelterRocks\CoronaData\Table\Datasets;
+use WelterRocks\CoronaData\Table\Testresults;
 use WelterRocks\CoronaData\Config;
 use WelterRocks\CoronaData\Exception;
 
@@ -52,36 +48,16 @@ class Database
         return new Locations($this->db);
     }
     
-    public function new_datacast()
+    public function new_dataset()
     {
-        return new Datacasts($this->db);
+        return new Datasets($this->db);
     }
     
-    public function new_nowcast()
+    public function new_testresult()
     {
-        return new Nowcasts($this->db);
+        return new Testresults($this->db);
     }
     
-    public function new_infocast()
-    {
-        return new Infocasts($this->db);
-    }
-    
-    public function new_positive()
-    {
-        return new Positives($this->db);
-    }
-    
-    public function new_combined()
-    {
-        return new Combined($this->db);
-    }
-    
-    public function new_positivestat()
-    {
-        return new Positivestat($this->db);
-    }
-        
     private function check_init()
     {    
         if (!is_object($this->db))
@@ -226,7 +202,7 @@ class Database
         return false;
     }
     
-    public function get_date_rep($table, $condition = "'1'", $desc = false, &$no_result = null, &$error = null, &$sql = null)
+    public function get_by_timestamp_represent($table, $condition = "'1'", $desc = false, &$no_result = null, &$error = null, &$sql = null)
     {	
         $error = null;
         $sql = null;
@@ -239,16 +215,14 @@ class Database
         
         switch ($table)
         {
-          case "positives":
-          case "datacasts":
-          case "nowcasts":
-          case "infocasts":
+          case "datasets":
+          case "testresults":
             break;
           default:
             return $nulldate." ".$nulltime;
         }
         
-        $date_rep = $this->select($table, "date_rep", $condition." GROUP BY date_rep ORDER BY date_rep ".(($desc) ? "DESC" : "ASC")." LIMIT 1", null, true, true, false, $results, $error, $sql);
+        $date_rep = $this->select($table, "timestamp_represent", $condition." GROUP BY timestamp_represent ORDER BY date_rep ".(($desc) ? "DESC" : "ASC")." LIMIT 1", null, true, true, false, $results, $error, $sql);
         
         if (!$date_rep)
         {
@@ -261,12 +235,12 @@ class Database
     
     public function get_earliest($table, $condition = "'1'", &$no_result = null, &$error = null, &$sql = null)
     {
-        return $this->get_date_rep($table, $condition, false, $no_result, $error, $sql);
+        return $this->get_by_timestamp_represent($table, $condition, false, $no_result, $error, $sql);
     }
     
     public function get_latest($table, $condition = "'1'", &$no_result = null, &$error = null, &$sql = null)
     {
-        return $this->get_date_rep($table, $condition, true, $no_result, $error, $sql);
+        return $this->get_by_timestamp_represent($table, $condition, true, $no_result, $error, $sql);
     }
     
     public function select($table, $field = "*", $conditions = "'1'", $callbacks_execute = null, $single_select = false, $force_stdclass = false, $force_is_view = false, &$result_count = null, &$error = null, &$sql = null)
@@ -502,12 +476,8 @@ class Database
         
         $tables = array(
           "Locations" => true,
-          "Nowcasts" => true,
-          "Datacasts" => true,
-          "Infocasts" => true,
-          "Positives" => true,
-          "Combined" => false,
-          "Positivestat" => false
+          "Datasets" => true,
+          "Testresults" => true
         );
         
         $errorcount = 0;

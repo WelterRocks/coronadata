@@ -1350,15 +1350,13 @@ class Client
                 $this->datasets[$dataset_hash] = $dataset;
             }
         }
-        
-        print_r($this->datasets);exit;
-                
+                        
         // Free the memory, which is no longer need (if hold data is not requested)
         if (!$hold_data)
             $this->rki_positive->handler->free();
         
         $this->testresults = $testresults;
-
+        
         return true;        
     }
     
