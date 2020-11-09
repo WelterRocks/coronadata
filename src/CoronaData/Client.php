@@ -1395,7 +1395,22 @@ class Client
             $db_obj = $this->database->new_testresult();
 
             foreach ($obj as $key => $val)
+            {
+                switch ($key)
+                {
+                    case "age_group":
+                    case "age_group2":
+                    case "district_id":
+                    case "district_type":
+                    case "district_name":
+                    case "district_fullname":
+                    case "state":
+                    case "state_id":
+                        continue(2);
+                }
+                
                 $db_obj->$key = $val;
+            }
                     
             if ($db_obj->save())
                 $count++;
