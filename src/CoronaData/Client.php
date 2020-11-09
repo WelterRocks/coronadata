@@ -901,6 +901,102 @@ class Client
         return true;
     }
     
+    public function calculate_dataset_fields($cases_array)
+    {
+        if (!is_array($cases_array))
+            return null;
+        
+        $cases = array();
+        
+        foreach ($cases_array as $c)
+            array_push($cases, $c);        
+            
+        $top7 = 8;
+        $top14 = 15;
+        $top7_smoothed = 11;
+        $top14_smoothed = 18;
+                
+        $incidence7 = 0;
+        $incidence14 = 0;
+
+        $incidence7_smoothed = 0;
+        $incidence14_smoothed = 0;
+                
+        $casecount = 0;
+        $casecount_smoothed = 0;
+                                        
+        if (count($cases) < 8)
+            $top7 = count($cases) - 1;
+                    
+        if (count($cases) < 15)
+            $top14 = count($cases) - 1;
+                    
+        if (count($cases) < 11)
+            $top7_smoothed = count($cases) - 1;
+                
+        if (count($cases) < 18)
+            $top14_smoothed = count($cases) - 1;
+            
+        $casebase = 0;
+        $casebase_smoothed = 3;
+                
+        if ((count($cases) + 1) < $casebase_smoothed)
+            $casebase_smoothed = (count($cases) - 1);
+
+        for ($i = $casebase; $i < $top7; $i++)
+            $incidence7 += $cases[$i];
+                            
+        for ($i = $casebase; $i < $top14; $i++)
+            $incidence14 += $cases[$i];
+                            
+        for ($i = $casebase_smoothed; $i < $top7_smoothed; $i++)
+            $incidence7_smoothed += $cases[$i];
+                            
+        for ($i = $casebase_smoothed; $i < $top14_smoothed; $i++)
+            $incidence14_smoothed += $cases[$i];
+                            
+        $casecount = $cases[0];
+                
+        if (count($cases) > 3)
+            $casecount_smoothed = $cases[3];
+        else
+            $casecount_smoothed = count($cases);
+                                    
+        $exp7 = (($incidence7 - $casecount) / 6);
+        $exp14 = (($incidence14 - $casecount) / 13);
+                
+        if ($exp7 == 0)
+            $exp7 = 1;
+                
+        if ($exp14 == 0)
+            $exp14 = 1;
+                
+        $exp7_smoothed = (($incidence7_smoothed - $casecount_smoothed) / 6);
+        $exp14_smoothed = (($incidence14_smoothed - $casecount_smoothed) / 13);
+                                
+        if ($exp7_smoothed == 0)
+            $exp7_smoothed = 1;
+                
+        if ($exp14_smoothed == 0)
+            $exp14_smoothed = 1;
+        
+        $result = new \stdClass;
+                
+        $result->incidence_7day = $incidence7 / 7;
+        $result->incidence_14day = $incidence14 / 14;
+                
+        $result->incidence_7day_smoothed = $incidence7_smoothed / 7;
+        $result->incidence_14day_smoothed = $incidence14_smoothed / 14;
+                
+        $result->exponence_7day = ($casecount / $exp7);
+        $result->exponence_14day = ($casecount / $exp14);
+
+        $result->exponence_7day_smoothed = ($casecount_smoothed / $exp7_smoothed);
+        $result->exponence_14day_smoothed = ($casecount_smoothed / $exp14_smoothed);
+        
+        return $result;    
+    }
+    
     public function master_datasets($hold_data = false)
     {
         // After stores are loaded, create the data pool with common fields
@@ -971,15 +1067,6 @@ class Client
             
             foreach ($data as $date => $hash)
             {
-                $incidence7 = 0;
-                $incidence14 = 0;
-
-                $incidence7_smoothed = 0;
-                $incidence14_smoothed = 0;
-                
-                $casecount = 0;
-                $casecount_smoothed = 0;
-                                        
                 foreach ($data as $date2 => $hash2)
                 {
                     if ($date2 < $date)
@@ -992,78 +1079,14 @@ class Client
                         break;
                     }
                 }
-
-                $top7 = 8;
-                $top14 = 15;
-                $top7_smoothed = 11;
-                $top14_smoothed = 18;
                 
-                if (count($cases) < 8)
-                    $top7 = count($cases) - 1;
-                    
-                if (count($cases) < 15)
-                    $top14 = count($cases) - 1;
-                    
-                if (count($cases) < 11)
-                    $top7_smoothed = count($cases) - 1;
+                $result = $this->calculate_dataset_fields($cases);
                 
-                if (count($cases) < 18)
-                    $top14_smoothed = count($cases) - 1;
-                    
-                $casebase = 0;
-                $casebase_smoothed = 3;
-                
-                if ((count($cases) + 1) < $casebase_smoothed)
-                    $casebase_smoothed = (count($cases) - 1);
-
-                for ($i = $casebase; $i < $top7; $i++)
-                    $incidence7 += $cases[$i];
-                            
-                for ($i = $casebase; $i < $top14; $i++)
-                    $incidence14 += $cases[$i];
-                            
-                for ($i = $casebase_smoothed; $i < $top7_smoothed; $i++)
-                    $incidence7_smoothed += $cases[$i];
-                            
-                for ($i = $casebase_smoothed; $i < $top14_smoothed; $i++)
-                    $incidence14_smoothed += $cases[$i];
-                            
-                $casecount = $cases[0];
-                
-                if (count($cases) > 3)
-                    $casecount_smoothed = $cases[3];
-                else
-                    $casecount_smoothed = count($cases);
-                                    
-                $exp7 = (($incidence7 - $casecount) / 6);
-                $exp14 = (($incidence14 - $casecount) / 13);
-                
-                if ($exp7 == 0)
-                    $exp7 = 1;
-                
-                if ($exp14 == 0)
-                    $exp14 = 1;
-                
-                $exp7_smoothed = (($incidence7_smoothed - $casecount_smoothed) / 6);
-                $exp14_smoothed = (($incidence14_smoothed - $casecount_smoothed) / 13);
-                                
-                if ($exp7_smoothed == 0)
-                    $exp7_smoothed = 1;
-                
-                if ($exp14_smoothed == 0)
-                    $exp14_smoothed = 1;
-                
-                $datasets[$hash]->incidence_7day = $incidence7 / 7;
-                $datasets[$hash]->incidence_14day = $incidence14 / 14;
-                
-                $datasets[$hash]->incidence_7day_smoothed = $incidence7_smoothed / 7;
-                $datasets[$hash]->incidence_14day_smoothed = $incidence14_smoothed / 14;
-                
-                $datasets[$hash]->exponence_7day = ($casecount / $exp7);
-                $datasets[$hash]->exponence_14day = ($casecount / $exp14);
-
-                $datasets[$hash]->exponence_7day_smoothed = ($casecount_smoothed / $exp7_smoothed);
-                $datasets[$hash]->exponence_14day_smoothed = ($casecount_smoothed / $exp14_smoothed);
+                if (is_object($result))
+                {
+                    foreach ($result as $key => $val)
+                        $datasets[$hash]->$key = $val;
+                }
             }
         }
                     
@@ -1142,12 +1165,36 @@ class Client
         $europe_hash = self::hash_name("Europe");
         $germany_hash = self::hash_name("Germany");
         
-        $result_index = array();
+        // Create a dataset template
+        $tmpl = new \stdClass;
+        $tmpl->dataset_hash = null;
+        $tmpl->district_hash = null;
+        $tmpl->state_hash = null;
+        $tmpl->country_hash = null;
+        $tmpl->continent_hash = null;
+        $tmpl->day_of_week = null;
+        $tmpl->day = null;
+        $tmpl->month = null;
+        $tmpl->year = null;
+        $tmpl->cases = null;
+        $tmpl->deaths = null;
+        $tmpl->recovered = null;
+        $tmpl->timestamp_represent = null;
+        
+        $filter = self::get_infocast_filter("inner");
+        
+        foreach ($filter as $key => $type)
+            $tmpl->$key = null;
+            
+        $datasets = array();
         
         // No need for templates here, just clone data and add the hashes
         foreach($this->rki_positive->handler->get_data() as $data)
         {
-            $result_hash = md5(self::hash_name($data->district_name).$data->date_rep);
+            // The result hash must have another part to be unique, date is not sufficient here
+            // So maybe its a good idea to use the foreign identifier, delivered by the data itself
+            $result_hash = md5(self::hash_name($data->district_name).$data->date_rep."#".$data->foreign_identifier);
+
             $district_hash = self::hash_name($data->district_name);
             $state_hash = self::hash_name($data->state);
             
@@ -1161,42 +1208,151 @@ class Client
             $index = $testresult->district_hash;
             $ts = strtotime($testresult->timestamp_represent);
             $date = date("Ymd", $ts);
-            
-            if (!isset($result_index[$index]))
-                $result_index[$index] = array();
+
+            // Create or update dateset
+            if (!isset($datasets[$index][$date]))
+            {
+                $dataset = clone $tmpl;
                 
-            $result_index[$index][$date] = $result_hash;
+                $dataset->dataset_hash = md5("positive#".self::hash_name($data->district_name).$data->date_rep);
+                $dataset->district_hash = self::hash_name($data->district_name);
+                $dataset->state_hash = self::hash_name($data->state);
+                $dataset->country_hash = $germany_hash;
+                $dataset->continent_hash = $europe_hash;
+                $dataset->day_of_week = $data->day_of_week;
+                $dataset->day = $data->day;
+                $dataset->month = $data->month;
+                $dataset->year = $data->year;
+                $dataset->cases = 0;
+                $dataset->deaths = 0;
+                $dataset->recovered = 0;
+                $dataset->new_cases = 0;
+                $dataset->new_deaths = 0;
+                $dataset->new_recovered = 0;
+                $dataset->new_cases_smoothed = 0;
+                $dataset->new_deaths_smoothed = 0;
+                $dataset->new_recovered_smoothed = 0;
+                $dataset->timestamp_represent = $data->timestamp_represent;
+                $dataset->date_rep = $data->date_rep;
+            }
+            else
+            {
+                $dataset = $datasets[$index][$date];
+            }
             
+            $dataset->cases += $data->cases_count;
+            $dataset->deaths += $data->deaths_count;
+            $dataset->recovered += $data->recovered_count;
+            
+            $dataset->new_cases += $data->cases_new;
+            $dataset->new_deaths += $data->deaths_new;
+            $dataset->new_recovered += $data->recovered_new;
+            
+            if ($data->flag_is_disease_beginning)
+            {
+                $dataset->new_cases_smoothed += $data->cases_new;
+                $dataset->new_deaths_smoothed += $data->deaths_new;
+                $dataset->new_recovered_smoothed += $data->recovered_new;
+            }
+                        
+            if (!isset($datasets[$index]))
+                $datasets[$index] = array();
+                                
+            $datasets[$index][$date] = $dataset;
             $testresults[$result_hash] = $testresult;
+            
+            ksort($datasets[$index]);
         }
         
-        // Create a dataset template
-        $tmpl = new \stdClass;
-        $tmpl->dataset_hash = null;
-        $tmpl->country_hash = null;
-        $tmpl->continent_hash = null;
-        $tmpl->day_of_week = null;
-        $tmpl->day = null;
-        $tmpl->month = null;
-        $tmpl->year = null;
-        $tmpl->cases = null;
-        $tmpl->deaths = null;
-        $tmpl->timestamp_represent = null;
+        // Define a "million" to prevent typos
+        $mil = 1000000;
         
-        $filter = self::get_infocast_filter("inner");
-        
-        foreach ($filter as $key => $type)
-            $tmpl->$key = null;
-                                
-        // Use result index to build district datasets
-        foreach ($result_index as $index => $data)
+        // Merge district datasets and main datasets
+        foreach ($datasets as $index => $data)
         {
-            foreach ($data as $date => $hash)
+            $cases = 0;
+            $deaths = 0;
+            $recovered = 0;
+            
+            $cases_last18 = array();
+            
+            // Zero fill cases array
+            for ($i = 0; $i < 19; $i++)
+                $cases_last18[$i] = 0;
+            
+            // We need the population from the corresponding location object
+            if (isset($this->districts[$index]))
+                $district = $this->districts[$index];
+            else
+                $district = null;
+            
+            if (is_object($district))
             {
-                // THIS WILL NOT WORK, BECAUSE OF MISSING ITERATIONS FOR DATES BUT FOR TODAY THATS IT
+                if (isset($district->population_count))
+                    $population = $district->population_count;
+                else
+                    $population = 0;
+            }
+            else
+            {
+                $population = 0;
+            }
+                
+            foreach ($data as $date => $dataset)
+            {
+                $cases += $dataset->cases;
+                $deaths += $dataset->deaths;
+                $recovered += $dataset->recovered;
+                
+                $dataset->total_cases = $cases;
+                $dataset->total_deaths = $deaths;
+                $dataset->total_recovered = $recovered;
+                
+                $dataset->total_cases_per_million = ($dataset->total_cases / $mil * $population);
+                $dataset->total_deaths_per_million = ($dataset->total_deaths / $mil * $population);
+                $dataset->total_recovered_per_million = ($dataset->total_recovered / $mil * $population);
+                
+                $dataset->new_cases_per_million = ($dataset->new_cases / $mil * $population);
+                $dataset->new_deaths_per_million = ($dataset->new_deaths / $mil * $population);
+                $dataset->new_recovered_per_million = ($dataset->new_recovered / $mil * $population);
+                
+                $dataset->new_cases_smoothed_per_million = ($dataset->new_cases_smoothed / $mil * $population);
+                $dataset->new_deaths_smoothed_per_million = ($dataset->new_deaths_smoothed / $mil * $population);
+                $dataset->new_recovered_smoothed_per_million = ($dataset->new_recovered_smoothed / $mil * $population);
+                
+                array_push($cases_last18, $cases);
+                array_shift($cases_last18);
+                                
+                $result = $this->calculate_dataset_fields($cases_last18);
+                
+                if (is_object($result))
+                {
+                    foreach ($result as $key => $val)
+                        $dataset->$key = $val;
+                }
+                
+                $dataset_hash = md5($dataset->district_hash.$dataset->date_rep);
+                                
+                if (isset($this->datasets[$dataset_hash]))
+                {
+                    // Override existing dataset with all non-null values
+                    foreach ($dataset as $key => $val)
+                    {
+                        if ($val !== null)
+                        {
+                            $this->datasets[$dataset_hash]->$key = $val;
+                        }                        
+                    }
+                    
+                    continue;
+                }
+                
+                $this->datasets[$dataset_hash] = $dataset;
             }
         }
         
+        print_r($this->datasets);exit;
+                
         // Free the memory, which is no longer need (if hold data is not requested)
         if (!$hold_data)
             $this->rki_positive->handler->free();
