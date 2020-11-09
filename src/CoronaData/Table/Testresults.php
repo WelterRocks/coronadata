@@ -22,7 +22,49 @@
 
 use WelterRocks\CoronaData\Exception;
 use WelterRocks\CoronaData\Table\Base;
-
+/*
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$dataset_hash in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$cases in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$deaths in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$hosp_patients in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$hosp_patients_per_million in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$icu_patients in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$icu_patients_per_million in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$new_cases in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$new_cases_per_million in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$new_cases_smoothed in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$new_cases_smoothed_per_million in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$new_deaths in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$new_deaths_per_million in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$new_deaths_smoothed in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$new_deaths_smoothed_per_million in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$new_tests in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$new_tests_per_thousand in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$new_tests_smoothed in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$new_tests_smoothed_per_thousand in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$positive_rate in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$stringency_index in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$tests_per_case in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$tests_units in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$total_cases in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$total_cases_per_million in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$total_deaths in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$total_deaths_per_million in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$total_tests in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$total_tests_per_thousand in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$weekly_hosp_admissions in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$weekly_hosp_admissions_per_million in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$weekly_icu_admissions in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$weekly_icu_admissions_per_million in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$incidence_7day in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$incidence_14day in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$incidence_7day_smoothed in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$incidence_14day_smoothed in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$exponence_7day in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$exponence_14day in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$exponence_7day_smoothed in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+PHP Notice:  Undefined property: WelterRocks\CoronaData\Table\Testresults::$exponence_14day_smoothed in /var/www/clients/client1/web51/home/sh1corona/coronadata/src/CoronaData/Table/Base.php on line 915
+*/
 class Testresults extends Base
 {
     protected $result_hash = null;
@@ -55,7 +97,7 @@ class Testresults extends Base
 
     protected function get_install_sql()
     {
-      return "CREATE TABLE IF NOT EXISTS `tableresults` (
+      return "CREATE TABLE IF NOT EXISTS `testresults` (
         `uid` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
         `foreign_identifier` INT NOT NULL,
         `timestamp_last_update` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

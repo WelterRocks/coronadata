@@ -316,6 +316,19 @@ class Client
         return $datediff;    
     }
     
+    public function database_transaction_begin($transaction_name, $flags = 0)
+    {
+        if ($this->transaction_name)
+            throw new Exception("Transaction '".$this->transaction_name."' already open");
+            
+        $retval = $this->database->begin_transaction($transaction_name, $flags);
+        
+        if ($retval)
+            $this->transaction_name = $transaction_name;
+            
+        return $retval;
+    }
+    
     public function database_transaction_commit($transaction_name, $flags = 0)
     {
         if (!$this->transaction_name)
@@ -464,6 +477,7 @@ class Client
             else
                 $continent = $continents[$continent_hash];
             
+            $continent->location_hash = md5('continent'.$continent_hash);
             $continent->continent_id = self::threeletter_encode($record->continent);
             $continent->geo_id = substr($continent->continent_id, 0, 2);
             $continent->continent_hash = $continent_hash;
@@ -501,6 +515,7 @@ class Client
             else
                 $country = $countries[$country_hash];
                 
+            $country->location_hash = md5('country'.$continent_hash.$country_hash);
             $country->continent_id = self::threeletter_encode($record->continent);
             $country->continent_hash = $continent_hash;
             $country->continent_name = $record->continent;
@@ -573,6 +588,7 @@ class Client
             
             if ($continent_created)
             {
+                $continent->location_hash = md5('continent'.$continent_hash);
                 $continent->continent_id = self::threeletter_encode($record->continent);
                 $continent->geo_id = substr($continent->continent_id, 0, 2);
                 $continent->continent_hash = $continent_hash;
@@ -594,6 +610,7 @@ class Client
             
             if ($country_created)
             {
+                $country->location_hash = md5('country'.$continent_hash.$country_hash);
                 $country->continent_id = self::threeletter_encode($record->continent);
                 $country->geo_id = substr($country->continent_id, 0, 2);
                 $country->continent_hash = $continent_hash;
@@ -704,6 +721,7 @@ class Client
                 
                 $real_state_name = null;
                     
+                $state->location_hash = md5('state'.$europe->continent_hash.$germany->country_hash.$state_hash);
                 $state->geo_id = DataHandler::german_state_id_by_name($state_name, $real_state_name);
                 $state->continent_id = $europe->continent_id;
                 $state->continent_hash = $europe->continent_hash;
@@ -751,6 +769,7 @@ class Client
                 {
                     $real_state_name = null;
                         
+                    $state->location_hash = md5('state'.$europe->continent_hash.$germany->country_hash.$state_hash);
                     $state->geo_id = DataHandler::german_state_id_by_name($state_name, $real_state_name);
                     $state->continent_id = $europe->continent_id;
                     $state->continent_hash = $europe->continent_hash;
@@ -810,6 +829,7 @@ class Client
                     
                 $district_index[$district_id] = $district_hash;
                     
+                $district->location_hash = md5('district'.$europe->continent_hash.$germany->country_hash.$state->state_hash.$district_hash);
                 $district->geo_id = $district_id;
                 $district->continent_id = $europe->continent_id;
                 $district->continent_hash = $europe->continent_hash;
@@ -1367,6 +1387,8 @@ class Client
         
         if (!is_array($this->testresults))
             return null;
+            
+        $this->database_transaction_begin("save_testresult");
         
         foreach ($this->datasets as $hash => $obj)
         {
@@ -1379,12 +1401,16 @@ class Client
                 $count++;
             else // For debugging only
             {
+                $this->database_transaction_rollback("save_testresult");
+                
                 print_r($db_obj);
                 exit;
             }
                 
             $any++;
         }
+        
+        $this->database_transaction_commit("save_testresult");
         
         return $count;
     }
@@ -1396,6 +1422,8 @@ class Client
         
         if (!is_array($this->datasets))
             return null;
+            
+        $this->database_transaction_begin("save_dataset");
         
         foreach ($this->datasets as $hash => $obj)
         {
@@ -1408,12 +1436,16 @@ class Client
                 $count++;
             else // For debugging only
             {
+                $this->database_transaction_rollback("save_dataset");
+
                 print_r($db_obj);
                 exit;
             }
                 
             $any++;
         }
+        
+        $this->database_transaction_commit("save_dataset");
         
         return $count;
     }
@@ -1430,6 +1462,8 @@ class Client
         
         $count = 0;
         $any = 0;
+        
+        $this->database_transaction_begin("save_location");
         
         foreach ($stores as $store)
         {
@@ -1452,6 +1486,8 @@ class Client
                 $any++;
             }
         }
+        
+        $this->database_transaction_commit("save_location");
 
         return $count;        
     }

@@ -230,7 +230,7 @@ class Locations extends Base
         `flag_disabled` tinyint(1) NOT NULL DEFAULT '0',
         `flag_deleted` tinyint(1) NOT NULL DEFAULT '0',
         PRIMARY KEY (`uid`),
-        UNIQUE KEY `location_unique_identifier` (`continent_hash`,`country_hash`,`state_hash`,`district_hash`,`location_hash`),
+        UNIQUE KEY `location_hash` (`location_hash`),
         KEY `location_type` (`location_type`),
         KEY `geo_id` (`geo_id`),
         KEY `continent_name` (`continent_name`),

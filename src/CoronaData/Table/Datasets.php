@@ -31,6 +31,7 @@ class Datasets extends Base
     protected $state_hash = null;
     protected $country_hash = null;
     protected $continent_hash = null;
+    protected $date_rep = null;
     protected $day_of_week = null;
     protected $day = null;
     protected $month = null;
@@ -67,6 +68,8 @@ class Datasets extends Base
     protected $total_cases_per_million = null;
     protected $total_deaths = null;
     protected $total_deaths_per_million = null;
+    protected $total_recovered = null;
+    protected $total_recovered_per_million = null;
     protected $total_tests = null;
     protected $total_tests_per_thousand = null;
     protected $weekly_hosp_admissions = null;
@@ -93,6 +96,7 @@ class Datasets extends Base
         `timestamp_disabled` timestamp NULL DEFAULT NULL,
         `timestamp_enabled` timestamp NULL DEFAULT NULL,
         `timestamp_represent` timestamp NULL DEFAULT NULL,
+        `date_rep` DATE NULL DEFAULT NULL,
         `dataset_hash` VARCHAR(32) NULL DEFAULT NULL,
         `continent_hash` VARCHAR(32) NULL DEFAULT NULL,
         `country_hash` VARCHAR(32) NULL DEFAULT NULL,
@@ -103,9 +107,9 @@ class Datasets extends Base
         `day` smallint UNSIGNED NOT NULL DEFAULT '0',
         `month` smallint UNSIGNED NOT NULL DEFAULT '0',
         `year` YEAR NOT NULL DEFAULT '0',
-        `cases` INT NOT NULL DEFAULT '0',
-        `deaths` INT NOT NULL DEFAULT '0',
-        `recovered` INT NOT NULL DEFAULT '0',
+        `cases` BIGINT NOT NULL DEFAULT '0',
+        `deaths` BIGINT NOT NULL DEFAULT '0',
+        `recovered` BIGINT NOT NULL DEFAULT '0',
         `hosp_patients` INT NOT NULL DEFAULT '0',
         `hosp_patients_per_million` FLOAT NOT NULL DEFAULT '0',
         `icu_patients` INT NOT NULL DEFAULT '0',
@@ -130,10 +134,12 @@ class Datasets extends Base
         `stringency_index` FLOAT NOT NULL DEFAULT '0',
         `tests_per_case` FLOAT NOT NULL DEFAULT '0',
         `tests_units` VARCHAR(32) DEFAULT NULL,
-        `total_cases` INT NOT NULL DEFAULT '0',
+        `total_cases` BIGINT NOT NULL DEFAULT '0',
         `total_cases_per_million` FLOAT NOT NULL DEFAULT '0',
-        `total_deaths` INT NOT NULL DEFAULT '0',
+        `total_deaths` BIGINT NOT NULL DEFAULT '0',
         `total_deaths_per_million` FLOAT NOT NULL DEFAULT '0',
+        `total_recovered` BIGINT NOT NULL DEFAULT '0',
+        `total_recovered_per_million` FLOAT NOT NULL DEFAULT '0',
         `total_tests` INT NOT NULL DEFAULT '0',
         `total_tests_per_thousand` FLOAT NOT NULL DEFAULT '0',
         `weekly_hosp_admissions` INT NOT NULL DEFAULT '0',
