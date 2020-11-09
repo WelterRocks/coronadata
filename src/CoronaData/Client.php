@@ -1390,7 +1390,7 @@ class Client
             
         $this->database_transaction_begin("save_testresult");
         
-        foreach ($this->datasets as $hash => $obj)
+        foreach ($this->testresults as $hash => $obj)
         {
             $db_obj = $this->database->new_testresult();
 
