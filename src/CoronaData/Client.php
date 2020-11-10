@@ -786,7 +786,9 @@ class Client
                 $state->population_males = $data->males;
                 $state->population_females = $data->females;
                 $state->population_count = $data->totals;
-                $state->population_density = ($state->population_count / $state->area);
+                
+                if ($state->area > 0)
+                    $state->population_density = ($state->population_count / $state->area);
                 
                 if (!isset($germany->population_females))
                     $germany->population_females = 0;
@@ -859,7 +861,9 @@ class Client
                         $district->population_males = $data2->males;
                         $district->population_count = $data2->totals;
                         $district->population_year = $data2->date->format("Y");
-                        $district->population_density = ($district->population_count / $district->area);
+                        
+                        if ($district->area > 0)
+                            $district->population_density = ($district->population_count / $district->area);
                         
                         unset($data2);
                     }
