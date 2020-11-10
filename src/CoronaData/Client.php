@@ -786,6 +786,7 @@ class Client
                 $state->population_males = $data->males;
                 $state->population_females = $data->females;
                 $state->population_count = $data->totals;
+                $state->population_density = ($state->population_count / $state->area);
                 
                 if (!isset($germany->population_females))
                     $germany->population_females = 0;
@@ -858,6 +859,7 @@ class Client
                         $district->population_males = $data2->males;
                         $district->population_count = $data2->totals;
                         $district->population_year = $data2->date->format("Y");
+                        $district->population_density = ($district->population_count / $district->area);
                         
                         unset($data2);
                     }
@@ -959,16 +961,11 @@ class Client
         return true;
     }
     
-    public function calculate_dataset_fields($cases_array)
+    public function calculate_dataset_fields($cases)
     {
-        if (!is_array($cases_array))
+        if (!is_array($cases))
             return null;
         
-        $cases = array();
-        
-        foreach ($cases_array as $c)
-            array_push($cases, $c);        
-            
         $top7 = 8;
         $top14 = 15;
         $top7_smoothed = 11;
@@ -1343,6 +1340,12 @@ class Client
                 $district = $this->districts[$index];
             else
                 $district = null;
+                
+            // And also its parent
+            if (isset($this->states[$district->state_hash]))
+                $state = $this->states[$district->state_hash];
+            else
+                $state = null;
             
             if (is_object($district))
             {
@@ -1406,7 +1409,83 @@ class Client
                 }
                 
                 $this->datasets[$dataset_hash] = $dataset;
-            }
+                
+                if (is_object($district))
+                {
+                    // Now, push the results to corresponding district and its parent locations                
+                    $district->cases_count = $cases;
+                    $district->deaths_count = $deaths;
+                    $district->recovered_count = $recovered;
+                    
+                    if ($district->cases_min > $cases)
+                        $district->cases_min = $cases;
+                    if ($district->cases_max < $cases)
+                        $district->cases_max = $cases;
+                    if ($district->deahts_min > $deaths)
+                        $district->deaths_min = $deaths;
+                    if ($district->deaths_max < $deaths)
+                        $district->deaths_max = $deaths;
+                    if ($district->recovered_min > $recovered)
+                        $district->recovered_min = $recovered;
+                    if ($district->recovered_max < $recovered)
+                        $district->recovered_max = $recovered;
+                        
+                    $district->total_cases = $cases;
+                    $district->total_deaths = $deaths;
+                    $district->total_recovered = $recovered;
+                    
+                    $district->total_cases_per_million = ($district->total_cases / $mil * $population);
+                    $district->total_deaths_per_million = ($district->total_deaths / $mil * $population);
+                    $district->total_recovered_per_million = ($district->total_recovered / $mil * $population);
+                    
+                    $district->new_cases_per_million = ($district->new_cases / $mil * $population);
+                    $district->new_deaths_per_million = ($district->new_deaths / $mil * $population);
+                    $district->new_recovered_per_million = ($district->new_recovered / $mil * $population);
+                    
+                    $district->new_cases_smoothed_per_million = ($district->new_cases_smoothed / $mil * $population);
+                    $district->new_deaths_smoothed_per_million = ($district->new_deaths_smoothed / $mil * $population);
+                    $district->new_recovered_smoothed_per_million = ($district->new_recovered_smoothed / $mil * $population);
+                    
+                    if (is_object($state))
+                    {
+                        $state->cases_count = $cases;
+                        $state->deaths_count = $deaths;
+                        $state->recovered_count = $recovered;
+                        
+                        if ($state->cases_min > $cases)
+                            $state->cases_min = $cases;
+                        if ($state->cases_max < $cases)
+                            $state->cases_max = $cases;
+                        if ($state->deahts_min > $deaths)
+                            $state->deaths_min = $deaths;
+                        if ($state->deaths_max < $deaths)
+                            $state->deaths_max = $deaths;
+                        if ($state->recovered_min > $recovered)
+                            $state->recovered_min = $recovered;
+                        if ($state->recovered_max < $recovered)
+                            $state->recovered_max = $recovered;
+                            
+                        $state->total_cases = $cases;
+                        $state->total_deaths = $deaths;
+                        $state->total_recovered = $recovered;
+                        
+                        $state->total_cases_per_million = ($district->total_cases / $mil * $state->population_count);
+                        $state->total_deaths_per_million = ($district->total_deaths / $mil * $state->population_count);
+                        $state->total_recovered_per_million = ($district->total_recovered / $mil * $state->population_count);
+                        
+                        $state->new_cases_per_million = ($district->new_cases / $mil * $state->population_count);
+                        $state->new_deaths_per_million = ($district->new_deaths / $mil * $state->population_count);
+                        $state->new_recovered_per_million = ($district->new_recovered / $mil * $state->population_count);
+                    
+                        $state->new_cases_smoothed_per_million = ($district->new_cases_smoothed / $mil * $population_count);
+                        $state->new_deaths_smoothed_per_million = ($district->new_deaths_smoothed / $mil * $population_count);
+                        $state->new_recovered_smoothed_per_million = ($district->new_recovered_smoothed / $mil * $state->population_count);
+                    }
+                }
+            }            
+            
+            $this->states[$district->state_hash] = $state;
+            $this->districts[$index] = $district;
         }
                         
         // Free the memory, which is no longer need (if hold data is not requested)
