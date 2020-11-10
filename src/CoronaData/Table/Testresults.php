@@ -105,12 +105,14 @@ class Testresults extends Base
         KEY `country_hash` (`country_hash`),
         KEY `continent_hash` (`continent_hash`)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
+      ";
+      /*
       ALTER TABLE `testresults` ADD CONSTRAINT `testresult_location_continent` FOREIGN KEY (`continent_hash`) REFERENCES `locations`(`continent_hash`) ON DELETE CASCADE ON UPDATE CASCADE;
       ALTER TABLE `testresults` ADD  CONSTRAINT `testresult_location_country` FOREIGN KEY (`country_hash`) REFERENCES `locations`(`country_hash`) ON DELETE CASCADE ON UPDATE CASCADE;
       ALTER TABLE `testresults` ADD  CONSTRAINT `testresult_location_state` FOREIGN KEY (`state_hash`) REFERENCES `locations`(`state_hash`) ON DELETE CASCADE ON UPDATE CASCADE;
       ALTER TABLE `testresults` ADD  CONSTRAINT `testresult_location_district` FOREIGN KEY (`district_hash`) REFERENCES `locations`(`district_hash`) ON DELETE CASCADE ON UPDATE CASCADE;
       ALTER TABLE `testresults` ADD  CONSTRAINT `testresult_location_location` FOREIGN KEY (`location_hash`) REFERENCES `locations`(`location_hash`) ON DELETE CASCADE ON UPDATE CASCADE;
       ";
+      */
     }
 }

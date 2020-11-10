@@ -85,9 +85,11 @@ class Nowcasts extends Base
         KEY `country_hash` (`country_hash`),
         KEY `continent_hash` (`continent_hash`)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
+      ";
+      /*
       ALTER TABLE `nowcasts` ADD CONSTRAINT `nowcast_location_continent` FOREIGN KEY (`continent_hash`) REFERENCES `locations`(`continent_hash`) ON DELETE CASCADE ON UPDATE CASCADE;
       ALTER TABLE `nowcasts` ADD  CONSTRAINT `nowcast_location_country` FOREIGN KEY (`country_hash`) REFERENCES `locations`(`country_hash`) ON DELETE CASCADE ON UPDATE CASCADE;
       ";
+      */
     }
 }

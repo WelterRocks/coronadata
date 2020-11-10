@@ -1245,7 +1245,7 @@ class Client
             $tmpl->$key = null;
             
         $datasets = array();
-        
+                
         // No need for templates here, just clone data and add the hashes
         foreach($this->rki_positive->handler->get_data() as $data)
         {
@@ -1418,7 +1418,7 @@ class Client
         return true;        
     }
     
-    public function save_testresults(&$count = null, &$any = null)
+    public function save_testresults(&$count = null, &$any = null, &$errors = null)
     {
         $count = 0;
         $any = 0;
@@ -1427,6 +1427,8 @@ class Client
             return null;
             
         $this->database_transaction_begin("save_testresult");
+        
+        $errors = array();
         
         foreach ($this->testresults as $hash => $obj)
         {
@@ -1458,6 +1460,8 @@ class Client
                     
             if ($db_obj->save())
                 $count++;
+            else
+                array_push($errors, $db_obj->get_error());
 
             $any++;
         }
@@ -1486,6 +1490,8 @@ class Client
                     
             if ($db_obj->save())
                 $count++;
+            else
+                array_push($errors, $db_obj->get_error());
 
             $any++;
         }
@@ -1495,7 +1501,7 @@ class Client
         return $count;
     }
     
-    public function save_nowcasts(&$count = null, &$any = null)
+    public function save_nowcasts(&$count = null, &$any = null, &$errors = null)
     {
         $count = 0;
         $any = 0;
@@ -1515,6 +1521,8 @@ class Client
         
         $europe_hash = self::hash_name("Europe");
         $germany_hash = self::hash_name("Germany");        
+        
+        $errors = array();
         
         foreach ($this->rki_nowcast->handler->get_data() as $obj)
         {            
@@ -1552,6 +1560,8 @@ class Client
                     
             if ($db_obj->save())
                 $count++;
+            else
+                array_push($errors, $db_obj->get_error());
 
             $any++;
         }
@@ -1561,7 +1571,7 @@ class Client
         return $count;
     }
     
-    public function save_locations(&$count = null, &$any = null)
+    public function save_locations(&$count = null, &$any = null, &$errors = null)
     {
         $stores = array(
             "continents",
@@ -1571,6 +1581,7 @@ class Client
             "locations"
         );
         
+        $errors = array();
         $count = 0;
         $any = 0;
         
@@ -1593,6 +1604,8 @@ class Client
                     
                 if ($db_obj->save())
                     $count++;
+                else
+                    array_push($errors, $db_obj->get_error());
                 
                 $any++;
             }

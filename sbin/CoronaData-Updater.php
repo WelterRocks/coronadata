@@ -154,15 +154,15 @@ function worker_loop(Client $client, $oneshot = false)
         // Reset update counter
         $did_updates = 0;
         
-        // Preload all stores
+        // Load all stores
         if (!$preload_done)
         {	
-            $cli->log("Preloading stores. This will take a while. Please be patient.", LOG_INFO);
+            $cli->log("Loading stores. This will take a while. Please be patient.", LOG_INFO);
             $length = $client->load_stores($global_cachetime);
             
             if ($length > 0)
             {
-                $cli->log("Preloading done. Got ".$length." bytes.", LOG_INFO);
+                $cli->log("Loading done. Got ".$length." bytes.", LOG_INFO);
                 
                 $cli->log("Extracting and mastering locations.", LOG_INFO);                
                 $client->master_locations();
@@ -172,18 +172,26 @@ function worker_loop(Client $client, $oneshot = false)
                 
                 $cli->log("Extracting and mastering testresults.", LOG_INFO);                
                 $client->master_testresults();
+                
+                $count = 0;
+                $any = 0;
+                $errors = array();
                                 
                 $cli->log("Storing location records.", LOG_INFO);
-                $client->save_locations();
+                $client->save_locations($count, $any, $errors);
+                $cli->log("Stored ".$count." from ".$any." location records.", LOG_INFO);
                 
                 $cli->log("Storing nowcast records.", LOG_INFO);
-                $client->save_nowcasts();
+                $client->save_nowcasts($count, $any, $errors);
+                $cli->log("Stored ".$count." from ".$any." nowcast records.", LOG_INFO);
                 
                 $cli->log("Storing dataset records.", LOG_INFO);
-                $client->save_datasets();
+                $client->save_datasets($count, $any, $errors);
+                $cli->log("Stored ".$count." from ".$any." dataset records.", LOG_INFO);
                 
                 $cli->log("Storing testresult records.", LOG_INFO);
-                $client->save_testresults();
+                $client->save_testresults($count, $any, $errors);
+                $cli->log("Stored ".$count." from ".$any." testresult records.", LOG_INFO);
                 
                 $cli->log("Database updated.", LOG_INFO);
                 $preload_done = true;
@@ -312,6 +320,13 @@ function shutdown_daemon()
 // Check, whether we have to setup some things
 if ($cli->has_argument("--oneshot"))
     $oneshot = true;
+    
+//  This will force the cached files to be used, if they exist
+if ($cli->has_argument("--force-cache"))
+{
+    $global_cachetime = 99999999999999999;
+    $max_cast_age = $global_cachetime;
+}
 
 // Check usage
 if ($cli->has_argument("start"))
