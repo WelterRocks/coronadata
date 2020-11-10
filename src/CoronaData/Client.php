@@ -1341,16 +1341,26 @@ class Client
             
             // We need the population from the corresponding location object
             if (isset($this->districts[$index]))
+            {
                 $district = $this->districts[$index];
+    
+                // And also its parent
+                if (isset($this->states[$district->state_hash]))
+                    $state = $this->states[$district->state_hash];
+                else
+                    $state = null;
+            }
             else
-                $district = null;
+            {
+                // Spooky, the corresponding district wasnt found.
+                // For now, we store the dataset anyway, but we have to find the problem here.
                 
-            // And also its parent
-            if (isset($this->states[$district->state_hash]))
-                $state = $this->states[$district->state_hash];
-            else
+                echo "District with index $index not found\n";
+                
+                $district = null;
                 $state = null;
-            
+            }
+                
             if (is_object($district))
             {
                 if (isset($district->population_count))
@@ -1421,11 +1431,35 @@ class Client
                     $district->deaths_count = $deaths;
                     $district->recovered_count = $recovered;
                     
+                    // Due to missing data in retrieved files, it could be that some fields are missing right now
+                    $fix_missing = array(
+                        "recovered_min",
+                        "recovered_max",
+                        "total_cases",
+                        "total_deaths",
+                        "total_recovered",
+                        "new_cases",
+                        "new_deaths",
+                        "new_recovered",
+                        "new_cases_smoothed",
+                        "new_deaths_smoothed",
+                        "new_recovered_smoothed"
+                    );
+                    
+                    foreach ($fix_missing as $fix)
+                    {
+                        if (!isset($district->$fix))
+                            $district->$fix = 0;
+                            
+                        if (!isset($state->$fix))
+                            $state->$fix = 0;
+                    }
+                    
                     if ($district->cases_min > $cases)
                         $district->cases_min = $cases;
                     if ($district->cases_max < $cases)
                         $district->cases_max = $cases;
-                    if ($district->deahts_min > $deaths)
+                    if ($district->deaths_min > $deaths)
                         $district->deaths_min = $deaths;
                     if ($district->deaths_max < $deaths)
                         $district->deaths_max = $deaths;
@@ -1460,7 +1494,7 @@ class Client
                             $state->cases_min = $cases;
                         if ($state->cases_max < $cases)
                             $state->cases_max = $cases;
-                        if ($state->deahts_min > $deaths)
+                        if ($state->deaths_min > $deaths)
                             $state->deaths_min = $deaths;
                         if ($state->deaths_max < $deaths)
                             $state->deaths_max = $deaths;
@@ -1481,15 +1515,18 @@ class Client
                         $state->new_deaths_per_million = ($district->new_deaths / $mil * $state->population_count);
                         $state->new_recovered_per_million = ($district->new_recovered / $mil * $state->population_count);
                     
-                        $state->new_cases_smoothed_per_million = ($district->new_cases_smoothed / $mil * $population_count);
-                        $state->new_deaths_smoothed_per_million = ($district->new_deaths_smoothed / $mil * $population_count);
+                        $state->new_cases_smoothed_per_million = ($district->new_cases_smoothed / $mil * $state->population_count);
+                        $state->new_deaths_smoothed_per_million = ($district->new_deaths_smoothed / $mil * $state->population_count);
                         $state->new_recovered_smoothed_per_million = ($district->new_recovered_smoothed / $mil * $state->population_count);
                     }
                 }
             }            
             
-            $this->states[$district->state_hash] = $state;
-            $this->districts[$index] = $district;
+            if (is_object($state))
+                $this->states[$district->state_hash] = $state;
+            
+            if (is_object($district))
+                $this->districts[$index] = $district;
         }
                         
         // Free the memory, which is no longer need (if hold data is not requested)
@@ -1680,6 +1717,9 @@ class Client
                 
             foreach ($this->$store as $hash => $obj)
             {
+                if (!is_object($obj))
+                    continue;
+                
                 $db_obj = $this->database->new_location();
                 
                 foreach ($obj as $key => $val)
