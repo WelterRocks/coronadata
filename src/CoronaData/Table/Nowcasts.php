@@ -81,7 +81,13 @@ class Nowcasts extends Base
         `flag_disabled` tinyint(1) NOT NULL DEFAULT '0',
         `flag_deleted` tinyint(1) NOT NULL DEFAULT '0',
         PRIMARY KEY (`uid`),
-        UNIQUE KEY `location_date_rep` (`continent_hash`,`country_hash`,`date_rep`)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+        UNIQUE KEY `location_date_rep` (`continent_hash`,`country_hash`,`date_rep`),
+        KEY `country_hash` (`country_hash`),
+        KEY `continent_hash` (`continent_hash`)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+      ALTER TABLE `nowcasts` ADD CONSTRAINT `nowcast_location_continent` FOREIGN KEY (`continent_hash`) REFERENCES `locations`(`continent_hash`) ON DELETE CASCADE ON UPDATE CASCADE;
+      ALTER TABLE `nowcasts` ADD  CONSTRAINT `nowcast_location_country` FOREIGN KEY (`country_hash`) REFERENCES `locations`(`country_hash`) ON DELETE CASCADE ON UPDATE CASCADE;
+      ";
     }
 }

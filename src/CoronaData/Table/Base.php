@@ -368,7 +368,7 @@ abstract class Base
         {
             $error = $this->__db->error;
             return false;
-        } 
+        }
                
         if ($this->__db->error)
         {
@@ -378,6 +378,17 @@ abstract class Base
         
         while ($this->__db->next_result()) {;}
         
+        if (!$this->is_view())
+        {
+          if (!$this->__db->multi_query("CREATE TRIGGER IF NOT EXISTS `update_set_".$this->__tablename."` BEFORE UPDATE ON `".$this->__tablename."` FOR EACH ROW BEGIN SET NEW.update_count = OLD.update_count + 1; SET NEW.flag_updated = 1; END;"))
+          {
+            $error = $this->__db->error;
+            return false;
+          }
+
+          while ($this->__db->next_result()) {;}
+        }
+              
         return true;
     }
     

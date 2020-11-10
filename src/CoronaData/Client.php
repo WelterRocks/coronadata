@@ -524,9 +524,9 @@ class Client
             $country->country_name = $record->country;
             $country->location_type = 'country';
             $country->geo_id = $record->geo_id ?: substr($record->country, 0, 2);
-            $country->population_count += $record->population;
-            $country->deaths_count += $record->deaths;
-            $country->cases_count += $record->cases;
+            $country->population_count = $record->population;
+            $country->deaths_count = $record->deaths;
+            $country->cases_count = $record->cases;
             
             if ($country->population_year > $record->population_year)
                 $country->population_year = $record->population_year;
@@ -619,7 +619,7 @@ class Client
                 $country->country_id = $country_code ?: self::threeletter_encode($record->location);
                 $country->country_name = $record->location;
                 $country->location_type = 'country';
-                $country->population_count += $record->population;
+                $country->population_count = $record->population;
             }
 
             foreach ($filter_outer as $filter)
@@ -873,17 +873,56 @@ class Client
         // Fifth, get the RKI nowcasting data and push the latest entry to the germany object
         $max_timestamp = -1;
         $max_data = null;
+
+        $esteem_reproduction_r = 0;
+        $lower_reproduction_r = 0;
+        $upper_reproduction_r = 0;
+
+        $esteem_7day_r_value = 0;
+        $lower_7day_r_value = 0;
+        $upper_7day_r_value = 0;
         
-        foreach ($this->rki_nowcast->handler->get_data() as $id => $data)
+        $nowcast = $this->rki_nowcast->handler->get_data();
+        
+        foreach ($nowcast as $id => $data)
         {
             $ts = strtotime($data->timestamp_represent);
             
+            foreach ($data as $key => $val)
+            {
+                switch ($key)
+                {
+                    case "esteem_reproduction_r":
+                        if ($val > 0) $esteem_reproduction_r = $val; elseif ($val == 0) $val = $esteem_reproduction_r;
+                        break;
+                    case "lower_reproduction_r":
+                        if ($val > 0) $lower_reproduction_r = $val; elseif ($val == 0) $val = $lower_reproduction_r;
+                        break;
+                    case "upper_reproduction_r":
+                        if ($val > 0) $upper_reproduction_r = $val; elseif ($val == 0) $val = $upper_reproduction_r;
+                        break;
+                    case "esteem_7day_r_value":
+                        if ($val > 0) $esteem_7day_r_value = $val; elseif ($val == 0) $val = $esteem_7day_r_value;
+                        break;
+                    case "lower_7day_r_value":
+                        if ($val > 0) $lower_7day_r_value = $val; elseif ($val == 0) $val = $lower_7day_r_value;
+                        break;
+                    case "upper_7day_r_value":
+                        if ($val > 0) $upper_7day_r_value = $val; elseif ($val == 0) $val = $upper_7day_r_value;
+                        break;
+                }
+                
+                $nowcast[$id]->$key = $val;
+            }
+                
             if ($ts > $max_timestamp)
             {
                 $max_timestamp = $ts;
-                $max_data = $data;
+                $max_data = clone $data;
             }
         }
+        
+        unset($nowcast);
         
         foreach ($max_data as $key => $val)
         {

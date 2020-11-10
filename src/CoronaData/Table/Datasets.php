@@ -165,6 +165,13 @@ class Datasets extends Base
         KEY `state_hash` (`state_hash`),
         KEY `district_hash` (`district_hash`),
         KEY `location_hash` (`location_hash`)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      
+      ALTER TABLE `datasets` ADD CONSTRAINT `dataset_location_continent` FOREIGN KEY (`continent_hash`) REFERENCES `locations`(`continent_hash`) ON DELETE CASCADE ON UPDATE CASCADE;
+      ALTER TABLE `datasets` ADD  CONSTRAINT `dataset_location_country` FOREIGN KEY (`country_hash`) REFERENCES `locations`(`country_hash`) ON DELETE CASCADE ON UPDATE CASCADE;
+      ALTER TABLE `datasets` ADD  CONSTRAINT `dataset_location_state` FOREIGN KEY (`state_hash`) REFERENCES `locations`(`state_hash`) ON DELETE CASCADE ON UPDATE CASCADE;
+      ALTER TABLE `datasets` ADD  CONSTRAINT `dataset_location_district` FOREIGN KEY (`district_hash`) REFERENCES `locations`(`district_hash`) ON DELETE CASCADE ON UPDATE CASCADE;
+      ALTER TABLE `datasets` ADD  CONSTRAINT `dataset_location_location` FOREIGN KEY (`location_hash`) REFERENCES `locations`(`location_hash`) ON DELETE CASCADE ON UPDATE CASCADE;
+      ";
     }
 }

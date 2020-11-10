@@ -237,7 +237,12 @@ class Locations extends Base
         KEY `country_name` (`country_name`),
         KEY `state_name` (`state_name`),
         KEY `district_name` (`district_name`),
-        KEY `location_name` (`location_name`)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+        KEY `location_name` (`location_name`),
+        KEY `district_hash` (`district_hash`),
+        KEY `state_hash` (`state_hash`),
+        KEY `country_hash` (`country_hash`),
+        KEY `continent_hash` (`continent_hash`)        
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      ";
     }
 }
