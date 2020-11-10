@@ -818,7 +818,7 @@ class Client
                 $state_name = DataHandler::german_state_by_district_geo_id($data->id);                
                 $state_hash = self::hash_name($state_name);
                 
-                $district_hash = self::hash_name($data->fullname);
+                $district_hash = self::hash_name($state_name.$data->name);
                 
                 if (!isset($states[$state_hash]))
                     continue;
@@ -1213,7 +1213,62 @@ class Client
         return true;
     }
     
-    public function master_testresults($hold_data = false)
+    public function district_map($district_name, &$mapped = false)
+    {
+        // Ohh yes, we need this map, because of the well-payed germans, which are unable to use a common standard for district names (or unique ids)
+        // But see yourself: on the left the stuff send in testresults and on the right the stuff coming from DESTATIS
+        // Also we see a special case for Berlin! They splitted Berlin into different parts. Nowhere in germany they did the same thing.
+        // Because of non existing Berlin Neukölln or Lichtenberg or so on as a district, we are forced to combine them into the district BERLIN.
+        // This is a good example on how they work and how statistics are obfuscated. Without this mapping, we would miss many datasets and things go wrong.
+        
+        $map = array(
+            "Mülheim a.d.Ruhr" => "Mülheim an der Ruhr",
+            "Altenkirchen" => "Altenkirchen (Westerwald)",
+            "Bitburg-Prüm" => "Eifelkreis Bitburg-Prüm",
+            "Frankenthal" => "Frankenthal (Pfalz)",
+            "Landau i.d.Pfalz" => "Landau in der Pfalz",
+            "Ludwigshafen" => "Ludwigshafen am Rhein",
+            "Neustadt a.d.Weinstraße" => "Neustadt an der Weinstraße",
+            "Freiburg i.Breisgau" => "Freiburg im Breisgau",
+            "Landsberg a.Lech" => "Landsberg am Lech",
+            "Mühldorf a.Inn" => "Mühldorf am Inn",
+            "Pfaffenhofen a.d.Ilm" => "Pfaffenhofen an der Ilm",
+            "Weiden i.d.OPf." => "Weiden in der Oberpfalz",
+            "Neumarkt i.d.OPf." => "Neumarkt in der Oberpfalz",
+            "Neustadt a.d.Waldnaab" => "Neustadt an der Waldnaab",
+            "Wunsiedel i.Fichtelgebirge" => "Wunsiedel im Fichtelgebirge",
+            "Neustadt a.d.Aisch-Bad Windsheim" => "Neustadt an der Aisch-Bad Windsheim",
+            "Kempten" => "Kempten (Allgäu)",
+            "Dillingen a.d.Donau" => "Dillingen an der Donau",
+            "Lindau" => "Lindau (Bodensee)",
+            "Stadtverband Saarbrücken" => "Regionalverband Saarbrücken",
+            "Berlin Mitte" => "Berlin",
+            "Berlin Friedrichshain-Kreuzberg" => "Berlin",
+            "Berlin Pankow" => "Berlin",
+            "Berlin Charlottenburg-Wilmersdorf" => "Berlin",
+            "Berlin Spandau" => "Berlin",
+            "Berlin Steglitz-Zehlendorf" => "Berlin",
+            "Berlin Tempelhof-Schöneberg" => "Berlin",
+            "Berlin Neukölln" => "Berlin",
+            "Berlin Treptow-Köpenick" => "Berlin",
+            "Berlin Marzahn-Hellersdorf" => "Berlin",
+            "Berlin Lichtenberg" => "Berlin",
+            "Berlin Reinickendorf" => "Berlin",
+            "Brandenburg a.d.Havel" => "Brandenburg an der Havel",
+            "Halle" => "Halle (Saale)"
+        );
+        
+        $mapped = true;
+        
+        if (isset($map[$district_name]))
+            return $map[$district_name];
+            
+        $mapped = false;
+            
+        return $district_name;
+    }
+    
+    public function master_testresults($hold_data = false, &$unknown_states = null, &$unknown_districts = null)
     {
         // After stores are loaded, create the testresult pool with common fields
         $testresults = array();
@@ -1246,16 +1301,36 @@ class Client
             $tmpl->$key = null;
             
         $datasets = array();
+        
+        $unknown_districts = array();
+        $unknown_states = array();
                 
         // No need for templates here, just clone data and add the hashes
         foreach($this->rki_positive->handler->get_data() as $data)
         {
+            // Before we do anything, we must map the district name!
+            $data->district_name = $this->district_map($data->district_name);
+        
             // The result hash must have another part to be unique, date is not sufficient here
             // So maybe its a good idea to use the foreign identifier, delivered by the data itself
             $result_hash = md5(self::hash_name($data->district_name).$data->date_rep."#".$data->foreign_identifier);
 
-            $district_hash = self::hash_name($data->district_name);
+            $district_hash = self::hash_name($data->state.$data->district_name);
             $state_hash = self::hash_name($data->state);
+            
+            if (!isset($this->districts[$district_hash]))
+            {
+                // Log unknown districts
+                if (!isset($unknown_districts[$district_hash]))
+                    $unknown_districts[$district_hash] = $data->district_name;
+            }
+            
+            if (!isset($this->states[$state_hash]))
+            {
+                // Log unknown states
+                if (!isset($unknown_states[$state_hash]))
+                    $unknown_states[$state_hash] = $data->state;
+            }
             
             $testresult = clone $data;
             $testresult->result_hash = $result_hash;
@@ -1274,8 +1349,8 @@ class Client
                 $dataset = clone $tmpl;
                 
                 $dataset->dataset_hash = md5("positive#".self::hash_name($data->district_name).$data->date_rep);
-                $dataset->district_hash = self::hash_name($data->district_name);
-                $dataset->state_hash = self::hash_name($data->state);
+                $dataset->district_hash = $district_hash;
+                $dataset->state_hash = $state_hash;
                 $dataset->country_hash = $germany_hash;
                 $dataset->continent_hash = $europe_hash;
                 $dataset->day_of_week = $data->day_of_week;
@@ -1322,7 +1397,7 @@ class Client
             
             ksort($datasets[$index]);
         }
-        
+
         // Define a "million" to prevent typos
         $mil = 1000000;
         
@@ -1353,10 +1428,8 @@ class Client
             else
             {
                 // Spooky, the corresponding district wasnt found.
-                // For now, we store the dataset anyway, but we have to find the problem here.
-                
-                echo "District with index $index not found\n";
-                
+                // Seems, that the district is not yet existing...
+                                
                 $district = null;
                 $state = null;
             }
