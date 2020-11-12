@@ -689,7 +689,7 @@ class Client
             unset($last_index);
 
             // Try to calculate contamination status
-            if ($country->total_cases > 0)
+            if ((isset($country->total_cases)) && ($country->total_cases > 0))
             {
                 $country->contamination_total = ($country->population_count / $country->total_cases);
                 $country->contamination_rundays = ((time() - $country->timestamp_min) / 60 / 60 / 24);
@@ -703,7 +703,7 @@ class Client
                     $country->contamination_target = (($country->population_count - $country->total_cases) / $country->contamination_per_day);
             }
 
-            if ($continent->total_cases > 0)
+            if ((isset($continent->total_cases)) && ($continent->total_cases > 0))
             {
                 $continent->contamination_total = ($continent->population_count / $continent->total_cases);
                 $continent->contamination_rundays = ((time() - $continent->timestamp_min) / 60 / 60 / 24);
