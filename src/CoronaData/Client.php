@@ -1018,7 +1018,7 @@ class Client
         return true;
     }
     
-    public function calculate_dataset_fields($cases)
+    public function calculate_dataset_fields($cases, $population, $incidence_factor = 100000)
     {
         if (!is_array($cases))
             return null;
@@ -1094,12 +1094,15 @@ class Client
         
         $result = new \stdClass;
                 
-        $result->incidence_7day = $incidence7 / 7;
-        $result->incidence_14day = $incidence14 / 14;
-                
-        $result->incidence_7day_smoothed = $incidence7_smoothed / 7;
-        $result->incidence_14day_smoothed = $incidence14_smoothed / 14;
-                
+        if ($population > 0)
+        {
+            $result->incidence_7day = (($incidence7 / 7) / $population * $incidence_factor);
+            $result->incidence_14day = (($incidence14 / 14) / $population * $incidence_factor);
+                    
+            $result->incidence_7day_smoothed = (($incidence7_smoothed / 7) / $population * $incidence_factor);
+            $result->incidence_14day_smoothed = (($incidence14_smoothed / 14) / $population * $incidence_factor);
+        }                    
+            
         $result->exponence_7day = ($casecount / $exp7);
         $result->exponence_14day = ($casecount / $exp14);
 
@@ -1182,7 +1185,7 @@ class Client
         );
         
         foreach ($force_defaults as $key => $val)
-            $result->$key = $val;
+            $result->$key = (int)$val;
         
         switch ($result->warning_level)
         {
@@ -1355,7 +1358,7 @@ class Client
                     }
                 }
                 
-                $result = $this->calculate_dataset_fields($cases);
+                $result = $this->calculate_dataset_fields($cases, $this->countries[$country_hash]->population_count);
                 
                 if (is_object($result))
                 {
@@ -1700,7 +1703,7 @@ class Client
                 array_push($cases_last18, $cases);
                 array_shift($cases_last18);
                                 
-                $result = $this->calculate_dataset_fields($cases_last18);
+                $result = $this->calculate_dataset_fields($cases_last18, $population);
                 
                 if (is_object($result))
                 {
