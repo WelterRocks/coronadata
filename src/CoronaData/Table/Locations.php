@@ -74,6 +74,7 @@ class Locations extends Base
     protected $population_density = null;
     protected $infection_density = null;
     protected $infection_probability = null;
+    protected $infection_area = null;
     protected $new_cases = null;
     protected $new_cases_per_million = null;
     protected $new_cases_smoothed = null;
@@ -219,6 +220,7 @@ class Locations extends Base
         `population_density` FLOAT NOT NULL DEFAULT '0',
         `infection_density` FLOAT NOT NULL DEFAULT '0',
         `infection_probability` FLOAT NOT NULL DEFAULT '0',
+        `infection_area` FLOAT NOT NULL DEFAULT '0',        
         `area` FLOAT DEFAULT NULL,
         `deaths_count` bigint NOT NULL DEFAULT '0',
         `deaths_min` bigint NOT NULL DEFAULT '0',

@@ -1525,11 +1525,13 @@ class Client
                     if ($district->area > 0)
                     {
                         $district->infection_density = ($district->cases_count / $district->area);
-                        $district->infection_probability = (100 / (1 / $district->infection_density * $district->population_density));
+                        $district->infection_area = (1 / $district->infection_density);
+                        $district->infection_probability = (100 / ($district->infection_area * $district->population_density));
                     }
                     else
                     {
                         $district->infection_density = 0;
+                        $district->infection_area = 0;
                         $district->infection_probability = 0;
                     }
                     
@@ -1595,11 +1597,13 @@ class Client
                         if ($state->area > 0)
                         {
                             $state->infection_density = ($state->cases_count / $state->area);
-                            $state->infection_probability = (100 / (1 / $state->infection_density * $state->population_density));
+                            $state->infection_area = (1 / $state->infection_density);
+                            $state->infection_probability = (100 / ($state->infection_area * $state->population_density));
                         }
                         else
                         {
                             $state->infection_density = 0;
+                            $state->infection_area = 0;
                             $state->infection_probability = 0;
                         }
                     
@@ -1641,11 +1645,13 @@ class Client
                             if ($germany->area > 0)
                             {
                                 $germany->infection_density = ($germany->cases_count / $germany->area);
-                                $germany->infection_probability = (100 / (1 / $germany->infection_density * $germany->population_density));
+                                $germany->infection_area = (1 / $germany->infection_density);
+                                $germany->infection_probability = (100 / ($germany->infection_area * $germany->population_density));
                             }
                             else
                             {
                                 $germany->infection_density = 0;
+                                $germany->infection_area = 0;
                                 $germany->infection_probability = 0;
                             }
                     

@@ -280,7 +280,7 @@ function daemon()
         if (!file_exists($last_run_filename))
             @touch($last_run_filename);
         else
-            $last_run_timestamp = filemtime($last_run_file);
+            $last_run_timestamp = filemtime($last_run_filename);
 
         // Dispatch signals in outer loop
         $cli->signals_dispatch();
