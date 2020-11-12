@@ -119,13 +119,13 @@ abstract class Base
                 $worker_count++;
               }
             }
-            elseif (($val !== null) && ($val != ""))
+            elseif (($val !== null) && ($val != "") && (!$this->isint($val)))
             {
               if (($val == 0) && ($zero_as_null))
                 $update_clause .= ", `".$key."` = NULL";
               elseif ((($val === 0) || ($val === false)) && ($val !== null))
                 $update_clause .= ", `".$key."` = ".$val;
-              elseif ((is_numeric($val)) || (is_int($val)))
+              elseif ((is_numeric($val)) || ($this->isint($val)))
                 $update_clause .= ", `".$key."` = ".$val;
               else
                 $update_clause .= ", `".$key."` = '".$this->esc($val)."'";
@@ -238,6 +238,11 @@ abstract class Base
     protected function get_db()
     {
         return $this->__db;
+    }
+    
+    public static function isint($input)
+    {
+      return(ctype_digit(strval($input)));
     }
     
     public function get_required_fields()
@@ -532,7 +537,7 @@ abstract class Base
             
             if ((($val === 0) || ($val === false)) && ($val !== null) && ($val !== ""))
               $vals .= ",".$val;
-            elseif ((is_numeric($val)) || (is_int($val)))
+            elseif ((is_numeric($val)) || ($this->isint($val)))
               $vals .= ",".$val;
             else
               $vals .= ",'".$this->esc($val)."'";

@@ -1102,6 +1102,13 @@ class Client
             $result->incidence_7day_smoothed = (($incidence7_smoothed / 7) / $population * $incidence_factor);
             $result->incidence_14day_smoothed = (($incidence14_smoothed / 14) / $population * $incidence_factor);
         }                    
+        else
+        {
+            $result->incidence_7day = 0;
+            $result->incidence_14day = 0;
+            $result->incidence_7day_smoothed = 0;
+            $result->incidence_14day_smoothed = 0;
+        }
             
         $result->exponence_7day = ($casecount / $exp7);
         $result->exponence_14day = ($casecount / $exp14);
