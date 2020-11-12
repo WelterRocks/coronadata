@@ -125,7 +125,7 @@ abstract class Base
                 $update_clause .= ", `".$key."` = NULL";
               elseif ((($val === 0) || ($val === false)) && ($val !== null))
                 $update_clause .= ", `".$key."` = ".$val;
-              elseif (is_numeric($val))
+              elseif ((is_numeric($val)) || (is_int($val)))
                 $update_clause .= ", `".$key."` = ".$val;
               else
                 $update_clause .= ", `".$key."` = '".$this->esc($val)."'";
@@ -532,7 +532,7 @@ abstract class Base
             
             if ((($val === 0) || ($val === false)) && ($val !== null) && ($val !== ""))
               $vals .= ",".$val;
-            elseif (is_numeric($val))
+            elseif ((is_numeric($val)) || (is_int($val)))
               $vals .= ",".$val;
             else
               $vals .= ",'".$this->esc($val)."'";

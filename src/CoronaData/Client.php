@@ -1152,33 +1152,33 @@ class Client
         // These are example recommendations!!!! NOT A STRICT TO DO LIST!!!
         // Suggestions are welcome.
         $force_defaults = array(
-            "flag_enforce_daily_need_deliveries" => 0,
-            "flag_enforce_treatment_priorization" => 0,
-            "flag_lockdown_primary_infrastructure" => 0,
-            "flag_isolate_executive_staff" => 0,
-            "flag_enforce_federation_control" => 0,
-            "flag_limit_fundamental_rights" => 0,
-            "flag_lockdown_schools" => 0,
-            "flag_lockdown_gastronomy" => 0,
-            "flag_lockdown_secondary_infrastructure" => 0,
-            "flag_enforce_local_crisis_team_control" => 0,
-            "flag_enforce_gastronomy_rules" => 0,
-            "flag_lockdown_leisure_activities" => 0,
-            "flag_isolate_medium_risk_group" => 0,
-            "flag_reserve_icu_units" => 0,
-            "flag_enforce_shopping_rules" => 0,
-            "flag_isolate_high_risk_group" => 0,
-            "flag_general_caution" => 0,
-            "flag_attention_on_symptoms" => 0,
-            "flag_wash_hands" => 0,
-            "flag_recommend_mask_wearing" => 0,
-            "flag_enforce_critical_mask_wearing" => 0, 
-            "flag_enforce_public_mask_wearing" => 0, 
-            "flag_isolate_low_risk_group" => 0,           
-            "enforce_distance_meters" => -1,
-            "enforce_household_plus_persons_to" => -1,
-            "enforce_public_groups_to" => -1,
-            "enforce_public_events_to" => -1
+            "flag_enforce_daily_need_deliveries" => (int)0,
+            "flag_enforce_treatment_priorization" => (int)0,
+            "flag_lockdown_primary_infrastructure" => (int)0,
+            "flag_isolate_executive_staff" => (int)0,
+            "flag_enforce_federation_control" => (int)0,
+            "flag_limit_fundamental_rights" => (int)0,
+            "flag_lockdown_schools" => (int)0,
+            "flag_lockdown_gastronomy" => (int)0,
+            "flag_lockdown_secondary_infrastructure" => (int)0,
+            "flag_enforce_local_crisis_team_control" => (int)0,
+            "flag_enforce_gastronomy_rules" => (int)0,
+            "flag_lockdown_leisure_activities" => (int)0,
+            "flag_isolate_medium_risk_group" => (int)0,
+            "flag_reserve_icu_units" => (int)0,
+            "flag_enforce_shopping_rules" => (int)0,
+            "flag_isolate_high_risk_group" => (int)0,
+            "flag_general_caution" => (int)0,
+            "flag_attention_on_symptoms" => (int)0,
+            "flag_wash_hands" => (int)0,
+            "flag_recommend_mask_wearing" => (int)0,
+            "flag_enforce_critical_mask_wearing" => (int)0, 
+            "flag_enforce_public_mask_wearing" => (int)0, 
+            "flag_isolate_low_risk_group" => (int)0,
+            "enforce_distance_meters" => (int)-1,
+            "enforce_household_plus_persons_to" => (int)-1,
+            "enforce_public_groups_to" => (int)-1,
+            "enforce_public_events_to" => (int)-1
         );
         
         foreach ($force_defaults as $key => $val)
@@ -1195,9 +1195,9 @@ class Client
                 $result->flag_limit_fundamental_rights = 1;
                 $result->flag_isolate_low_risk_group = 1;
                 $result->enforce_distance_meters = 3;
-                $result->enforce_household_plus_persons_to = 0;
-                $result->enforce_public_groups_to = 0;
-                $result->enforce_public_events_to = 0;
+                $result->enforce_household_plus_persons_to = (int)0;
+                $result->enforce_public_groups_to = (int)0;
+                $result->enforce_public_events_to = (int)0;
             case 6:
                 $result->flag_lockdown_schools = 1;
                 $result->flag_lockdown_gastronomy = 1;
@@ -1207,8 +1207,8 @@ class Client
                 {
                     $result->enforce_distance_meters = 3;
                     $result->enforce_household_plus_persons_to = 1;
-                    $result->enforce_public_groups_to = 0;
-                    $result->enforce_public_events_to = 0;
+                    $result->enforce_public_groups_to = (int)0;
+                    $result->enforce_public_events_to = (int)0;
                 }
             case 5:
                 $result->flag_enforce_gastronomy_rules = 1;
