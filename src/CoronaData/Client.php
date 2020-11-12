@@ -1096,11 +1096,11 @@ class Client
                 
         if ($population > 0)
         {
-            $result->incidence_7day = (($incidence7 / 7) / $population * $incidence_factor);
-            $result->incidence_14day = (($incidence14 / 14) / $population * $incidence_factor);
+            $result->incidence_7day = ($incidence7 / $population * $incidence_factor);
+            $result->incidence_14day = ($incidence14 / $population * $incidence_factor);
                     
-            $result->incidence_7day_smoothed = (($incidence7_smoothed / 7) / $population * $incidence_factor);
-            $result->incidence_14day_smoothed = (($incidence14_smoothed / 14) / $population * $incidence_factor);
+            $result->incidence_7day_smoothed = ($incidence7_smoothed / $population * $incidence_factor);
+            $result->incidence_14day_smoothed = ($incidence14_smoothed / $population * $incidence_factor);
         }                    
         else
         {
@@ -1707,7 +1707,7 @@ class Client
                 $dataset->new_deaths_smoothed_per_million = ($dataset->new_deaths_smoothed / $mil * $population);
                 $dataset->new_recovered_smoothed_per_million = ($dataset->new_recovered_smoothed / $mil * $population);
                 
-                array_push($cases_last18, $cases);
+                array_push($cases_last18, $dataset->cases);
                 array_shift($cases_last18);
                                 
                 $result = $this->calculate_dataset_fields($cases_last18, $population);
