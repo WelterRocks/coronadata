@@ -1566,7 +1566,7 @@ class Client
                     $district->deaths_count = $deaths;
                     $district->recovered_count = $recovered;
                     
-                    if ($district->total_cases > 0)
+                    if ((isset($district->total_cases)) && ($district->total_cases > 0))
                     {
                         $district->contamination_total = ($district->population_count / $district->total_cases);
                         $district->contamination_rundays = ((time() - $district->timestamp_min) / 60 / 60 / 24);
@@ -1646,7 +1646,7 @@ class Client
                         $state->deaths_count = $deaths;
                         $state->recovered_count = $recovered;
                         
-                        if ($state->total_cases > 0)
+                        if ((isset($state->total_cases)) && ($state->total_cases > 0))
                         {
                             $state->contamination_total = ($state->population_count / $state->total_cases);
                             $state->contamination_rundays = ((time() - $state->timestamp_min) / 60 / 60 / 24);
@@ -1702,7 +1702,7 @@ class Client
                             $germany->deaths_count = $deaths;
                             $germany->recovered_count = $recovered;
                             
-                            if ($germany->total_cases > 0)
+                            if ((isset($germany->total_cases)) && ($germany->total_cases > 0))
                             {
                                 $germany->contamination_total = ($germany->population_count / $germany->total_cases);
                                 $germany->contamination_rundays = ((time() - $germany->timestamp_min) / 60 / 60 / 24);
