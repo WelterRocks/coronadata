@@ -119,7 +119,16 @@ abstract class Base
                 $worker_count++;
               }
             }
-            elseif (($val !== null) && ($val != "") && (!$this->isint($val)))
+            elseif ($this->isint($val))
+            {
+              if (($val == 0) && ($zero_as_null))
+                $update_clause .= ", `".$key."` = NULL";
+              elseif ($val == 0)
+                $update_clause .= ", `".$key."` = 0";
+              else
+                $update_clause .= ", `".$key."` = ".(int)$val;
+            }
+            elseif (($val !== null) && ($val != ""))
             {
               if (($val == 0) && ($zero_as_null))
                 $update_clause .= ", `".$key."` = NULL";
