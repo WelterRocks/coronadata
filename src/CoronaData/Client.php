@@ -1806,8 +1806,16 @@ class Client
                     if ($district->area > 0)
                     {
                         $district->infection_density = ($district->cases_count / $district->area);
-                        $district->infection_area = (1 / $district->infection_density);
-                        $district->infection_probability = (100 / ($district->infection_area * $district->population_density));
+                        
+                        if ($district->infection_density > 0)
+                            $district->infection_area = (1 / $district->infection_density);
+                        else
+                            $district->infection_area = 0;
+                        
+                        if ($district->infection_area > 0)
+                            $district->infection_probability = (100 / ($district->infection_area * $district->population_density));
+                        else
+                            $district->infection_probability = 0;
                     }
                     
                     // Due to missing data in retrieved files, it could be that some fields are missing right now
@@ -1899,8 +1907,16 @@ class Client
                         if ($state->area > 0)
                         {
                             $state->infection_density = ($state->cases_count / $state->area);
-                            $state->infection_area = (1 / $state->infection_density);
-                            $state->infection_probability = (100 / ($state->infection_area * $state->population_density));
+                            
+                            if ($state->infection_density > 0)
+                                $state->infection_area = (1 / $state->infection_density);
+                            else
+                                $state->infection_area = 0;
+                            
+                            if ($state->infection_area > 0)
+                                $state->infection_probability = (100 / ($state->infection_area * $state->population_density));
+                            else
+                                $state->infection_probability = 0;
                         }
                     
                         if ($state->cases_min > $cases)
@@ -1957,8 +1973,16 @@ class Client
                             if ($germany->area > 0)
                             {
                                 $germany->infection_density = ($germany->cases_count / $germany->area);
-                                $germany->infection_area = (1 / $germany->infection_density);
-                                $germany->infection_probability = (100 / ($germany->infection_area * $germany->population_density));
+                                
+                                if ($germany->infection_density > 0)
+                                    $germany->infection_area = (1 / $germany->infection_density);
+                                else
+                                    $germany->infection_area = 0;
+                                
+                                if ($germany->infection_area > 0)    
+                                    $germany->infection_probability = (100 / ($germany->infection_area * $germany->population_density));
+                                else
+                                    $germany->infection_probability = 0;
                             }
                     
                             if ($germany->cases_min > $cases)
