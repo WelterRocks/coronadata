@@ -1639,7 +1639,16 @@ class Client
 
         // Define a "million" to prevent typos
         $mil = 1000000;
-        
+
+        // Global counters        
+        $states_cases = array();
+        $states_deaths = array();
+        $states_recovered = array();
+            
+        $germany_cases = 0;
+        $germany_deaths = 0;
+        $germany_recovered = 0;
+            
         // Merge district datasets and main datasets
         foreach ($datasets as $index => $data)
         {
@@ -1685,11 +1694,33 @@ class Client
                 $population = 0;
             }
             
+            
+            if (is_object($district))
+            {
+                if (!isset($state_cases[$district->state_hash]))
+                {
+                    $state_cases[$district->state_hash] = 0;
+                    $state_deaths[$district->state_hash] = 0;
+                    $state_recovered[$district->state_hash] = 0;
+                }
+            }
+            
             foreach ($data as $date => $dataset)
             {
                 $cases += $dataset->cases;
                 $deaths += $dataset->deaths;
                 $recovered += $dataset->recovered;
+
+                if (is_object($district))
+                {                
+                    $state_cases[$district->state_hash] += $dataset->cases;
+                    $state_deaths[$district->state_hash] += $dataset->deaths;
+                    $state_recovered[$district->state_hash] += $dataset->recovered;
+                }
+                
+                $germany_cases += $dataset->cases;
+                $germany_deaths += $dataset->deaths;
+                $germany_recovered += $dataset->recovered;
                 
                 $dataset->total_cases = $cases;
                 $dataset->total_deaths = $deaths;
@@ -1741,9 +1772,9 @@ class Client
                 if (is_object($district))
                 {
                     // Now, push the results to corresponding district and its parent locations                
-                    $district->cases_count = $cases;
-                    $district->deaths_count = $deaths;
-                    $district->recovered_count = $recovered;                   
+                    $district->cases_count = $dataset->cases;
+                    $district->deaths_count = $dataset->deaths;
+                    $district->recovered_count = $dataset->recovered;                   
             
                     if ($district->timestamp_min > $timestamp)
                         $district->timestamp_min = $timestamp;
@@ -1834,9 +1865,9 @@ class Client
                     
                     if (is_object($state))
                     {
-                        $state->cases_count = $cases;
-                        $state->deaths_count = $deaths;
-                        $state->recovered_count = $recovered;
+                        $state->cases_count = $state_cases[$district->state_hash];
+                        $state->deaths_count = $state_deaths[$district->state_hash];
+                        $state->recovered_count = $state_recovered[$district->state_hash];
                         
                         if ($state->timestamp_min > $timestamp)
                             $state->timestamp_min = $timestamp;
@@ -1903,9 +1934,9 @@ class Client
                         
                         if (is_object($germany))
                         {
-                            $germany->cases_count = $cases;
-                            $germany->deaths_count = $deaths;
-                            $germany->recovered_count = $recovered;
+                            $germany->cases_count = $germany_cases;
+                            $germany->deaths_count = $germany_deaths;
+                            $germany->recovered_count = $germany_recovered;
                             
                             if ((isset($germany->total_cases)) && ($germany->total_cases > 0))
                             {
