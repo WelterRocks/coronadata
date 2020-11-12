@@ -1139,6 +1139,135 @@ class Client
             $result->warning_level_14day = 1;
         else
             $result->warning_level_14day = 0;
+            
+        if ($result->warning_level_7day > $result->warning_level_14day)
+            $result->warning_tendence = "asc";
+        elseif ($result->warning_level_7day < $result->warning_level_14day)
+            $result->warning_tendence = "desc";
+        else
+            $result->warning_tendence = "sty";
+            
+        $result->warning_level = round((($result->warning_level_7day + $result->warning_level_14day) / 2));
+        
+        // These are example recommendations!!!! NOT A STRICT TO DO LIST!!!
+        // Suggestions are welcome.
+        $force_defaults = array(
+            "flag_enforce_daily_need_deliveries" => 0,
+            "flag_enforce_treatment_priorization" => 0,
+            "flag_lockdown_primary_infrastructure" => 0,
+            "flag_isolate_executive_staff" => 0,
+            "flag_enforce_federation_control" => 0,
+            "flag_limit_fundamental_rights" => 0,
+            "flag_lockdown_schools" => 0,
+            "flag_lockdown_gastronomy" => 0,
+            "flag_lockdown_secondary_infrastructure" => 0,
+            "flag_enforce_local_crisis_team_control" => 0,
+            "flag_enforce_gastronomy_rules" => 0,
+            "flag_lockdown_leisure_activities" => 0,
+            "flag_isolate_medium_risk_group" => 0,
+            "flag_reserve_icu_units" => 0,
+            "flag_enforce_shopping_rules" => 0,
+            "flag_isolate_high_risk_group" => 0,
+            "flag_general_caution" => 0,
+            "flag_attention_on_symptoms" => 0,
+            "flag_wash_hands" => 0,
+            "flag_recommend_mask_wearing" => 0,
+            "flag_enforce_critcal_mask_wearing" => 0, 
+            "flag_enforce_public_mask_wearing" => 0, 
+            "flag_isolate_low_risk_group" => 0,           
+            "enforce_distance_meters" => -1,
+            "enforce_household_plus_persons_to" => -1,
+            "enforce_public_groups_to" => -1,
+            "enforce_public_events_to" => -1
+        );
+        
+        foreach ($force_defaults as $key => $val)
+            $result->$key = $val;
+        
+        switch ($result->warning_level)
+        {
+            case 7:
+                $result->flag_enforce_daily_need_deliveries = 1;
+                $result->flag_enforce_treatment_priorization = 1;
+                $result->flag_lockdown_primary_infrastructure = 1;
+                $result->flag_isolate_executive_staff = 1;
+                $result->flag_enforce_federation_control = 1;
+                $result->flag_limit_fundamental_rights = 1;
+                $result->flag_isolate_low_risk_group = 1;
+                $result->enforce_distance_meters = 3;
+                $result->enforce_household_plus_persons_to = 0;
+                $result->enforce_public_groups_to = 0;
+                $result->enforce_public_events_to = 0;
+            case 6:
+                $result->flag_lockdown_schools = 1;
+                $result->flag_lockdown_gastronomy = 1;
+                $result->flag_lockdown_secondary_infrastructure = 1;
+                $result->flag_enforce_local_crisis_team_control = 1;
+                if ($$result->warning_level == 6)
+                {
+                    $result->enforce_distance_meters = 3;
+                    $result->enforce_household_plus_persons_to = 1;
+                    $result->enforce_public_groups_to = 0;
+                    $result->enforce_public_events_to = 0;
+                }
+            case 5:
+                $result->flag_enforce_gastronomy_rules = 1;
+                $result->flag_lockdown_leisure_activities = 1;
+                $result->flag_isolate_medium_risk_group = 1;
+                $result->flag_enforce_public_mask_wearing = 1;
+                $result->flag_reserve_icu_units = 1;
+                if ($$result->warning_level == 5)
+                {
+                    $result->enforce_distance_meters = 3;
+                    $result->enforce_household_plus_persons_to = 2;
+                    $result->enforce_public_groups_to = 5;
+                    $result->enforce_public_events_to = 100;
+                }
+            case 4:
+                $result->flag_enforce_shopping_rules = 1;
+                $result->flag_isolate_high_risk_group = 1;
+                if ($$result->warning_level == 4)
+                {
+                    $result->enforce_distance_meters = 2;
+                    $result->enforce_household_plus_persons_to = 5;
+                    $result->enforce_public_groups_to = 25;
+                    $result->enforce_public_events_to = 1000;
+                }
+            case 3:
+                if ($$result->warning_level == 3)
+                {
+                    $result->enforce_distance_meters = 2;
+                    $result->enforce_household_plus_persons_to = 10;
+                    $result->enforce_public_groups_to = 50;
+                    $result->enforce_public_events_to = 2500;
+                }
+            case 2:
+                $result->flag_enforce_critical_mask_wearing = 1;
+                if ($$result->warning_level == 2)
+                {
+                    $result->enforce_distance_meters = 2;
+                    $result->enforce_household_plus_persons_to = 10;
+                    $result->enforce_public_groups_to = 50;
+                    $result->enforce_public_events_to = 5000;
+                }
+            case 1:
+                $result->flag_general_caution = 1;
+                $result->flag_attention_on_symptoms = 1;
+                $result->flag_recommend_mask_wearing = 1;
+                $result->flag_wash_hands = 1;
+                if ($$result->warning_level == 1)
+                {
+                    $result->enforce_distance_meters = 2;
+                    $result->enforce_household_plus_persons_to = 15;
+                    $result->enforce_public_groups_to = 100;
+                    $result->enforce_public_events_to = 10000;
+                }
+            case 0;
+                $result->flag_general_caution = 1;
+                $result->flag_wash_hands = 1;
+                $result->flag_attention_on_symptoms = 1;
+                break;
+        }
         
         return $result;    
     }

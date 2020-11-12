@@ -86,6 +86,35 @@ class Datasets extends Base
     protected $exponence_14day_smoothed = null;
     protected $warning_level_7day = null;
     protected $warning_level_14day = null;
+    protected $warning_level = null;
+    protected $warning_tendence = null;
+    protected $flag_enforce_daily_need_deliveries = null;
+    protected $flag_enforce_treatment_priorization = null;
+    protected $flag_lockdown_primary_infrastructure = null;
+    protected $flag_isolate_executive_staff = null;
+    protected $flag_enforce_federation_control = null;
+    protected $flag_limit_fundamental_rights = null;
+    protected $flag_lockdown_schools = null;
+    protected $flag_lockdown_gastronomy = null;
+    protected $flag_lockdown_secondary_infrastructure = null;
+    protected $flag_enforce_local_crisis_team_control = null;
+    protected $flag_enforce_gastronomy_rules = null;
+    protected $flag_lockdown_leisure_activities = null;
+    protected $flag_isolate_medium_risk_group = null;
+    protected $flag_reserve_icu_units = null;
+    protected $flag_enforce_shopping_rules = null;
+    protected $flag_isolate_high_risk_group = null;
+    protected $flag_general_caution = null;
+    protected $flag_attention_on_symptoms = null;
+    protected $flag_wash_hands = null;
+    protected $flag_recommend_mask_wearing = null;
+    protected $flag_enforce_critcal_mask_wearing = null;
+    protected $flag_enforce_public_mask_wearing = null;
+    protected $flag_isolate_low_risk_group = null;
+    protected $enforce_distance_meters = null;
+    protected $enforce_household_plus_persons_to = null;
+    protected $enforce_public_groups_to = null;
+    protected $enforce_public_events_to = null;
 
     protected function get_install_sql()
     {
@@ -158,10 +187,39 @@ class Datasets extends Base
         `exponence_14day_smoothed` FLOAT NOT NULL DEFAULT '0',        
         `warning_level_7day` smallint NOT NULL DEFAULT '-1',
         `warning_level_14day` smallint NOT NULL DEFAULT '-1',
+        `warning_level` smallint NOT NULL DEFAULT '-1',
+        `warning_tendence` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
         `update_count` int UNSIGNED NOT NULL DEFAULT '0',
         `flag_updated` tinyint(1) NOT NULL DEFAULT '0',
         `flag_disabled` tinyint(1) NOT NULL DEFAULT '0',
         `flag_deleted` tinyint(1) NOT NULL DEFAULT '0',
+        `flag_enforce_daily_need_deliveries` tinyint(1) NOT NULL DEFAULT '0',
+        `flag_enforce_treatment_priorization` tinyint(1) NOT NULL DEFAULT '0',
+        `flag_lockdown_primary_infrastructure` tinyint(1) NOT NULL DEFAULT '0',
+        `flag_isolate_executive_staff` tinyint(1) NOT NULL DEFAULT '0',
+        `flag_enforce_federation_control` tinyint(1) NOT NULL DEFAULT '0',
+        `flag_limit_fundamental_rights` tinyint(1) NOT NULL DEFAULT '0',
+        `flag_lockdown_schools` tinyint(1) NOT NULL DEFAULT '0',
+        `flag_lockdown_gastronomy` tinyint(1) NOT NULL DEFAULT '0',
+        `flag_lockdown_secondary_infrastructure` tinyint(1) NOT NULL DEFAULT '0',
+        `flag_enforce_local_crisis_team_control` tinyint(1) NOT NULL DEFAULT '0',
+        `flag_enforce_gastronomy_rules` tinyint(1) NOT NULL DEFAULT '0',
+        `flag_lockdown_leisure_activities` tinyint(1) NOT NULL DEFAULT '0',
+        `flag_isolate_medium_risk_group` tinyint(1) NOT NULL DEFAULT '0',
+        `flag_reserve_icu_units` tinyint(1) NOT NULL DEFAULT '0',
+        `flag_enforce_shopping_rules` tinyint(1) NOT NULL DEFAULT '0',
+        `flag_isolate_high_risk_group` tinyint(1) NOT NULL DEFAULT '0',
+        `flag_general_caution` tinyint(1) NOT NULL DEFAULT '0',
+        `flag_attention_on_symptoms` tinyint(1) NOT NULL DEFAULT '0',
+        `flag_wash_hands` tinyint(1) NOT NULL DEFAULT '0',
+        `flag_recommend_mask_wearing` tinyint(1) NOT NULL DEFAULT '0',
+        `flag_enforce_critcal_mask_wearing` tinyint(1) NOT NULL DEFAULT '0',
+        `flag_enforce_public_mask_wearing` tinyint(1) NOT NULL DEFAULT '0',
+        `flag_isolate_low_risk_group` tinyint(1) NOT NULL DEFAULT '0',
+        `enforce_distance_meters` smallint NOT NULL DEFAULT '-1',
+        `enforce_household_plus_persons_to` smallint NOT NULL DEFAULT '-1',
+        `enforce_public_groups_to` smallint NOT NULL DEFAULT '-1',
+        `enforce_public_events_to` smallint NOT NULL DEFAULT '-1',
         PRIMARY KEY (`uid`),
         UNIQUE KEY `dataset_hash` (`dataset_hash`),
         KEY `continent_hash` (`continent_hash`),
