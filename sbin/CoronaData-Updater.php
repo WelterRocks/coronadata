@@ -127,7 +127,7 @@ $last_run_filename = null;
 // Worker loop
 function worker_loop(Client $client, $oneshot = false)
 {
-    global $ticks_state, $worker_startup, $preload_done;
+    global $ticks_state, $worker_startup, $preload_done, $oneshot;
     global $last_run_filename, $last_run_timestamp, $force_cachetime;
     global $cli, $worker_reload, $daemon_terminate, $global_cachetime;
     
@@ -162,7 +162,7 @@ function worker_loop(Client $client, $oneshot = false)
         }
         
         // Load all stores
-        if (($last_run_timestamp + $global_cachetime) < time())
+        if ((($last_run_timestamp + $global_cachetime) < time()) || ($oneshot))
         {	
             $cli->log("Loading stores. This will take a while. Please be patient.", LOG_INFO);
             $length = $client->load_stores((($force_cachetime !== null) ? $force_cachetime : $global_cachetime));
