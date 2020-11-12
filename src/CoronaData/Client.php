@@ -1106,6 +1106,40 @@ class Client
         $result->exponence_7day_smoothed = ($casecount_smoothed / $exp7_smoothed);
         $result->exponence_14day_smoothed = ($casecount_smoothed / $exp14_smoothed);
         
+        if ($result->incidence_7day >= 150)
+            $result->warning_level_7day = 7;
+        elseif ($result->incidence_7day >= 100)
+            $result->warning_level_7day = 6;
+        elseif ($result->incidence_7day >= 75)
+            $result->warning_level_7day = 5;
+        elseif ($result->incidence_7day >= 50)
+            $result->warning_level_7day = 4;
+        elseif ($result->incidence_7day >= 35)
+            $result->warning_level_7day = 3;
+        elseif ($result->incidence_7day >= 20)
+            $result->warning_level_7day = 2;
+        elseif ($result->incidence_7day >= 1)
+            $result->warning_level_7day = 1;
+        else
+            $result->warning_level_7day = 0;
+        
+        if ($result->incidence_14day >= 150)
+            $result->warning_level_14day = 7;
+        elseif ($result->incidence_14day >= 100)
+            $result->warning_level_14day = 6;
+        elseif ($result->incidence_14day >= 75)
+            $result->warning_level_14day = 5;
+        elseif ($result->incidence_14day >= 50)
+            $result->warning_level_14day = 4;
+        elseif ($result->incidence_14day >= 35)
+            $result->warning_level_14day = 3;
+        elseif ($result->incidence_14day >= 20)
+            $result->warning_level_14day = 2;
+        elseif ($result->incidence_14day >= 1)
+            $result->warning_level_14day = 1;
+        else
+            $result->warning_level_14day = 0;
+        
         return $result;    
     }
     

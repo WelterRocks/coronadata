@@ -84,6 +84,8 @@ class Datasets extends Base
     protected $exponence_14day = null;
     protected $exponence_7day_smoothed = null;
     protected $exponence_14day_smoothed = null;
+    protected $warning_level_7day = null;
+    protected $warning_level_14day = null;
 
     protected function get_install_sql()
     {
@@ -154,6 +156,8 @@ class Datasets extends Base
         `exponence_14day` FLOAT NOT NULL DEFAULT '0',
         `exponence_7day_smoothed` FLOAT NOT NULL DEFAULT '0',
         `exponence_14day_smoothed` FLOAT NOT NULL DEFAULT '0',        
+        `warning_level_7day` smallint NOT NULL DEFAULT '-1',
+        `warning_level_14day` smallint NOT NULL DEFAULT '-1',
         `update_count` int UNSIGNED NOT NULL DEFAULT '0',
         `flag_updated` tinyint(1) NOT NULL DEFAULT '0',
         `flag_disabled` tinyint(1) NOT NULL DEFAULT '0',
