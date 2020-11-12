@@ -41,9 +41,8 @@ $worker_reload = false;
 
 $ticks_state = 0;
 
-$max_cast_age = 18000;
 $global_cachetime = 14400;
-
+$force_cachetime = null;
 $oneshot = false;
 
 $pid = null;
@@ -121,13 +120,15 @@ function select_config_file()
 // Worker startup
 $worker_startup = false;
 
-// Preload done
-$preload_done = false;
+// Last run timestamp and file
+$last_run_timestamp = 0;
+$last_run_filename = null;
 
 // Worker loop
 function worker_loop(Client $client, $oneshot = false)
 {
     global $ticks_state, $worker_startup, $preload_done;
+    global $last_run_filename, $last_run_timestamp, $force_cachetime;
     global $cli, $worker_reload, $daemon_terminate, $global_cachetime;
     
     // Dispatch signals in inner loop
@@ -151,14 +152,20 @@ function worker_loop(Client $client, $oneshot = false)
     
     if (($ticks_state == $ticks_max_state) || ($oneshot))
     {
-        // Reset update counter
-        $did_updates = 0;
+        // Check, whether this is our first run
+        if ($last_run_timestamp == 0)
+        {
+            @touch($last_run_filename);
+            
+            $last_run_timestamp = filemtime($last_run_filename);
+            $force_cachetime = 999999999999999;
+        }
         
         // Load all stores
-        if (!$preload_done)
+        if (($last_run_timestamp + $global_cachetime) < time())
         {	
             $cli->log("Loading stores. This will take a while. Please be patient.", LOG_INFO);
-            $length = $client->load_stores($global_cachetime);
+            $length = $client->load_stores((($force_cachetime !== null) ? $force_cachetime : $global_cachetime));
             
             if ($length > 0)
             {
@@ -194,11 +201,10 @@ function worker_loop(Client $client, $oneshot = false)
                 $cli->log("Stored ".$count." from ".$any." testresult records.", LOG_INFO);
                 
                 $cli->log("Database updated.", LOG_INFO);
-                $preload_done = true;
             }
             else
             {
-                $cli->log("Preloading failed. Retrying later.", LOG_ALERT);
+                $cli->log("Loading failed. Retrying later.", LOG_ALERT);
             }
         }
         
@@ -227,6 +233,7 @@ function mother()
 function daemon()
 {
     global $cli, $daemon_terminate, $worker_reload, $log_options, $oneshot;
+    global $last_run_filename, $last_run_timestamp;
     
     // Register shutdown function
     register_shutdown_function("shutdown_daemon");
@@ -265,6 +272,15 @@ function daemon()
         
         // Create the client object
         $client = new Client($config_file);
+        
+        // Get last run file
+        $last_run_filename = $client->get_data_store()."/.".PROG_NAME.".lastrun";
+        
+        // Create last run file if not exists and leave last run timestamp at zero in this case
+        if (!file_exists($last_run_filename))
+            @touch($last_run_filename);
+        else
+            $last_run_timestamp = filemtime($last_run_file);
 
         // Dispatch signals in outer loop
         $cli->signals_dispatch();
@@ -323,10 +339,7 @@ if ($cli->has_argument("--oneshot"))
     
 //  This will force the cached files to be used, if they exist
 if ($cli->has_argument("--force-cache"))
-{
-    $global_cachetime = 99999999999999999;
-    $max_cast_age = $global_cachetime;
-}
+    $force_cachetime = 999999999999999;
 
 // Check usage
 if ($cli->has_argument("start"))

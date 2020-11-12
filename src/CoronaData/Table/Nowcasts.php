@@ -45,6 +45,7 @@ class Nowcasts extends Base
     protected $esteem_7day_r_value = null;
     protected $lower_7day_r_value = null;
     protected $upper_7day_r_value = null;
+    protected $flag_casted_r_values = null;
     
     protected function get_install_sql()
     {
@@ -80,6 +81,7 @@ class Nowcasts extends Base
         `flag_updated` tinyint(1) NOT NULL DEFAULT '0',
         `flag_disabled` tinyint(1) NOT NULL DEFAULT '0',
         `flag_deleted` tinyint(1) NOT NULL DEFAULT '0',
+        `flag_casted_r_values` tinyint(1) NOT NULL DEFAULT '0',
         PRIMARY KEY (`uid`),
         UNIQUE KEY `location_date_rep` (`continent_hash`,`country_hash`,`date_rep`),
         KEY `country_hash` (`country_hash`),

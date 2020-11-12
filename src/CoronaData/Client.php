@@ -102,6 +102,11 @@ class Client
         return $this->database->install($force_install, $error, $sql);
     }
     
+    public function get_data_store()
+    {
+        return realpath($this->config->data_store);
+    }
+    
     private function create_datastore()
     {
         if (!is_dir($this->config->data_store))
@@ -1279,6 +1284,19 @@ class Client
         $europe_hash = self::hash_name("Europe");
         $germany_hash = self::hash_name("Germany");
         
+        // Get the country and zero some fields
+        $germany = $this->countries[$germany_hash];
+        
+        $germany->cases_count = 0;
+        $germany->deaths_count = 0;
+        $germany->recovered_count = 0;
+        $germany->cases_min = 0; 
+        $germany->deaths_min = 0;
+        $germany->recovered_min = 0;
+        $germany->cases_max = 0; 
+        $germany->deaths_max = 0;
+        $germany->recovered_max = 0;
+        
         // Create a dataset template
         $tmpl = new \stdClass;
         $tmpl->dataset_hash = null;
@@ -1445,7 +1463,7 @@ class Client
             {
                 $population = 0;
             }
-                
+            
             foreach ($data as $date => $dataset)
             {
                 $cases += $dataset->cases;
@@ -1503,6 +1521,17 @@ class Client
                     $district->cases_count = $cases;
                     $district->deaths_count = $deaths;
                     $district->recovered_count = $recovered;
+                    
+                    if ($district->area > 0)
+                    {
+                        $district->infection_density = ($district->cases_count / $district->area);
+                        $district->infection_probability = (100 / (1 / $district->infection_density * $district->population_density));
+                    }
+                    else
+                    {
+                        $district->infection_density = 0;
+                        $district->infection_probability = 0;
+                    }
                     
                     // Due to missing data in retrieved files, it could be that some fields are missing right now
                     $fix_missing = array(
@@ -1563,6 +1592,17 @@ class Client
                         $state->deaths_count = $deaths;
                         $state->recovered_count = $recovered;
                         
+                        if ($state->area > 0)
+                        {
+                            $state->infection_density = ($state->cases_count / $state->area);
+                            $state->infection_probability = (100 / (1 / $state->infection_density * $state->population_density));
+                        }
+                        else
+                        {
+                            $state->infection_density = 0;
+                            $state->infection_probability = 0;
+                        }
+                    
                         if ($state->cases_min > $cases)
                             $state->cases_min = $cases;
                         if ($state->cases_max < $cases)
@@ -1591,6 +1631,37 @@ class Client
                         $state->new_cases_smoothed_per_million = ($district->new_cases_smoothed / $mil * $state->population_count);
                         $state->new_deaths_smoothed_per_million = ($district->new_deaths_smoothed / $mil * $state->population_count);
                         $state->new_recovered_smoothed_per_million = ($district->new_recovered_smoothed / $mil * $state->population_count);
+                        
+                        if (is_object($germany))
+                        {
+                            $germany->cases_count = $cases;
+                            $germany->deaths_count = $deaths;
+                            $germany->recovered_count = $recovered;
+                            
+                            if ($germany->area > 0)
+                            {
+                                $germany->infection_density = ($germany->cases_count / $germany->area);
+                                $germany->infection_probability = (100 / (1 / $germany->infection_density * $germany->population_density));
+                            }
+                            else
+                            {
+                                $germany->infection_density = 0;
+                                $germany->infection_probability = 0;
+                            }
+                    
+                            if ($germany->cases_min > $cases)
+                                $germany->cases_min = $cases;
+                            if ($germany->cases_max < $cases)
+                                $germany->cases_max = $cases;
+                            if ($germany->deaths_min > $deaths)
+                                $germany->deaths_min = $deaths;
+                            if ($germany->deaths_max < $deaths)
+                                $germany->deaths_max = $deaths;
+                            if ($germany->recovered_min > $recovered)
+                                $germany->recovered_min = $recovered;
+                            if ($germany->recovered_max < $recovered)
+                                $germany->recovered_max = $recovered;        
+                        }
                     }
                 }
             }            
@@ -1723,28 +1794,31 @@ class Client
             
             $db_obj->continent_hash = $europe_hash;
             $db_obj->country_hash = $germany_hash;
+            
+            // Set casted r values flag to 0
+            $obj->flag_casted_r_values = 0;
 
             foreach ($obj as $key => $val)
             {
                 switch ($key)
                 {
                     case "esteem_reproduction_r":
-                        if ($val > 0) $esteem_reproduction_r = $val; elseif ($val == 0) $val = $esteem_reproduction_r;
+                        if ($val > 0) $esteem_reproduction_r = $val; elseif ($val == 0) { $obj->flag_casted_r_values = 1; $val = $esteem_reproduction_r; }
                         break;
                     case "lower_reproduction_r":
-                        if ($val > 0) $lower_reproduction_r = $val; elseif ($val == 0) $val = $lower_reproduction_r;
+                        if ($val > 0) $lower_reproduction_r = $val; elseif ($val == 0) { $obj->flag_casted_r_values = 1; $val = $lower_reproduction_r; }
                         break;
                     case "upper_reproduction_r":
-                        if ($val > 0) $upper_reproduction_r = $val; elseif ($val == 0) $val = $upper_reproduction_r;
+                        if ($val > 0) $upper_reproduction_r = $val; elseif ($val == 0) { $obj->flag_casted_r_values = 1; $val = $upper_reproduction_r; }
                         break;
                     case "esteem_7day_r_value":
-                        if ($val > 0) $esteem_7day_r_value = $val; elseif ($val == 0) $val = $esteem_7day_r_value;
+                        if ($val > 0) $esteem_7day_r_value = $val; elseif ($val == 0) { $obj->flag_casted_r_values = 1; $val = $esteem_7day_r_value; }
                         break;
                     case "lower_7day_r_value":
-                        if ($val > 0) $lower_7day_r_value = $val; elseif ($val == 0) $val = $lower_7day_r_value;
+                        if ($val > 0) $lower_7day_r_value = $val; elseif ($val == 0) { $obj->flag_casted_r_values = 1; $val = $lower_7day_r_value; }
                         break;
                     case "upper_7day_r_value":
-                        if ($val > 0) $upper_7day_r_value = $val; elseif ($val == 0) $val = $upper_7day_r_value;
+                        if ($val > 0) $upper_7day_r_value = $val; elseif ($val == 0) { $obj->flag_casted_r_values = 1; $val = $upper_7day_r_value; }
                         break;
                 }
                 
