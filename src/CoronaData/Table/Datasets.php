@@ -108,7 +108,7 @@ class Datasets extends Base
     protected $flag_attention_on_symptoms = null;
     protected $flag_wash_hands = null;
     protected $flag_recommend_mask_wearing = null;
-    protected $flag_enforce_critcal_mask_wearing = null;
+    protected $flag_enforce_critical_mask_wearing = null;
     protected $flag_enforce_public_mask_wearing = null;
     protected $flag_isolate_low_risk_group = null;
     protected $enforce_distance_meters = null;
@@ -213,7 +213,7 @@ class Datasets extends Base
         `flag_attention_on_symptoms` tinyint(1) NOT NULL DEFAULT '0',
         `flag_wash_hands` tinyint(1) NOT NULL DEFAULT '0',
         `flag_recommend_mask_wearing` tinyint(1) NOT NULL DEFAULT '0',
-        `flag_enforce_critcal_mask_wearing` tinyint(1) NOT NULL DEFAULT '0',
+        `flag_enforce_critical_mask_wearing` tinyint(1) NOT NULL DEFAULT '0',
         `flag_enforce_public_mask_wearing` tinyint(1) NOT NULL DEFAULT '0',
         `flag_isolate_low_risk_group` tinyint(1) NOT NULL DEFAULT '0',
         `enforce_distance_meters` smallint NOT NULL DEFAULT '-1',

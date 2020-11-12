@@ -1172,7 +1172,7 @@ class Client
             "flag_attention_on_symptoms" => 0,
             "flag_wash_hands" => 0,
             "flag_recommend_mask_wearing" => 0,
-            "flag_enforce_critcal_mask_wearing" => 0, 
+            "flag_enforce_critical_mask_wearing" => 0, 
             "flag_enforce_public_mask_wearing" => 0, 
             "flag_isolate_low_risk_group" => 0,           
             "enforce_distance_meters" => -1,
