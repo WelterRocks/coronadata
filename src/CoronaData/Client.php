@@ -691,7 +691,9 @@ class Client
             // Try to calculate contamination status
             if ((isset($country->total_cases)) && ($country->total_cases > 0))
             {
-                $country->contamination_total = ($country->population_count / $country->total_cases);
+                if ($country->population_count)
+                    $country->contamination_total = (100 / $country->population_count * $country->total_cases);
+                    
                 $country->contamination_rundays = ((time() - $country->timestamp_min) / 60 / 60 / 24);
 
                 if ($country->contamination_rundays > 0)
@@ -705,7 +707,9 @@ class Client
 
             if ((isset($continent->total_cases)) && ($continent->total_cases > 0))
             {
-                $continent->contamination_total = ($continent->population_count / $continent->total_cases);
+                if ($continent->population_count)
+                    $continent->contamination_total = (100 / $continent->population_count * $continent->total_cases);
+                    
                 $continent->contamination_rundays = ((time() - $continent->timestamp_min) / 60 / 60 / 24);
 
                 if ($continent->contamination_rundays > 0)
@@ -1557,6 +1561,8 @@ class Client
                     continue;
                 }
                 
+                $timestamp = strtotime($dataset->timestamp_represent);
+
                 $this->datasets[$dataset_hash] = $dataset;
                 
                 if (is_object($district))
@@ -1564,11 +1570,24 @@ class Client
                     // Now, push the results to corresponding district and its parent locations                
                     $district->cases_count = $cases;
                     $district->deaths_count = $deaths;
-                    $district->recovered_count = $recovered;
-                    
+                    $district->recovered_count = $recovered;                   
+            
+                    if ($district->timestamp_min > $timestamp)
+                        $district->timestamp_min = $timestamp;
+                
+                    if ($district->timestamp_max < $timestamp)
+                        $district->timestamp_max = $timestamp;
+                        
+                    $district->day_of_week = date("w", $district->timestamp_max);
+                    $district->day = date("j", $district->timestamp_max);
+                    $district->month = date("n", $district->timestamp_max);
+                    $district->year = date("Y", $district->timestamp_max);
+                
                     if ((isset($district->total_cases)) && ($district->total_cases > 0))
                     {
-                        $district->contamination_total = ($district->population_count / $district->total_cases);
+                        if ($district->population_count)
+                            $district->contamination_total = (100 / $district->population_count * $district->total_cases);
+                            
                         $district->contamination_rundays = ((time() - $district->timestamp_min) / 60 / 60 / 24);
                         
                         if ($district->contamination_rundays > 0)
@@ -1646,9 +1665,22 @@ class Client
                         $state->deaths_count = $deaths;
                         $state->recovered_count = $recovered;
                         
+                        if ($state->timestamp_min > $timestamp)
+                            $state->timestamp_min = $timestamp;
+                    
+                        if ($state->timestamp_max < $timestamp)
+                            $state->timestamp_max = $timestamp;
+                
+                        $state->day_of_week = date("w", $state->timestamp_max);
+                        $state->day = date("j", $state->timestamp_max);
+                        $state->month = date("n", $state->timestamp_max);
+                        $state->year = date("Y", $state->timestamp_max);
+                
                         if ((isset($state->total_cases)) && ($state->total_cases > 0))
                         {
-                            $state->contamination_total = ($state->population_count / $state->total_cases);
+                            if ($state->population_count)
+                                $state->contamination_total = (100 / $state->population_count * $state->total_cases);
+                                
                             $state->contamination_rundays = ((time() - $state->timestamp_min) / 60 / 60 / 24);
                             
                             if ($state->contamination_rundays > 0)
@@ -1704,7 +1736,9 @@ class Client
                             
                             if ((isset($germany->total_cases)) && ($germany->total_cases > 0))
                             {
-                                $germany->contamination_total = ($germany->population_count / $germany->total_cases);
+                                if ($germany->population_count)
+                                    $germany->contamination_total = (100 / $germany->population_count * $germany->total_cases);
+                                    
                                 $germany->contamination_rundays = ((time() - $germany->timestamp_min) / 60 / 60 / 24);
                                 
                                 if ($germany->contamination_rundays > 0)
