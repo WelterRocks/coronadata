@@ -71,6 +71,10 @@ class Locations extends Base
     protected $human_development_index = null;
     protected $life_expectancy = null;
     protected $median_age = null;
+    protected $contamination_total = null;
+    protected $contamination_rundays = null;
+    protected $contamination_per_day = null;
+    protected $contamination_target = null;
     protected $population_density = null;
     protected $infection_density = null;
     protected $infection_probability = null;
@@ -213,6 +217,10 @@ class Locations extends Base
         `location_hash` VARCHAR(32) NULL DEFAULT NULL,
         `location_name` VARCHAR(64) NULL DEFAULT NULL,
         `geo_id` VARCHAR(16) NULL DEFAULT NULL,
+        `contamination_total` FLOAT NOT NULL DEFAULT '0',
+        `contamination_rundays` FLOAT NOT NULL DEFAULT '0',
+        `contamination_per_day` FLOAT NOT NULL DEFAULT '0',
+        `contamination_target` FLOAT NOT NULL DEFAULT '0',
         `population_year` YEAR NULL DEFAULT NULL,
         `population_count` BIGINT UNSIGNED NULL DEFAULT '0',
         `population_females` BIGINT UNSIGNED NULL DEFAULT '0',

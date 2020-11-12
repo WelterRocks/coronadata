@@ -688,6 +688,50 @@ class Client
             unset($data);
             unset($last_index);
 
+            // Try to calculate contamination status
+            if ($country->total_cases > 0)
+            {
+                $country->contamination_total = ($country->population_count / $country->total_cases);
+                $country->contamination_rundays = ((time() - $country->timestamp_min) / 60 / 60 / 24);
+
+                if ($country->contamination_rundays > 0)
+                    $country->contamination_per_day = ($country->total_cases / $country->contamination_rundays);
+                else
+                    $country->contamination_per_day = 0;
+
+                if ($country->contamination_per_day > 0)
+                    $country->contamination_target = (($country->population_count - $country->total_cases) / $country->contamination_per_day);
+            }
+
+            if ($continent->total_cases > 0)
+            {
+                $continent->contamination_total = ($continent->population_count / $continent->total_cases);
+                $continent->contamination_rundays = ((time() - $continent->timestamp_min) / 60 / 60 / 24);
+
+                if ($continent->contamination_rundays > 0)
+                    $continent->contamination_per_day = ($continent->total_cases / $continent->contamination_rundays);
+                else
+                    $continent->contamination_per_day = 0;
+
+                if ($continent->contamination_per_day > 0)
+                    $continent->contamination_target = (($continent->population_count - $continent->total_cases) / $continent->contamination_per_day);
+            }
+            
+            // Try to set infection status
+            if ($country->area > 0)
+            {
+                $country->infection_density = ($country->cases_count / $country->area);
+                $country->infection_area = (1 / $country->infection_density);
+                $country->infection_probability = (100 / ($country->infection_area * $country->population_density));
+            }            
+
+            if ($continent->area > 0)
+            {
+                $continent->infection_density = ($continent->cases_count / $continent->area);
+                $continent->infection_area = (1 / $continent->infection_density);
+                $continent->infection_probability = (100 / ($continent->infection_area * $continent->population_density));
+            }            
+
             // We must override the used addressed space, if objects just have been created, they will get lost if we dont force this
             $countries[$country_hash] = $country;
             $continents[$continent_hash] = $continent;
@@ -1522,17 +1566,25 @@ class Client
                     $district->deaths_count = $deaths;
                     $district->recovered_count = $recovered;
                     
+                    if ($district->total_cases > 0)
+                    {
+                        $district->contamination_total = ($district->population_count / $district->total_cases);
+                        $district->contamination_rundays = ((time() - $district->timestamp_min) / 60 / 60 / 24);
+                        
+                        if ($district->contamination_rundays > 0)
+                            $district->contamination_per_day = ($district->total_cases / $district->contamination_rundays); 
+                        else
+                            $district->contamination_per_day = 0;
+   
+                        if ($district->contamination_per_day > 0)
+                            $district->contamination_target = (($district->population_count - $district->total_cases) / $district->contamination_per_day);
+                    }
+                    
                     if ($district->area > 0)
                     {
                         $district->infection_density = ($district->cases_count / $district->area);
                         $district->infection_area = (1 / $district->infection_density);
                         $district->infection_probability = (100 / ($district->infection_area * $district->population_density));
-                    }
-                    else
-                    {
-                        $district->infection_density = 0;
-                        $district->infection_area = 0;
-                        $district->infection_probability = 0;
                     }
                     
                     // Due to missing data in retrieved files, it could be that some fields are missing right now
@@ -1594,17 +1646,25 @@ class Client
                         $state->deaths_count = $deaths;
                         $state->recovered_count = $recovered;
                         
+                        if ($state->total_cases > 0)
+                        {
+                            $state->contamination_total = ($state->population_count / $state->total_cases);
+                            $state->contamination_rundays = ((time() - $state->timestamp_min) / 60 / 60 / 24);
+                            
+                            if ($state->contamination_rundays > 0)
+                                $state->contamination_per_day = ($state->total_cases / $state->contamination_rundays); 
+                            else
+                                $state->contamination_per_day = 0;
+       
+                            if ($state->contamination_per_day > 0)
+                                $state->contamination_target = (($state->population_count - $state->total_cases) / $state->contamination_per_day);
+                        }
+                    
                         if ($state->area > 0)
                         {
                             $state->infection_density = ($state->cases_count / $state->area);
                             $state->infection_area = (1 / $state->infection_density);
                             $state->infection_probability = (100 / ($state->infection_area * $state->population_density));
-                        }
-                        else
-                        {
-                            $state->infection_density = 0;
-                            $state->infection_area = 0;
-                            $state->infection_probability = 0;
                         }
                     
                         if ($state->cases_min > $cases)
@@ -1642,17 +1702,25 @@ class Client
                             $germany->deaths_count = $deaths;
                             $germany->recovered_count = $recovered;
                             
+                            if ($germany->total_cases > 0)
+                            {
+                                $germany->contamination_total = ($germany->population_count / $germany->total_cases);
+                                $germany->contamination_rundays = ((time() - $germany->timestamp_min) / 60 / 60 / 24);
+                                
+                                if ($germany->contamination_rundays > 0)
+                                    $germany->contamination_per_day = ($germany->total_cases / $germany->contamination_rundays); 
+                                else
+                                    $germany->contamination_per_day = 0;
+           
+                                if ($germany->contamination_per_day > 0)
+                                    $germany->contamination_target = (($germany->population_count - $germany->total_cases) / $germany->contamination_per_day);
+                            }
+                            
                             if ($germany->area > 0)
                             {
                                 $germany->infection_density = ($germany->cases_count / $germany->area);
                                 $germany->infection_area = (1 / $germany->infection_density);
                                 $germany->infection_probability = (100 / ($germany->infection_area * $germany->population_density));
-                            }
-                            else
-                            {
-                                $germany->infection_density = 0;
-                                $germany->infection_area = 0;
-                                $germany->infection_probability = 0;
                             }
                     
                             if ($germany->cases_min > $cases)
