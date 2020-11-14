@@ -249,8 +249,8 @@ class Grafana extends Base
       $sql .= "\tOR\n";
       $sql .= "\t(`locations`.`location_type` = 'location' AND `locations`.`continent_hash` = `datasets`.`continent_hash` AND `locations`.`country_hash` = `datasets`.`country_hash` AND `locations`.`state_hash` = `datasets`.`state_hash` AND `locations`.`district_hash` = `datasets`.`district_hash` AND `locations`.`location_hash` = `datasets`.`location_hash`)\n";
       $sql .= "\t)\n";
-      $sql .= "ORDER BY `datasets`.`timestamp_represent` DESC\n";
-      
+      $sql .= "ORDER BY `datasets`.`timestamp_represent` DESC;";
+
       return $sql;
     }
 }
