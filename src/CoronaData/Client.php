@@ -1145,7 +1145,7 @@ class Client
         if ((!$result->prefix) || (count($result->prefix) != $days))
             return false;
 
-        if ((!$result->suffix) || (count($cresult->suffix) != $days))
+        if ((!$result->suffix) || (count($result->suffix) != $days))
             return false;
 
         $result->prefix_value = 0;
