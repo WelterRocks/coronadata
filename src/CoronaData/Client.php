@@ -60,6 +60,20 @@ class Client
     private $datasets = null;
     private $testresults = null;
     
+    public static function result_object_merge(&$result, $obj)
+    {
+        if (!is_object($obj))
+            return false;
+            
+        if (!is_object($result))
+            return false;
+            
+        foreach ($obj as $key => $val)
+            $result->$key = $val;
+            
+        return true;
+    }
+
     public static function clean_str($str)
     {
         $allowed = "abcdefghijklmnopqrstuvwxyz";
@@ -1020,146 +1034,194 @@ class Client
         return true;
     }
     
-    public function calculate_dataset_fields($cases, $population, $incidence_factor = 100000)
+    public function get_last_x_days($cases, $deaths, $days = 7, $skip_days = 0, &$reproduction_available = null)
     {
-        if (!is_array($cases))
+        if ($days <= 0)
             return null;
-        
-        $top7 = 8;
-        $top14 = 15;
-        $top7_smoothed = 11;
-        $top14_smoothed = 18;
-                
-        $incidence7 = 0;
-        $incidence14 = 0;
-
-        $incidence7_smoothed = 0;
-        $incidence14_smoothed = 0;
-                
-        $casecount = 0;
-        $casecount_smoothed = 0;
-                                        
-        if (count($cases) < 8)
-            $top7 = count($cases) - 1;
-                    
-        if (count($cases) < 15)
-            $top14 = count($cases) - 1;
-                    
-        if (count($cases) < 11)
-            $top7_smoothed = count($cases) - 1;
-                
-        if (count($cases) < 18)
-            $top14_smoothed = count($cases) - 1;
             
-        $casebase = 0;
-        $casebase_smoothed = 3;
-                
-        if ((count($cases) + 1) < $casebase_smoothed)
-            $casebase_smoothed = (count($cases) - 1);
+        $base = $skip_days;
+        $top = ($days + $skip_days);
+        
+        $max = count($cases);
+        
+        $reproduction_available = ((($days * 2 + $skip_days) <= $max) ? true : false);
+        
+        $result = array();
+        
+        if ($max < $top)
+            $top = $max;
+            
+        $n = 0;
+            
+        for ($i = $base; $i < $top; $i++)
+        {
+            $n++;
+            
+            $tmp = new \stdClass;
+            $tmp->day = $n;
+            $tmp->cases = $cases[$i];
+            $tmp->deaths = $deaths[$i];
+            
+            array_push($result, $tmp);
+        }
+        
+        return $result;
+    }
+    
+    public function calculate_x_day_fields($cases, $deaths, $population, $days = 7, $skip_days = 0, $incidence_factor = 100000)
+    {
+        if ($days <= 0)
+            return null;
+            
+        $reproduction_available = false;
+        
+        $last_x = $this->get_last_x_days($cases, $deaths, $days, $skip_days);
+        
+        $cases_now = $cases[count($cases)-1];
+        $deaths_now = $deaths[count($deaths)-1];
 
-        for ($i = $casebase; $i < $top7; $i++)
-            $incidence7 += $cases[$i];
-                            
-        for ($i = $casebase; $i < $top14; $i++)
-            $incidence14 += $cases[$i];
-                            
-        for ($i = $casebase_smoothed; $i < $top7_smoothed; $i++)
-            $incidence7_smoothed += $cases[$i];
-                            
-        for ($i = $casebase_smoothed; $i < $top14_smoothed; $i++)
-            $incidence14_smoothed += $cases[$i];
-                            
-        $casecount = $cases[0];
-                
-        if (count($cases) > 3)
-            $casecount_smoothed = $cases[3];
+        if (!$last_x)
+            return false;
+
+        $result = new \stdClass;
+        $result->cases = (int)0;
+        $result->deaths = (int)0;
+
+        foreach ($last_x as $obj)
+        {
+            $result->cases += (int)$obj->cases ?: 0;
+            $result->deaths += (int)$obj->deaths ?: 0;
+        }
+
+        if ($result->cases != 0)
+            $result->exponence = ($cases_now / ($result->cases / $days));
         else
-            $casecount_smoothed = count($cases);
-                                    
-        $exp7 = (($incidence7 - $casecount) / 6);
-        $exp14 = (($incidence14 - $casecount) / 13);
-                
-        if ($exp7 == 0)
-            $exp7 = 1;
-                
-        if ($exp14 == 0)
-            $exp14 = 1;
-                
-        $exp7_smoothed = (($incidence7_smoothed - $casecount_smoothed) / 6);
-        $exp14_smoothed = (($incidence14_smoothed - $casecount_smoothed) / 13);
-                                
-        if ($exp7_smoothed == 0)
-            $exp7_smoothed = 1;
-                
-        if ($exp14_smoothed == 0)
-            $exp14_smoothed = 1;
+            $result->exponence = 0;
+
+        if ($population != 0)
+            $result->incidence = ($result->cases / $population * $incidence_factor);
+        else
+            $result->incidence = 0;
+
+        $result->incidence_factor = $incidence_factor;
+
+        if ($result->incidence < 0)
+            $result->alert_condition = -1;
+        elseif ($result->incidence == 0)
+            $result->alert_condition = 0;
+        elseif ($result->incidence >= 200)
+            $result->alert_condition = 7;
+        elseif ($result->incidence >= 150)
+            $result->alert_condition = 6;
+        elseif ($result->incidence >= 100)
+            $result->alert_condition = 5;
+        elseif ($result->incidence >= 75)
+            $result->alert_condition = 4;
+        elseif ($result->incidence >= 50)
+            $result->alert_condition = 3;
+        elseif ($result->incidence >= 35)
+            $result->alert_condition = 2;
+        else
+            $result->alert_condition = 1;
+
+        return $result;
+    }
+
+    public function calculate_x_day_r_value($cases, $deaths, $days = 7, $skip_days = 0, &$reproduction_available = null)
+    {
+        if ($days <= 0)
+            return null;
+            
+        $reproduction_available = false;
         
         $result = new \stdClass;
-                
-        if ($population > 0)
-        {
-            $result->incidence_7day = ($incidence7 / $population * $incidence_factor);
-            $result->incidence_14day = ($incidence14 / $population * $incidence_factor);
-                    
-            $result->incidence_7day_smoothed = ($incidence7_smoothed / $population * $incidence_factor);
-            $result->incidence_14day_smoothed = ($incidence14_smoothed / $population * $incidence_factor);
-        }                    
-        else
-        {
-            $result->incidence_7day = 0;
-            $result->incidence_14day = 0;
-            $result->incidence_7day_smoothed = 0;
-            $result->incidence_14day_smoothed = 0;
-        }
-            
-        $result->exponence_7day = ($casecount / $exp7);
-        $result->exponence_14day = ($casecount / $exp14);
 
-        $result->exponence_7day_smoothed = ($casecount_smoothed / $exp7_smoothed);
-        $result->exponence_14day_smoothed = ($casecount_smoothed / $exp14_smoothed);
+        $result->suffix = $this->get_last_x_days($cases, $deaths, $days, $skip_days);
+        $result->prefix = $this->get_last_x_days($cases, $deaths, $days, ($skip_days + $days), $reproduction_available);
         
-        if ($result->incidence_7day >= 150)
-            $result->warning_level_7day = 7;
-        elseif ($result->incidence_7day >= 100)
-            $result->warning_level_7day = 6;
-        elseif ($result->incidence_7day >= 75)
-            $result->warning_level_7day = 5;
-        elseif ($result->incidence_7day >= 50)
-            $result->warning_level_7day = 4;
-        elseif ($result->incidence_7day >= 35)
-            $result->warning_level_7day = 3;
-        elseif ($result->incidence_7day >= 20)
-            $result->warning_level_7day = 2;
-        elseif ($result->incidence_7day >= 1)
-            $result->warning_level_7day = 1;
+        if (!$reproduction_available)
+            return false;        
+
+        if ((!$result->prefix) || (count($result->prefix) != $days))
+            return false;
+
+        if ((!$result->suffix) || (count($cresult->suffix) != $days))
+            return false;
+
+        $result->prefix_value = 0;
+        $result->suffix_value = 0;
+
+        foreach ($result->prefix as $case)
+            $result->prefix_value += $case->cases;
+
+        unset($result->prefix);
+
+        foreach ($result->suffix as $case)
+            $result->suffix_value += $case->cases;
+
+        unset($result->suffix);
+
+        $result->prefix_average = ($result->prefix_value / $days);
+        $result->suffix_average = ($result->suffix_value / $days);
+
+        if ($result->prefix_average == 0)
+            $result->r_value = 0;
         else
-            $result->warning_level_7day = 0;
+            $result->r_value = ($result->suffix_average / $result->prefix_average);
+
+        return $cases;
+    }
+    
+    public function calculate_14day_r_value($cases, $deaths, $skip_days = 3)
+    {
+        $reproduction_available = false;
         
-        if ($result->incidence_14day >= 150)
-            $result->warning_level_14day = 7;
-        elseif ($result->incidence_14day >= 100)
-            $result->warning_level_14day = 6;
-        elseif ($result->incidence_14day >= 75)
-            $result->warning_level_14day = 5;
-        elseif ($result->incidence_14day >= 50)
-            $result->warning_level_14day = 4;
-        elseif ($result->incidence_14day >= 35)
-            $result->warning_level_14day = 3;
-        elseif ($result->incidence_14day >= 20)
-            $result->warning_level_14day = 2;
-        elseif ($result->incidence_14day >= 1)
-            $result->warning_level_14day = 1;
-        else
-            $result->warning_level_14day = 0;
-            
-        if ($result->warning_level_7day > $result->warning_level_14day)
-            $result->warning_tendence = "asc";
-        elseif ($result->warning_level_7day < $result->warning_level_14day)
-            $result->warning_tendence = "desc";
-        else
-            $result->warning_tendence = "sty";
-            
-        $result->warning_level = round((($result->warning_level_7day + $result->warning_level_14day) / 2));
+        $obj = $this->calculate_x_day_r_value($cases, $deaths, 14, $skip_days, $reproduction_available);
+        
+        if (!$reproduction_available)
+            return null;
+
+        if (!$obj)
+            return null;
+
+        return $obj->r_value;
+    }
+
+    public function calculate_7day_r_value($cases, $deaths, $skip_days = 3)
+    {
+        $reproduction_available = false;
+        
+        $obj = $this->calculate_x_day_r_value($cases, $deaths, 7, $skip_days, $reproduction_available);
+        
+        if (!$reproduction_available)
+            return null;
+
+        if (!$obj)
+            return null;
+
+        return $obj->r_value;
+    }
+
+    public function calculate_4day_r_value($cases, $deaths, $skip_days = 3)
+    {
+        $reproduction_available = false;
+        
+        $obj = $this->calculate_x_day_r_value($cases, $deaths, 4, $skip_days, $reproduction_available);
+        
+        if (!$reproduction_available)
+            return null;
+
+        if (!$obj)
+            return null;
+
+        return $obj->r_value;
+    }
+
+    public function calculate_alert_condition($alert_condition_7day, $alert_condition_14day)
+    {
+        $result = new \stdClass;
+        
+        $result->alert_condition = round((($alert_condition_7day + $alert_condition_14day) / 2));
         
         // These are example recommendations!!!! NOT A STRICT TO DO LIST!!!
         // Suggestions are welcome.
@@ -1196,7 +1258,14 @@ class Client
         foreach ($force_defaults as $key => $val)
             $result->$key = (int)$val;
         
-        switch ($result->warning_level)
+        if ($alert_condition_7day > $alert_condition_14day)
+            $result->alert_condition_pointer = "asc";
+        elseif ($alert_condition_7day < $alert_condition_14day)
+            $result->alert_condition_pointer = "desc";
+        else
+            $result->alert_condition_pointer = "sty";
+            
+        switch ($result->alert_condition)
         {
             case 7:
                 $result->flag_enforce_daily_need_deliveries = 1;
@@ -1215,7 +1284,7 @@ class Client
                 $result->flag_lockdown_gastronomy = 1;
                 $result->flag_lockdown_secondary_infrastructure = 1;
                 $result->flag_enforce_local_crisis_team_control = 1;
-                if ($result->warning_level == 6)
+                if ($result->alert_condition == 6)
                 {
                     $result->enforce_distance_meters = 3;
                     $result->enforce_household_plus_persons_to = 1;
@@ -1228,7 +1297,7 @@ class Client
                 $result->flag_isolate_medium_risk_group = 1;
                 $result->flag_enforce_public_mask_wearing = 1;
                 $result->flag_reserve_icu_units = 1;
-                if ($result->warning_level == 5)
+                if ($result->alert_condition == 5)
                 {
                     $result->enforce_distance_meters = 3;
                     $result->enforce_household_plus_persons_to = 2;
@@ -1238,7 +1307,7 @@ class Client
             case 4:
                 $result->flag_enforce_shopping_rules = 1;
                 $result->flag_isolate_high_risk_group = 1;
-                if ($result->warning_level == 4)
+                if ($result->alert_condition == 4)
                 {
                     $result->enforce_distance_meters = 2;
                     $result->enforce_household_plus_persons_to = 5;
@@ -1246,7 +1315,7 @@ class Client
                     $result->enforce_public_events_to = 1000;
                 }
             case 3:
-                if ($result->warning_level == 3)
+                if ($result->alert_condition == 3)
                 {
                     $result->enforce_distance_meters = 2;
                     $result->enforce_household_plus_persons_to = 10;
@@ -1255,7 +1324,7 @@ class Client
                 }
             case 2:
                 $result->flag_enforce_critical_mask_wearing = 1;
-                if ($result->warning_level == 2)
+                if ($result->alert_condition == 2)
                 {
                     $result->enforce_distance_meters = 2;
                     $result->enforce_household_plus_persons_to = 10;
@@ -1267,7 +1336,7 @@ class Client
                 $result->flag_attention_on_symptoms = 1;
                 $result->flag_recommend_mask_wearing = 1;
                 $result->flag_wash_hands = 1;
-                if ($result->warning_level == 1)
+                if ($result->alert_condition == 1)
                 {
                     $result->enforce_distance_meters = 2;
                     $result->enforce_household_plus_persons_to = 15;
@@ -1282,6 +1351,137 @@ class Client
         }
         
         return $result;    
+    }
+
+    public function calculate_14day_fields($cases, $deaths, $population, $incidence_factor = 100000)
+    {
+        $obj = $this->calculate_x_day_fields($cases, $deaths, $population, 14, 0, $incidence_factor);
+        $obj2 = $this->calculate_x_day_fields($cases, $deaths, $population, 14, 3, $incidence_factor);
+
+        if (!$obj)
+            return null;
+
+        $result = new \stdClass;
+
+        if ($obj->cases == 0)
+            $result->flag_case_free = 0;
+        
+        $result->cases_14day = $obj->cases;
+        $result->deaths_14day = $obj->deaths;
+        $result->exponence_14day = $obj->exponence;
+        $result->exponence_14day_smoothed = ((!$obj2) ? $obj->exponence : $obj2->exponence);
+        $result->incidence_14day = $obj->incidence;
+        $result->incidence_14day_smooted = ((!$obj2) ? $obj->incidence : $obj2->incidence);
+        $result->alert_condition_14day = ((!$obj2) ? $obj->alert_condition : $obj2->alert_condition);
+
+        return $result;
+    }
+
+    public function calculate_7day_fields($cases, $deaths, $population, $incidence_factor = 100000)
+    {
+        $obj = $this->calculate_x_day_fields($cases, $deaths, $population, 7, 0, $incidence_factor);
+        $obj2 = $this->calculate_x_day_fields($cases, $deaths, $population, 7, 3, $incidence_factor);
+
+        if (!$obj)
+            return null;
+
+        $result = new \stdClass;
+
+        $result->cases_7day = $obj->cases;
+        $result->deaths_7day = $obj->deaths;
+        $result->exponence_7day = $obj->exponence;
+        $result->exponence_7day_smoothed = ((!$obj2) ? $obj->exponence : $obj2->exponence);
+        $result->incidence_7day = $obj->incidence;
+        $result->incidence_7day_smoothed = ((!$obj2) ? $obj->incidence : $obj2->incidence);
+        $result->alert_condition_7day = ((!$obj2) ? $obj->alert_condition : $obj2->alert_condition);
+
+        return $result;
+    }
+
+    public function calculate_case_and_death_ascension($cases, $deaths)
+    {
+        $last = $this->get_last_x_days($cases, $deaths, 1);
+        
+        $cases_now = $cases[count($cases)-1];
+        $deaths_now = $deaths[count($deaths)-1];
+
+        if ((!$last) || (count($last) == 0))
+            return null;
+            
+        $result = new \stdClass;
+
+        $result->cases_ascension = (int)($cases_now - $last[0]->cases) ?: 0;
+        $result->deaths_ascension = (int)($deaths_now - $last[0]->deaths) ?: 0;
+
+        $yesterday = ($cases_now - $result->cases_ascension);
+
+        if ($yesterday != 0)
+            $result->exponence_yesterday = ($cases_now / $yesterday);
+
+        if ($result->cases_ascension > 0)
+            $result->cases_pointer = "asc";
+        elseif ($result->cases_ascension < 0)
+            $result->cases_pointer = "desc";
+        else
+            $result->cases_pointer = "sty";
+
+        if ($result->deaths_ascension > 0)
+            $result->deaths_pointer = "asc";
+        elseif ($result->deaths_ascension < 0)
+            $result->deaths_pointer = "desc";
+        else
+            $result->deaths_pointer = "sty";
+
+        return $result;
+    }
+
+    public function calculate_case_and_death_rates($cases, $deaths, $population)
+    {
+        if ($population == 0)
+            return false;
+            
+        $cases_now = $cases[count($cases)-1];
+        $deaths_now = $deaths[count($deaths)-1];
+            
+        $result = new \stdClass;
+
+        $result->cases_rate = (100 / $population * $cases_now);
+        $result->deaths_rate = (100 / $population * $deaths_now);
+
+        return $result;
+    }
+    
+    public function calculate_dataset_fields($cases, $deaths, $population, $incidence_factor = 100000)
+    {
+        if (!is_array($cases))
+            return null;
+            
+        if (!is_array($deaths))
+            return null;
+        
+        $result = new \stdClass;
+        
+        self::result_object_merge($result, $this->calculate_7day_fields($cases, $deaths, $population, $incidence_factor));
+        self::result_object_merge($result, $this->calculate_14day_fields($cases, $deaths, $population, $incidence_factor));
+        self::result_object_merge($result, $this->calculate_case_and_death_rates($cases, $deaths, $population));
+        self::result_object_merge($result, $this->calculate_case_and_death_ascension($cases, $deaths));
+        self::result_object_merge($result, $this->calculate_4day_r_value($cases, $deaths));
+        self::result_object_merge($result, $this->calculate_7day_r_value($cases, $deaths));
+        self::result_object_merge($result, $this->calculate_14day_r_value($cases, $deaths));
+
+        if (isset($result->alert_condition_7day))
+            $alert_condition_7day = $result->alert_condition_7day;
+        else
+            $alert_condition_7day = -1;
+        
+        if (isset($result->alert_condition_14day))
+            $alert_condition_14day = $result->alert_condition_14day;
+        else
+            $alert_condition_14day = -1;
+        
+        self::result_object_merge($result, $this->calculate_alert_condition($alert_condition_7day, $alert_condition_14day));
+        
+        return $result;        
     }
     
     public function master_datasets($hold_data = false)
@@ -1352,6 +1552,7 @@ class Client
         foreach ($dataset_index as $index => $data)
         {
             $cases = array();
+            $deaths = array();
             
             foreach ($data as $date => $hash)
             {
@@ -1361,20 +1562,15 @@ class Client
                         continue;
                         
                     array_push($cases, $datasets[$hash2]->cases);
+                    array_push($deaths, $datasets[$hash2]->deaths);
                 
-                    if (count($cases) == 18)
+                    if (count($cases) == 33)
                     {
                         break;
                     }
                 }
                 
-                $result = $this->calculate_dataset_fields($cases, $this->countries[$country_hash]->population_count);
-                
-                if (is_object($result))
-                {
-                    foreach ($result as $key => $val)
-                        $datasets[$hash]->$key = $val;
-                }
+                self::result_object_merge($datasets[$hash], $this->calculate_dataset_fields($cases, $deaths, $this->countries[$country_hash]->population_count));                
             }
         }
                     
@@ -1661,11 +1857,15 @@ class Client
             $deaths = 0;
             $recovered = 0;
             
-            $cases_last18 = array();
+            $cases_last = array();
+            $deaths_last = array();
             
-            // Zero fill cases array
-            for ($i = 0; $i < 19; $i++)
-                $cases_last18[$i] = 0;
+            // Zero fill cases and deaths array
+            for ($i = 0; $i < 34; $i++)
+            {
+                $cases_last[$i] = 0;
+                $deaths_last[$i] = 0;
+            }
             
             // We need the population from the corresponding location object
             if (isset($this->districts[$index]))
@@ -1743,17 +1943,14 @@ class Client
                 $dataset->new_deaths_smoothed_per_million = ($dataset->new_deaths_smoothed / $mil * $population);
                 $dataset->new_recovered_smoothed_per_million = ($dataset->new_recovered_smoothed / $mil * $population);
                 
-                array_push($cases_last18, $dataset->cases);
-                array_shift($cases_last18);
+                array_push($cases_last, $dataset->cases);
+                array_push($deaths_last, $dataset->deaths);
+                
+                array_shift($cases_last);
+                array_shift($deaths_last);
                                 
-                $result = $this->calculate_dataset_fields($cases_last18, $population);
-                
-                if (is_object($result))
-                {
-                    foreach ($result as $key => $val)
-                        $dataset->$key = $val;
-                }
-                
+                self::result_object_merge($dataset, $this->calculate_dataset_fields($cases_last, $deaths_last, $population));
+
                 $dataset_hash = md5($dataset->district_hash.$dataset->date_rep);
                                 
                 if (isset($this->datasets[$dataset_hash]))

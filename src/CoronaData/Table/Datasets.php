@@ -39,7 +39,17 @@ class Datasets extends Base
     protected $month = null;
     protected $year = null;
     protected $cases = null;
+    protected $cases_7day = null;
+    protected $cases_14day = null;
+    protected $cases_rate = null;
+    protected $cases_ascension = null;
+    protected $cases_pointer = null;
     protected $deaths = null;
+    protected $deaths_7day = null;
+    protected $deaths_14day = null;
+    protected $deaths_rate = null;
+    protected $deaths_ascension = null;
+    protected $deaths_pointer = null;
     protected $recovered = null;
     protected $timestamp_represent = null;
     protected $hosp_patients = null;
@@ -82,14 +92,15 @@ class Datasets extends Base
     protected $incidence_14day = null;
     protected $incidence_7day_smoothed = null;
     protected $incidence_14day_smoothed = null;
+    protected $exponence_yesterday = null;
     protected $exponence_7day = null;
     protected $exponence_14day = null;
     protected $exponence_7day_smoothed = null;
     protected $exponence_14day_smoothed = null;
-    protected $warning_level_7day = null;
-    protected $warning_level_14day = null;
-    protected $warning_level = null;
-    protected $warning_tendence = null;
+    protected $alert_condition_7day = null;
+    protected $alert_condition_14day = null;
+    protected $alert_condition_pointer = null;
+    protected $alert_condition = null;
     protected $flag_enforce_daily_need_deliveries = null;
     protected $flag_enforce_treatment_priorization = null;
     protected $flag_lockdown_primary_infrastructure = null;
@@ -117,7 +128,7 @@ class Datasets extends Base
     protected $enforce_household_plus_persons_to = null;
     protected $enforce_public_groups_to = null;
     protected $enforce_public_events_to = null;
-
+    
     protected function get_install_sql()
     {
       return "CREATE TABLE IF NOT EXISTS `datasets` (
@@ -143,7 +154,17 @@ class Datasets extends Base
         `month` smallint UNSIGNED NOT NULL DEFAULT '0',
         `year` YEAR NOT NULL DEFAULT '0',
         `cases` BIGINT NOT NULL DEFAULT '0',
+        `cases_7day` BIGINT NOT NULL DEFAULT '0',
+        `cases_14day` BIGINT NOT NULL DEFAULT '0',
+        `cases_rate` FLOAT NOT NULL DEFAULT '0',
+        `cases_ascension` FLOAT NOT NULL DEFAULT '0',
+        `cases_pointer` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
         `deaths` BIGINT NOT NULL DEFAULT '0',
+        `deaths_7day` BIGINT NOT NULL DEFAULT '0',
+        `deaths_14day` BIGINT NOT NULL DEFAULT '0',
+        `deaths_rate` FLOAT NOT NULL DEFAULT '0',
+        `deaths_ascension` FLOAT NOT NULL DEFAULT '0',
+        `deaths_pointer` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
         `recovered` BIGINT NOT NULL DEFAULT '0',
         `hosp_patients` INT NOT NULL DEFAULT '0',
         `hosp_patients_per_million` FLOAT NOT NULL DEFAULT '0',
@@ -185,14 +206,15 @@ class Datasets extends Base
         `incidence_14day` FLOAT NOT NULL DEFAULT '0',
         `incidence_7day_smoothed` FLOAT NOT NULL DEFAULT '0',
         `incidence_14day_smoothed` FLOAT NOT NULL DEFAULT '0',
+        `exponence_yesterday` FLOAT NOT NULL DEFAULT '0',
         `exponence_7day` FLOAT NOT NULL DEFAULT '0',
         `exponence_14day` FLOAT NOT NULL DEFAULT '0',
         `exponence_7day_smoothed` FLOAT NOT NULL DEFAULT '0',
         `exponence_14day_smoothed` FLOAT NOT NULL DEFAULT '0',        
-        `warning_level_7day` smallint NOT NULL DEFAULT '-1',
-        `warning_level_14day` smallint NOT NULL DEFAULT '-1',
-        `warning_level` smallint NOT NULL DEFAULT '-1',
-        `warning_tendence` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
+        `alert_condition_7day` smallint NOT NULL DEFAULT '-1',
+        `alert_condition_14day` smallint NOT NULL DEFAULT '-1',
+        `alert_condition` smallint NOT NULL DEFAULT '-1',
+        `alert_condition_pointer` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
         `update_count` int UNSIGNED NOT NULL DEFAULT '0',
         `flag_updated` tinyint(1) NOT NULL DEFAULT '0',
         `flag_disabled` tinyint(1) NOT NULL DEFAULT '0',
@@ -237,13 +259,5 @@ class Datasets extends Base
       
       ALTER TABLE `datasets` ADD CONSTRAINT `dataset_location` FOREIGN KEY (`locations_uid`) REFERENCES `locations`(`uid`) ON DELETE CASCADE ON UPDATE CASCADE;
       ";
-      /*      
-      ALTER TABLE `datasets` ADD CONSTRAINT `dataset_location_continent` FOREIGN KEY (`continent_hash`) REFERENCES `locations`(`continent_hash`) ON DELETE CASCADE ON UPDATE CASCADE;
-      ALTER TABLE `datasets` ADD  CONSTRAINT `dataset_location_country` FOREIGN KEY (`country_hash`) REFERENCES `locations`(`country_hash`) ON DELETE CASCADE ON UPDATE CASCADE;
-      ALTER TABLE `datasets` ADD  CONSTRAINT `dataset_location_state` FOREIGN KEY (`state_hash`) REFERENCES `locations`(`state_hash`) ON DELETE CASCADE ON UPDATE CASCADE;
-      ALTER TABLE `datasets` ADD  CONSTRAINT `dataset_location_district` FOREIGN KEY (`district_hash`) REFERENCES `locations`(`district_hash`) ON DELETE CASCADE ON UPDATE CASCADE;
-      ALTER TABLE `datasets` ADD  CONSTRAINT `dataset_location_location` FOREIGN KEY (`location_hash`) REFERENCES `locations`(`location_hash`) ON DELETE CASCADE ON UPDATE CASCADE;
-      ";
-      */
     }
 }
