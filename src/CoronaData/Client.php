@@ -55,6 +55,8 @@ class Client
     private $districts = null;
     private $locations = null;
     
+    private $location_index = null;
+    
     private $datasets = null;
     private $testresults = null;
     
@@ -1331,6 +1333,7 @@ class Client
             $dataset->cases = $record->cases;
             $dataset->deaths = $record->deaths;
             $dataset->timestamp_represent = $record->timestamp_represent;
+            $dataset->location_type = "country";
             
             $index = $dataset->continent_hash.$dataset->country_hash;
             
@@ -1410,6 +1413,7 @@ class Client
                     $dataset->month = date("m", $ts);
                     $dataset->year = date("Y", $ts);
                     $dataset->timestamp_represent = date("Y-m-d H:i:s", $ts);
+                    $dataset->location_type = "country";
                 }
                 
                 foreach ($filter as $key => $type)
@@ -1607,6 +1611,7 @@ class Client
                 $dataset->new_recovered_smoothed = 0;
                 $dataset->timestamp_represent = $data->timestamp_represent;
                 $dataset->date_rep = $data->date_rep;
+                $dataset->location_type = "district";
             }
             else
             {
@@ -2087,6 +2092,30 @@ class Client
 
             foreach ($obj as $key => $val)
                 $db_obj->$key = $val;
+                
+            switch($obj->location_type)
+            {
+                case "continent":
+                    $x_hash = "N".$obj->continent_hash;
+                    break;
+                case "country":
+                    $x_hash = "C".$obj->country_hash;
+                    break;
+                case "state":
+                    $x_hash = "S".$obj->state_hash;
+                    break;
+                case "district":
+                    $x_hash = "D".$obj->district_hash;
+                    break;
+                case "location":
+                    $x_hash = "L".$obj->location_hash;
+                    break;
+                default:
+                    $x_hash = $hash;
+                    break;
+            }
+                    
+            $db_obj->locations_uid = $this->location_index[$x_hash];
                     
             if ($db_obj->save())
                 $count++;
@@ -2188,6 +2217,8 @@ class Client
         $count = 0;
         $any = 0;
         
+        $this->location_index = array();
+        
         $this->database_transaction_begin("save_location");
         
         foreach ($stores as $store)
@@ -2208,7 +2239,29 @@ class Client
                 foreach ($obj as $key => $val)
                     $db_obj->$key = $val;
                     
-                if ($db_obj->save())
+                switch($obj->location_type)
+                {
+                    case "continent":
+                        $x_hash = "N".$obj->continent_hash;
+                        break;
+                    case "country":
+                        $x_hash = "C".$obj->country_hash;
+                        break;
+                    case "state":
+                        $x_hash = "S".$obj->state_hash;
+                        break;
+                    case "district":
+                        $x_hash = "D".$obj->district_hash;
+                        break;
+                    case "location":
+                        $x_hash = "L".$obj->location_hash;
+                        break;
+                    default:
+                        $x_hash = $hash;
+                        break;
+                }
+                    
+                if ($this->location_index[$x_hash] = $db_obj->save())
                     $count++;
                 else
                     array_push($errors, $db_obj->get_error());

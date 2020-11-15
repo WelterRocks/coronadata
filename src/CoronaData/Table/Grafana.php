@@ -100,6 +100,7 @@ class Grafana extends Base
 
     // Fields from dataset        
     protected $dataset_hash = null;
+    protected $locations_uid = null;
     protected $date_rep = null;
     protected $day_of_week = null;
     protected $day = null;
@@ -209,10 +210,13 @@ class Grafana extends Base
         
         switch ($key)
         {
+          case "location_type":
+            $k[$key] = "`locations`.`".$key."` as '".$key."'";
+            continue(2);
           case "flag_updated":
           case "flag_deleted":
           case "flag_disabled":
-            $k[$key] = "(`locations`.`".$key."` | `datasets`.`".$key."`) as `".$key."`";
+            $k[$key] = "(`locations`.`".$key."` | `datasets`.`".$key."`) as '".$key."'";
             continue(2);
           case "location_update_count":
           case "location_timestamp_last_update":
@@ -229,8 +233,8 @@ class Grafana extends Base
           case "timestamp_enabled":
           case "timestamp_deleted":
           case "timestamp_undeleted":
-            $k["location_".$key] = "`locations`.`".$key."` as `locations_".$key."`";
-            $k[$key] = "`datasets`.`".$key."` as `".$key."`";
+            $k["location_".$key] = "`locations`.`".$key."` as 'locations_".$key."'";
+            $k[$key] = "`datasets`.`".$key."` as '".$key."'";
             continue(2);
         }
         
@@ -238,17 +242,7 @@ class Grafana extends Base
       }
          
       $sql = "CREATE VIEW grafana AS SELECT\n\t".implode(",\n\t", $k)."\nFROM\n\t`locations`,`datasets`\nWHERE\n";
-      $sql .= "\t(\n";
-      $sql .= "\t(`locations`.`location_type` = 'continent' AND `locations`.`continent_hash` = `datasets`.`continent_hash` AND `datasets`.`country_hash` IS NULL AND `datasets`.`state_hash` IS NULL AND `datasets`.`district_hash` IS NULL AND `datasets`.`location_hash` IS NULL)\n";
-      $sql .= "\tOR\n";
-      $sql .= "\t(`locations`.`location_type` = 'country' AND `locations`.`continent_hash` = `datasets`.`continent_hash` AND `locations`.`country_hash` = `datasets`.`country_hash` AND `datasets`.`state_hash` IS NULL AND `datasets`.`district_hash` IS NULL AND `datasets`.`location_hash` IS NULL)\n";
-      $sql .= "\tOR\n";
-      $sql .= "\t(`locations`.`location_type` = 'state' AND `locations`.`continent_hash` = `datasets`.`continent_hash` AND `locations`.`country_hash` = `datasets`.`country_hash` AND `locations`.`state_hash` = `datasets`.`state_hash` AND `datasets`.`district_hash` IS NULL AND `datasets`.`location_hash` IS NULL)\n";
-      $sql .= "\tOR\n";
-      $sql .= "\t(`locations`.`location_type` = 'district' AND `locations`.`continent_hash` = `datasets`.`continent_hash` AND `locations`.`country_hash` = `datasets`.`country_hash` AND `locations`.`state_hash` = `datasets`.`state_hash` AND `locations`.`district_hash` = `datasets`.`district_hash` AND `datasets`.`location_hash` IS NULL)\n";
-      $sql .= "\tOR\n";
-      $sql .= "\t(`locations`.`location_type` = 'location' AND `locations`.`continent_hash` = `datasets`.`continent_hash` AND `locations`.`country_hash` = `datasets`.`country_hash` AND `locations`.`state_hash` = `datasets`.`state_hash` AND `locations`.`district_hash` = `datasets`.`district_hash` AND `locations`.`location_hash` = `datasets`.`location_hash`)\n";
-      $sql .= "\t)\n";
+      $sql .= "\t(`locations`.`uid` = `datasets`.`locations_uid`)\n";
       $sql .= "ORDER BY `datasets`.`timestamp_represent` DESC;";
 
       return $sql;

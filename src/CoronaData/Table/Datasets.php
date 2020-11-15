@@ -25,6 +25,8 @@ use WelterRocks\CoronaData\Table\Base;
 
 class Datasets extends Base
 {
+    protected $locations_uid = null;
+    protected $location_type = null;
     protected $dataset_hash = null;
     protected $location_hash = null;
     protected $district_hash = null;
@@ -120,6 +122,8 @@ class Datasets extends Base
     {
       return "CREATE TABLE IF NOT EXISTS `datasets` (
         `uid` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
+        `locations_uid` bigint UNSIGNED NULL DEFAULT NULL,
+        `location_type` ENUM('continent','country','state','district','location') NOT NULL DEFAULT 'location',
         `timestamp_last_update` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         `timestamp_registration` timestamp NOT NULL,
         `timestamp_deleted` timestamp NULL DEFAULT NULL,
@@ -226,8 +230,12 @@ class Datasets extends Base
         KEY `country_hash` (`country_hash`),
         KEY `state_hash` (`state_hash`),
         KEY `district_hash` (`district_hash`),
-        KEY `location_hash` (`location_hash`)
+        KEY `location_hash` (`location_hash`),
+        KEY `location_type` (`location_type`),
+        KEY `locations_uid` (`locations_uid`)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      
+      ALTER TABLE `datasets` ADD CONSTRAINT `dataset_location` FOREIGN KEY (`locations_uid`) REFERENCES `locations`(`uid`) ON DELETE CASCADE ON UPDATE CASCADE;
       ";
       /*      
       ALTER TABLE `datasets` ADD CONSTRAINT `dataset_location_continent` FOREIGN KEY (`continent_hash`) REFERENCES `locations`(`continent_hash`) ON DELETE CASCADE ON UPDATE CASCADE;
