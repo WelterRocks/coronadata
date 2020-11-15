@@ -97,6 +97,9 @@ class Datasets extends Base
     protected $exponence_14day = null;
     protected $exponence_7day_smoothed = null;
     protected $exponence_14day_smoothed = null;
+    protected $reproduction_4day = null;
+    protected $reproduction_7day = null;
+    protected $reproduction_14day = null;
     protected $alert_condition_7day = null;
     protected $alert_condition_14day = null;
     protected $alert_condition_pointer = null;
@@ -212,6 +215,9 @@ class Datasets extends Base
         `exponence_14day` FLOAT NOT NULL DEFAULT '0',
         `exponence_7day_smoothed` FLOAT NOT NULL DEFAULT '0',
         `exponence_14day_smoothed` FLOAT NOT NULL DEFAULT '0',        
+        `reproduction_4day` FLOAT NOT NULL DEFAULT '0',
+        `reproduction_7day` FLOAT NOT NULL DEFAULT '0',
+        `reproduction_14day` FLOAT NOT NULL DEFAULT '0',
         `alert_condition_7day` smallint NOT NULL DEFAULT '-1',
         `alert_condition_14day` smallint NOT NULL DEFAULT '-1',
         `alert_condition` smallint NOT NULL DEFAULT '-1',
