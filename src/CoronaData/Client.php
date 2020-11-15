@@ -1371,7 +1371,7 @@ class Client
         $result->exponence_14day = $obj->exponence;
         $result->exponence_14day_smoothed = ((!$obj2) ? $obj->exponence : $obj2->exponence);
         $result->incidence_14day = $obj->incidence;
-        $result->incidence_14day_smooted = ((!$obj2) ? $obj->incidence : $obj2->incidence);
+        $result->incidence_14day_smoothed = ((!$obj2) ? $obj->incidence : $obj2->incidence);
         $result->alert_condition_14day = ((!$obj2) ? $obj->alert_condition : $obj2->alert_condition);
 
         return $result;
