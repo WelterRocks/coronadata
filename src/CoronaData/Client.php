@@ -1169,7 +1169,7 @@ class Client
         else
             $result->r_value = ($result->suffix_average / $result->prefix_average);
 
-        return $cases;
+        return $result;
     }
     
     public function calculate_14day_r_value($cases, $deaths, $skip_days = 3)
