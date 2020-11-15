@@ -2259,11 +2259,13 @@ class Client
                 
                 $db_obj->$key = $val;
             }
+            
+            $error = null;
                     
-            if ($db_obj->save())
+            if ($db_obj->save(null, null, false, false, $error))
                 $count++;
             else
-                array_push($errors, $db_obj->get_error());
+                array_push($errors, $error);
 
             $any++;
         }
@@ -2314,10 +2316,12 @@ class Client
                     
             $db_obj->locations_uid = $this->location_index[$x_hash];
                     
-            if ($db_obj->save())
+            $error = null;
+            
+            if ($db_obj->save(null, null, false, false, $error))
                 $count++;
             else
-                array_push($errors, $db_obj->get_error());
+                array_push($errors, $error);
 
             $any++;
         }
@@ -2386,11 +2390,13 @@ class Client
                 
                 $db_obj->$key = $val;
             }
+            
+            $error = null;
                     
-            if ($db_obj->save())
+            if ($db_obj->save(null, null, false, false, $error))
                 $count++;
             else
-                array_push($errors, $db_obj->get_error());
+                array_push($errors, $error);
 
             $any++;
         }
@@ -2457,11 +2463,13 @@ class Client
                         $x_hash = $hash;
                         break;
                 }
-                    
-                if ($this->location_index[$x_hash] = $db_obj->save())
+                
+                $error = null;
+
+                if ($this->location_index[$x_hash] = $db_obj->save(null, null, false, false, $error))
                     $count++;
                 else
-                    array_push($errors, $db_obj->get_error());
+                    array_push($errors, $error);
                 
                 $any++;
             }
