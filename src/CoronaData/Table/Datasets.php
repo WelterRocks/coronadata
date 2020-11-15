@@ -101,6 +101,7 @@ class Datasets extends Base
     protected $alert_condition_14day = null;
     protected $alert_condition_pointer = null;
     protected $alert_condition = null;
+    protected $flag_case_free = null;
     protected $flag_enforce_daily_need_deliveries = null;
     protected $flag_enforce_treatment_priorization = null;
     protected $flag_lockdown_primary_infrastructure = null;
@@ -219,6 +220,7 @@ class Datasets extends Base
         `flag_updated` tinyint(1) NOT NULL DEFAULT '0',
         `flag_disabled` tinyint(1) NOT NULL DEFAULT '0',
         `flag_deleted` tinyint(1) NOT NULL DEFAULT '0',
+        `flag_case_free` tinyint(1) NOT NULL DEFAULT '0',
         `flag_enforce_daily_need_deliveries` tinyint(1) NOT NULL DEFAULT '0',
         `flag_enforce_treatment_priorization` tinyint(1) NOT NULL DEFAULT '0',
         `flag_lockdown_primary_infrastructure` tinyint(1) NOT NULL DEFAULT '0',
