@@ -1112,8 +1112,8 @@ class Client
         
         $last_x = $this->get_last_x_days($cases, $deaths, $days, $skip_days);
         
-        $cases_now = $cases[count($cases)-1];
-        $deaths_now = $deaths[count($deaths)-1];
+        $cases_now = $cases[0];
+        $deaths_now = $deaths[0];
 
         if (!$last_x)
             return null;
@@ -1122,14 +1122,24 @@ class Client
         $result->cases = (int)0;
         $result->deaths = (int)0;
 
+        $cases1 = (int)0;
+        $n = 0;
+
         foreach ($last_x as $obj)
         {
             $result->cases += (int)$obj->cases ?: 0;
             $result->deaths += (int)$obj->deaths ?: 0;
+            
+            if ($n > 0)
+            {
+                $cases1 += (int)$obj->cases ?: 0;
+            }
+            
+            $n++;
         }
 
         if ($result->cases > 0)
-            $result->exponence = ($cases_now / ($result->cases / $days));
+            $result->exponence = ($cases_now / ($cases1 / $days));
         else
             $result->exponence = 0;
 
@@ -1207,7 +1217,7 @@ class Client
         return $result;
     }
     
-    public function calculate_14day_r_value($cases, $deaths, $skip_days = 3)
+    public function calculate_14day_r_value($cases, $deaths, $skip_days = 0)
     {
         $reproduction_available = false;
         
@@ -1225,7 +1235,7 @@ class Client
         return $result;
     }
 
-    public function calculate_7day_r_value($cases, $deaths, $skip_days = 3)
+    public function calculate_7day_r_value($cases, $deaths, $skip_days = 0)
     {
         $reproduction_available = false;
         
@@ -1243,7 +1253,7 @@ class Client
         return $result;
     }
 
-    public function calculate_4day_r_value($cases, $deaths, $skip_days = 3)
+    public function calculate_4day_r_value($cases, $deaths, $skip_days = 0)
     {
         $reproduction_available = false;
         
@@ -2353,10 +2363,12 @@ class Client
         return $count;
     }
     
-    public function save_datasets(&$count = null, &$any = null)
+    public function save_datasets(&$count = null, &$any = null, &$errors = null)
     {
         $count = 0;
         $any = 0;
+        
+        $errors = array();
         
         if (!is_array($this->datasets))
             return null;
