@@ -25,6 +25,8 @@ use WelterRocks\CoronaData\Table\Base;
 
 class Testresults extends Base
 {
+    protected $locations_uid = null;
+    protected $location_type = null;
     protected $result_hash = null;
     protected $location_hash = null;
     protected $district_hash = null;
@@ -58,7 +60,9 @@ class Testresults extends Base
     {
       return "CREATE TABLE IF NOT EXISTS `testresults` (
         `uid` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
-        `foreign_identifier` INT NOT NULL,
+        `locations_uid` bigint UNSIGNED NULL DEFAULT '0',
+        `location_type` ENUM('continent','country','state','district','location') NOT NULL DEFAULT 'location',
+        `foreign_identifier` BIGINT NOT NULL,
         `timestamp_last_update` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         `timestamp_registration` timestamp NOT NULL,
         `timestamp_deleted` timestamp NULL DEFAULT NULL,
@@ -99,20 +103,16 @@ class Testresults extends Base
         PRIMARY KEY (`uid`),
         UNIQUE KEY `location_unique_identifier` (`foreign_identifier`),
         UNIQUE KEY `result_hash` (`result_hash`),
+        KEY `locations_uid` (`locations_uid`),
+        KEY `location_type` (`location_type`),
         KEY `location_hash` (`location_hash`),
         KEY `district_hash` (`district_hash`),
         KEY `state_hash` (`state_hash`),
         KEY `country_hash` (`country_hash`),
         KEY `continent_hash` (`continent_hash`)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+      ALTER TABLE `testresults` ADD CONSTRAINT `testresult_location` FOREIGN KEY (`locations_uid`) REFERENCES `locations`(`uid`) ON DELETE CASCADE ON UPDATE CASCADE;
       ";
-      /*
-      ALTER TABLE `testresults` ADD CONSTRAINT `testresult_location_continent` FOREIGN KEY (`continent_hash`) REFERENCES `locations`(`continent_hash`) ON DELETE CASCADE ON UPDATE CASCADE;
-      ALTER TABLE `testresults` ADD  CONSTRAINT `testresult_location_country` FOREIGN KEY (`country_hash`) REFERENCES `locations`(`country_hash`) ON DELETE CASCADE ON UPDATE CASCADE;
-      ALTER TABLE `testresults` ADD  CONSTRAINT `testresult_location_state` FOREIGN KEY (`state_hash`) REFERENCES `locations`(`state_hash`) ON DELETE CASCADE ON UPDATE CASCADE;
-      ALTER TABLE `testresults` ADD  CONSTRAINT `testresult_location_district` FOREIGN KEY (`district_hash`) REFERENCES `locations`(`district_hash`) ON DELETE CASCADE ON UPDATE CASCADE;
-      ALTER TABLE `testresults` ADD  CONSTRAINT `testresult_location_location` FOREIGN KEY (`location_hash`) REFERENCES `locations`(`location_hash`) ON DELETE CASCADE ON UPDATE CASCADE;
-      ";
-      */
     }
 }

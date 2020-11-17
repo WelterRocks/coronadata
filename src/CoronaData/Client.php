@@ -1445,7 +1445,10 @@ class Client
             
         $result = new \stdClass;
 
+        // This is a snapshot of the current days rate of cases AND NOT THE POSITIVE RATE BY PERFORMED TESTS
         $result->cases_rate = (100 / $population * $cases_now);
+        
+        // The rate of deaths for the current day
         $result->deaths_rate = (100 / $population * $deaths_now);
 
         return $result;
@@ -1777,6 +1780,9 @@ class Client
             $testresult->state_hash = $state_hash;
             $testresult->country_hash = $germany_hash;
             $testresult->continent_hash = $europe_hash;
+            
+            // The location type for a testresult is always 'district' (for now), no need to use resources on hash type validations
+            $testresult->location_type = 'district';
             
             $index = $testresult->district_hash;
             $ts = strtotime($testresult->timestamp_represent);
@@ -2260,6 +2266,30 @@ class Client
                 $db_obj->$key = $val;
             }
             
+            switch($obj->location_type)
+            {
+                case "continent":
+                    $x_hash = "N".$obj->continent_hash;
+                    break;
+                case "country":
+                    $x_hash = "C".$obj->country_hash;
+                    break;
+                case "state":
+                    $x_hash = "S".$obj->state_hash;
+                    break;
+                case "district":
+                    $x_hash = "D".$obj->district_hash;
+                    break;
+                case "location":
+                    $x_hash = "L".$obj->location_hash;
+                    break;
+                default:
+                    $x_hash = $hash;
+                    break;
+            }
+                    
+            $db_obj->locations_uid = $this->location_index[$x_hash];
+                    
             $error = null;
                     
             if ($db_obj->save(null, null, false, false, $error))
