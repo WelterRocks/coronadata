@@ -1051,6 +1051,12 @@ class Client
         if ($max < $top)
             $top = $max;
             
+        if ($base > $top)
+            $base = ($top - 1);
+        
+        if ($base < 0)
+            $base = 0;
+            
         $n = 0;
             
         for ($i = $base; $i < $top; $i++)
@@ -1064,7 +1070,7 @@ class Client
             
             array_push($result, $tmp);
         }
-        
+                
         return $result;
     }
     
