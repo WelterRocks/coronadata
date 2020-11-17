@@ -1899,7 +1899,7 @@ class Client
             $datasets[$index][$date] = $dataset;
             $testresults[$result_hash] = $testresult;
             
-            ksort($datasets[$index]);
+            krsort($datasets[$index]);
         }
 
         // Define a "million" to prevent typos
@@ -1925,7 +1925,7 @@ class Client
             $deaths_last = array();
             
             // Zero fill cases and deaths array
-            for ($i = 0; $i < 34; $i++)
+            for ($i = 0; $i < 32; $i++)
             {
                 $cases_last[$i] = 0;
                 $deaths_last[$i] = 0;
@@ -2007,12 +2007,12 @@ class Client
                 $dataset->new_deaths_smoothed_per_million = ($dataset->new_deaths_smoothed / $mil * $population);
                 $dataset->new_recovered_smoothed_per_million = ($dataset->new_recovered_smoothed / $mil * $population);
                 
+                array_shift($cases_last);
+                array_shift($deaths_last);
+                
                 array_push($cases_last, $dataset->cases);
                 array_push($deaths_last, $dataset->deaths);
                 
-                array_shift($cases_last);
-                array_shift($deaths_last);
-                                
                 self::result_object_merge($dataset, $this->calculate_dataset_fields($cases_last, $deaths_last, $population));
 
                 $dataset_hash = md5($dataset->district_hash.$dataset->date_rep);
