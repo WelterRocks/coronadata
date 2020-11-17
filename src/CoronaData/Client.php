@@ -1190,10 +1190,6 @@ class Client
         
         $obj = $this->calculate_x_day_r_value($cases, $deaths, 14, $skip_days, $reproduction_available);
         
-        print_r($obj);
-        echo "REPRO: ".$reproduction_available."\n";
-        exit;
-        
         if (!$reproduction_available)
             return null;
 
