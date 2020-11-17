@@ -1562,7 +1562,7 @@ class Client
                 
             $dataset_index[$index][$date] = $dataset_hash;
             
-            krsort($dataset_index[$index]);
+            ksort($dataset_index[$index]);
             
             $datasets[$dataset_hash] = $dataset;
         }
