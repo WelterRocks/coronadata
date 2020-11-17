@@ -1059,7 +1059,7 @@ class Client
             
         $n = 0;
             
-        for ($i = $base; $i < $top; $i++)
+        for ($i = ($top - 1); $i >= $base; $i--)
         {
             $n++;
             
@@ -1562,8 +1562,6 @@ class Client
                 
             $dataset_index[$index][$date] = $dataset_hash;
             
-            ksort($dataset_index[$index]);
-            
             $datasets[$dataset_hash] = $dataset;
         }
         
@@ -1571,6 +1569,8 @@ class Client
         {
             $cases = array();
             $deaths = array();
+            
+            ksort($dataset_index[$index]);
             
             foreach ($data as $date => $hash)
             {
