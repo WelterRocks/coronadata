@@ -1189,8 +1189,11 @@ class Client
 
         if (!$obj)
             return null;
+            
+        $result = new \stdClass;
+        $result->reproduction_14day = $obj->r_value;
 
-        return $obj->r_value;
+        return $result;
     }
 
     public function calculate_7day_r_value($cases, $deaths, $skip_days = 3)
@@ -1205,7 +1208,10 @@ class Client
         if (!$obj)
             return null;
 
-        return $obj->r_value;
+        $result = new \stdClass;
+        $result->reproduction_7day = $obj->r_value;
+
+        return $result;
     }
 
     public function calculate_4day_r_value($cases, $deaths, $skip_days = 3)
@@ -1220,7 +1226,10 @@ class Client
         if (!$obj)
             return null;
 
-        return $obj->r_value;
+        $result = new \stdClass;
+        $result->reproduction_4day = $obj->r_value;
+
+        return $result;
     }
 
     public function calculate_alert_condition($alert_condition_7day, $alert_condition_14day)
