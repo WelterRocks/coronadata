@@ -1138,7 +1138,7 @@ class Client
             $n++;
         }
 
-        if ($result->cases > 0)
+        if ($cases1 > 0)
             $result->exponence = ($cases_now / ($cases1 / $days));
         else
             $result->exponence = 0;
