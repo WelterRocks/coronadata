@@ -1039,13 +1039,34 @@ class Client
         if ($days <= 0)
             return null;
             
-        $base = $skip_days;
-        $top = ($days + $skip_days);
+        if (!is_array($cases))
+            return null;
+            
+        if (!is_array($deaths))
+            return null;
+            
+        if ($skip_days < 0)
+            return null;
+            
+        $reproduction_available = ((($days + $skip_days) <= count($cases)) ? true : false);
+        $xindex = ($days + $skip_days);
         
-        $max = count($cases);
-        
-        $reproduction_available = ((($days * 2 + $skip_days) <= $max) ? true : false);
-        
+        if (count($cases) < $xindex)
+        {
+            for ($i = count($cases); $i < $xindex; $i++)
+            {
+                $cases[$i] = (int)0;
+            }
+        }
+    
+        if (count($deaths) < $xindex)
+        {
+            for ($i = count($deaths); $i < $xindex; $i++)
+            {
+                $deaths[$i] = (int)0;
+            }
+        }
+    
         $result = array();
         
         for ($i = 0; $i < $days; $i++)
@@ -1054,29 +1075,31 @@ class Client
             $tmp->day = $i + 1;
             $tmp->cases = (int)0;
             $tmp->deaths = (int)0;
+            $tmp->set_case = false;
+            $tmp->set_deaths = false;
             
             $result[$i] = $tmp;
         }
         
-        if ($max < $top)
-            $top = $max;
-            
-        if ($base > $top)
-            $base = ($top - 1);
-        
-        if ($base < 0)
-            $base = 0;
-            
         $n = 0;
-            
-        for ($i = $base; $i < $top; $i++)
+        
+        for ($i = $skip_days; $i < $xindex; $i++)
         {
+            if (!isset($cases[$i]))
+                break;
+                
             $result[$n]->cases = $cases[$i];
+            $result[$n]->set_case = true;
+            
+            if (!isset($deaths[$i]))
+                break;
+                
             $result[$n]->deaths = $deaths[$i];
+            $result[$n]->set_deaths = true;
             
             $n++;
         }
-                
+        
         return $result;
     }
     
@@ -1093,7 +1116,7 @@ class Client
         $deaths_now = $deaths[count($deaths)-1];
 
         if (!$last_x)
-            return false;
+            return null;
 
         $result = new \stdClass;
         $result->cases = (int)0;
@@ -1105,12 +1128,12 @@ class Client
             $result->deaths += (int)$obj->deaths ?: 0;
         }
 
-        if ($result->cases != 0)
+        if ($result->cases > 0)
             $result->exponence = ($cases_now / ($result->cases / $days));
         else
             $result->exponence = 0;
 
-        if ($population != 0)
+        if ($population > 0)
             $result->incidence = ($result->cases / $population * $incidence_factor);
         else
             $result->incidence = 0;
@@ -1148,8 +1171,8 @@ class Client
         
         $result = new \stdClass;
 
-        $result->suffix = $this->get_last_x_days($cases, $deaths, $days, $skip_days);
-        $result->prefix = $this->get_last_x_days($cases, $deaths, $days, ($skip_days + $days), $reproduction_available);
+        $result->prefix = $this->get_last_x_days($cases, $deaths, $days, $skip_days);
+        $result->suffix = $this->get_last_x_days($cases, $deaths, $days, ($skip_days + $days), $reproduction_available);
         
         if (!$reproduction_available)
             return false;        
@@ -1573,35 +1596,32 @@ class Client
         
         foreach ($dataset_index as $index => $data)
         {
-            $cases = array();
-            $deaths = array();
-            
-            for ($i = 0; $i < 31; $i++)
-            {
-                $cases[$i] = (int)0;
-                $deaths[$i] = (int)0;
-            }
-            
             krsort($data);
             
             foreach ($data as $date => $hash)
-            {
+            {                
+                $cases = array();
+                $deaths = array();
+            
                 foreach ($data as $date2 => $hash2)
                 {
-                    if ($date2 < $date)
+                    if ($date2 > $date)
                         continue;
                         
                     array_push($cases, $datasets[$hash2]->cases);
                     array_push($deaths, $datasets[$hash2]->deaths);
                 
-                    if (count($cases) >= 31)
+                    if (count($cases) >= 32)
                         break;
                 }
                 
-                self::result_object_merge($datasets[$hash], $this->calculate_dataset_fields($cases, $deaths, $this->countries[$country_hash]->population_count));
+                for ($i = (count($cases) - 1); $i < 32; $i++)
+                {
+                    $cases[$i] = (int)0;
+                    $deaths[$i] = (int)0;
+                }
                 
-                array_shift($cases);
-                array_shift($deaths);                
+                self::result_object_merge($datasets[$hash], $this->calculate_dataset_fields($cases, $deaths, $this->countries[$country_hash]->population_count));                
             }
         }
                     
