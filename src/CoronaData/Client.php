@@ -1048,6 +1048,16 @@ class Client
         
         $result = array();
         
+        for ($i = 0; $i < $days; $i++)
+        {
+            $tmp = new \stdClass;
+            $tmp->day = $i + 1;
+            $tmp->cases = (int)0;
+            $tmp->deaths = (int)0;
+            
+            $result[$i] = $tmp;
+        }
+        
         if ($max < $top)
             $top = $max;
             
@@ -1059,16 +1069,12 @@ class Client
             
         $n = 0;
             
-        for ($i = ($top - 1); $i >= $base; $i--)
+        for ($i = $base; $i < $top; $i++)
         {
+            $result[$n]->cases = $cases[$i];
+            $result[$n]->deaths = $deaths[$i];
+            
             $n++;
-            
-            $tmp = new \stdClass;
-            $tmp->day = $n;
-            $tmp->cases = $cases[$i];
-            $tmp->deaths = $deaths[$i];
-            
-            array_push($result, $tmp);
         }
                 
         return $result;
@@ -1183,6 +1189,10 @@ class Client
         $reproduction_available = false;
         
         $obj = $this->calculate_x_day_r_value($cases, $deaths, 14, $skip_days, $reproduction_available);
+        
+        print_r($obj);
+        echo "REPRO: ".$reproduction_available."\n";
+        exit;
         
         if (!$reproduction_available)
             return null;
@@ -1570,7 +1580,13 @@ class Client
             $cases = array();
             $deaths = array();
             
-            ksort($dataset_index[$index]);
+            for ($i = 0; $i < 31; $i++)
+            {
+                $cases[$i] = (int)0;
+                $deaths[$i] = (int)0;
+            }
+            
+            krsort($data);
             
             foreach ($data as $date => $hash)
             {
@@ -1582,13 +1598,14 @@ class Client
                     array_push($cases, $datasets[$hash2]->cases);
                     array_push($deaths, $datasets[$hash2]->deaths);
                 
-                    if (count($cases) == 33)
-                    {
+                    if (count($cases) >= 31)
                         break;
-                    }
                 }
                 
-                self::result_object_merge($datasets[$hash], $this->calculate_dataset_fields($cases, $deaths, $this->countries[$country_hash]->population_count));                
+                self::result_object_merge($datasets[$hash], $this->calculate_dataset_fields($cases, $deaths, $this->countries[$country_hash]->population_count));
+                
+                array_shift($cases);
+                array_shift($deaths);                
             }
         }
                     
