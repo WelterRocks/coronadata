@@ -61,6 +61,13 @@ class Locations extends Base
     protected $recovered_count = null;
     protected $recovered_min = null;
     protected $recovered_max = null;
+    protected $divi_reporting_areas = null;
+    protected $divi_locations_count = null;
+    protected $divi_beds_free = null;
+    protected $divi_beds_occupied = null;
+    protected $divi_beds_total = null;
+    protected $divi_cases_covid = null;
+    protected $divi_cases_covid_ventilated = null;
     protected $aged_65_older = null;
     protected $aged_70_older = null;
     protected $cardiovasc_death_rate = null;
@@ -158,6 +165,13 @@ class Locations extends Base
         `esteem_7day_r_value` FLOAT NOT NULL DEFAULT '0',
         `lower_7day_r_value` FLOAT NOT NULL DEFAULT '0',
         `upper_7day_r_value` FLOAT NOT NULL DEFAULT '0',
+        `divi_reporting_areas` INT NOT NULL DEFAULT '0',
+        `divi_locations_count` INT NOT NULL DEFAULT '0',
+        `divi_cases_covid` INT NOT NULL DEFAULT '0',
+        `divi_cases_covid_ventilated` INT NOT NULL DEFAULT '0',
+        `divi_beds_free` INT NOT NULL DEFAULT '0',
+        `divi_beds_occupied` INT NOT NULL DEFAULT '0',
+        `divi_beds_total` INT NOT NULL DEFAULT '0',
         `aged_65_older` INT NOT NULL DEFAULT '0',
         `aged_70_older` INT NOT NULL DEFAULT '0',
         `cardiovasc_death_rate` FLOAT NOT NULL DEFAULT '0',

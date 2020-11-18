@@ -507,6 +507,13 @@ class Client
         $tmpl->cases_max = 0;
         $tmpl->timestamp_min = (time() + 86400);
         $tmpl->timestamp_max = 0;
+        $tmpl->divi_beds_free = 0;
+        $tmpl->divi_beds_occupied = 0;
+        $tmpl->divi_beds_total = 0;
+        $tmpl->divi_cases_covid = 0;
+        $tmpl->divi_cases_covid_ventilated = 0;
+        $tmpl->divi_reporting_areas = 0;
+        $tmpl->divi_locations_count = 0;
 
         // First, we use the EU datacast
         foreach ($this->eu_datacast->handler->get_data()->records as $id => $record)
@@ -1007,6 +1014,31 @@ class Client
                     // Remove no longer needed things
                     unset($divi->district_id);
                     unset($divi->state_id);
+                    
+                    // Write divi data to upstream locations
+                    $district->divi_beds_free += $divi->beds_free;
+                    $district->divi_beds_occupied += $divi->beds_occupied;
+                    $district->divi_beds_total += $divi->beds_total;
+                    $district->divi_cases_covid += $divi->cases_covid;
+                    $district->divi_cases_covid_ventilated += $divi->cases_covid_ventilated;
+                    $district->divi_reporting_areas += $divi->reporting_areas;
+                    $district->divi_locations_count += $divi->locations_count;
+                    
+                    $states[$district->state_hash]->divi_beds_free += $divi->beds_free;
+                    $states[$district->state_hash]->divi_beds_occupied += $divi->beds_occupied;
+                    $states[$district->state_hash]->divi_beds_total += $divi->beds_total;
+                    $states[$district->state_hash]->divi_cases_covid += $divi->cases_covid;
+                    $states[$district->state_hash]->divi_cases_covid_ventilated += $divi->cases_covid_ventilated;
+                    $states[$district->state_hash]->divi_reporting_areas += $divi->reporting_areas;
+                    $states[$district->state_hash]->divi_locations_count += $divi->locations_count;
+
+                    $countries[$district->country_hash]->divi_beds_free += $divi->beds_free;
+                    $countries[$district->country_hash]->divi_beds_occupied += $divi->beds_occupied;
+                    $countries[$district->country_hash]->divi_beds_total += $divi->beds_total;
+                    $countries[$district->country_hash]->divi_cases_covid += $divi->cases_covid;
+                    $countries[$district->country_hash]->divi_cases_covid_ventilated += $divi->cases_covid_ventilated;
+                    $countries[$district->country_hash]->divi_reporting_areas += $divi->reporting_areas;
+                    $countries[$district->country_hash]->divi_locations_count += $divi->locations_count;                    
                     
                     $divis[$divi->divi_hash] = $divi;
 		}

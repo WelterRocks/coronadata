@@ -63,6 +63,13 @@ class Grafana extends Base
     protected $recovered_count = null;
     protected $recovered_min = null;
     protected $recovered_max = null;
+    protected $divi_reporting_areas = null;
+    protected $divi_locations_count = null;
+    protected $divi_cases_covid = null;
+    protected $divi_cases_covid_ventilated = null;
+    protected $divi_beds_free = null;
+    protected $divi_beds_occupied = null;
+    protected $divi_beds_total = null;
     protected $aged_65_older = null;
     protected $aged_70_older = null;
     protected $cardiovasc_death_rate = null;
@@ -97,16 +104,6 @@ class Grafana extends Base
     protected $lower_7day_r_value = null;
     protected $upper_7day_r_value = null;
     protected $date_nowcast = null;
-
-    // Divi fields
-    protected $divi_hash = null;
-    protected $divi_reporting_areas = null;
-    protected $divi_locations_count = null;
-    protected $divi_cases_covid = null;
-    protected $divi_cases_covid_ventilated = null;
-    protected $divi_beds_free = null;
-    protected $divi_beds_occupied = null;
-    protected $divi_beds_total = null;
 
     // Fields from dataset        
     protected $dataset_hash = null;
@@ -227,9 +224,7 @@ class Grafana extends Base
       
       foreach ($this as $key => $val)
       {
-        if ($key == "divi_hash")
-          $prefix = "divis";
-        elseif ($key == "dataset_hash")
+        if ($key == "dataset_hash")
           $prefix = "datasets";
           
         if (substr($key, 0, 2) == "__")
@@ -265,14 +260,10 @@ class Grafana extends Base
             continue(2);
         }
                 
-        if (($prefix == "divis") && ($key != "divi_hash"))
-          $k[$key] = "`".$prefix."`.`".substr($key, 5)."` as '".$key."'";
-        else
-          $k[$key] = "`".$prefix."`.`".$key."` as '".$key."'";
+        $k[$key] = "`".$prefix."`.`".$key."` as '".$key."'";
       }
          
-      $sql = "CREATE VIEW grafana AS SELECT\n\t".implode(",\n\t", $k)."\nFROM\n\t`locations`,`datasets`\n";
-      $sql .= "LEFT OUTER JOIN `divis` ON (`datasets`.`locations_uid` = `divis`.`locations_uid` AND `datasets`.`date_rep` = `divis`.`date_rep`)\nWHERE\n";
+      $sql = "CREATE VIEW grafana AS SELECT\n\t".implode(",\n\t", $k)."\nFROM\n\t`locations`,`datasets`\nWHERE\n";
       $sql .= "\t(`locations`.`uid` = `datasets`.`locations_uid`)\n";
       $sql .= "ORDER BY `datasets`.`timestamp_represent` DESC;";
 
