@@ -42,7 +42,7 @@ class Divis extends Base
     protected $geo_id = null;
     protected $district_hash = null;
     protected $state_hash = null;
-    protected $countryhash = null;
+    protected $country_hash = null;
     protected $continent_hash = null;
     protected $divi_hash = null;
 

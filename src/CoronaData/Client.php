@@ -1004,6 +1004,10 @@ class Client
                     $divi->divi_hash = self::hash_name($district->district_name.$divi->geo_id.$divi->date_rep);
                     $divi->beds_total = ($divi->beds_free + $divi->beds_occupied);
                     
+                    // Remove no longer needed things
+                    unset($divi->district_id);
+                    unset($divi->state_id);
+                    
                     $divis[$divi->divi_hash] = $divi;
 		}
             }
