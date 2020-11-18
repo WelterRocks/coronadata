@@ -1483,8 +1483,16 @@ class Client
             
         $result = new \stdClass;
 
-        $result->cases_ascension = (int)($cases_now - $last[0]->cases) ?: 0;
-        $result->deaths_ascension = (int)($deaths_now - $last[0]->deaths) ?: 0;
+        if (isset($last[1]))
+        {
+            $result->cases_ascension = (int)($cases_now - $last[1]->cases) ?: 0;
+            $result->deaths_ascension = (int)($deaths_now - $last[1]->deaths) ?: 0;
+        }
+        else
+        {
+            $result->cases_ascension = 0;
+            $result->deaths_ascension = 0;
+        }
 
         $yesterday = ($cases_now - $result->cases_ascension);
 
