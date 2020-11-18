@@ -1309,6 +1309,25 @@ class Client
         else
             $result->alert_condition = 1;
 
+        if ($result->incidence2 < 0)
+            $result->alert_condition2 = -1;
+        elseif ($result->incidence2 == 0)
+            $result->alert_condition2 = 0;
+        elseif ($result->incidence2 >= 50)
+            $result->alert_condition2 = 7;
+        elseif ($result->incidence2 >= 40)
+            $result->alert_condition2 = 6;
+        elseif ($result->incidence2 >= 30)
+            $result->alert_condition2 = 5;
+        elseif ($result->incidence2 >= 20)
+            $result->alert_condition2 = 4;
+        elseif ($result->incidence2 >= 10)
+            $result->alert_condition2 = 3;
+        elseif ($result->incidence2 >= 5)
+            $result->alert_condition2 = 2;
+        else
+            $result->alert_condition2 = 1;
+
         return $result;
     }
 
@@ -1411,12 +1430,36 @@ class Client
         return $result;
     }
 
-    public function calculate_alert_condition($alert_condition_4day, $alert_condition_7day, $alert_condition_14day)
+    public function calculate_alert_condition($alert_condition_4day, $alert_condition_7day, $alert_condition_14day, $set_flags = false)
     {
         $result = new \stdClass;
         
         $result->alert_condition = round((($alert_condition_4day + $alert_condition_7day + $alert_condition_14day) / 3));
         
+        if (($alert_condition_4day > $alert_condition_7day) && ($alert_condition_7day > $alert_condition_14day))
+            $result->alert_condition_pointer = "asc";
+        elseif (($alert_condition_4day == $alert_condition_7day) && ($alert_condition_7day > $alert_condition_14day))
+            $result->alert_condition_pointer = "asc";
+        elseif (($alert_condition_4day < $alert_condition_7day) && ($alert_condition_7day > $alert_condition_14day) && ($alert_condition_4day > $alert_condition_14day))
+            $result->alert_condition_pointer = "asc";
+        elseif (($alert_condition_4day > $alert_condition_7day) && ($alert_condition_7day == $alert_condition_14day))
+            $result->alert_condition_pointer = "asc";
+        elseif (($alert_condition_4day > $alert_condition_7day) && ($alert_condition_7day < $alert_condition_14day) && ($alert_condition_4day > $alert_condition_14day))
+            $result->alert_condition_pointer = "asc";
+        elseif (($alert_condition_4day < $alert_condition_7day) && ($alert_condition_7day < $alert_condition_14day))
+            $result->alert_condition_pointer = "desc";
+        elseif (($alert_condition_4day < $alert_condition_7day) && ($alert_condition_7day > $alert_condition_14day) && ($alert_condition_4day < $alert_condition_14day))
+            $result->alert_condition_pointer = "desc";
+        elseif (($alert_condition_4day == $alert_condition_7day) && ($alert_condition_7day < $alert_condition_14day))
+            $result->alert_condition_pointer = "desc";
+        elseif (($alert_condition_4day < $alert_condition_7day) && ($alert_condition_7day == $alert_condition_14day))
+            $result->alert_condition_pointer = "desc";
+        else
+            $result->alert_condition_pointer = "sty";
+            
+        if (!$set_flags)
+            return $result;
+            
         // These are example recommendations!!!! NOT A STRICT TO DO LIST!!!
         // Suggestions are welcome.
         $force_defaults = array(
@@ -1452,13 +1495,6 @@ class Client
         foreach ($force_defaults as $key => $val)
             $result->$key = (int)$val;
         
-        if ($alert_condition_7day > $alert_condition_14day)
-            $result->alert_condition_pointer = "asc";
-        elseif ($alert_condition_7day < $alert_condition_14day)
-            $result->alert_condition_pointer = "desc";
-        else
-            $result->alert_condition_pointer = "sty";
-            
         switch ($result->alert_condition)
         {
             case 7:
@@ -1569,6 +1605,7 @@ class Client
         $result->incidence2_14day = $obj->incidence2;
         $result->incidence2_14day_smoothed = ((!$obj2) ? $obj->incidence2 : $obj2->incidence2);
         $result->alert_condition_14day = ((!$obj2) ? $obj->alert_condition : $obj2->alert_condition);
+        $result->alert_condition2_14day = ((!$obj2) ? $obj->alert_condition2 : $obj2->alert_condition2);
 
         return $result;
     }
@@ -1592,6 +1629,7 @@ class Client
         $result->incidence2_7day = $obj->incidence2;
         $result->incidence2_7day_smoothed = ((!$obj2) ? $obj->incidence2 : $obj2->incidence2);
         $result->alert_condition_7day = ((!$obj2) ? $obj->alert_condition : $obj2->alert_condition);
+        $result->alert_condition2_7day = ((!$obj2) ? $obj->alert_condition2 : $obj2->alert_condition2);
 
         return $result;
     }
@@ -1615,6 +1653,7 @@ class Client
         $result->incidence2_4day = $obj->incidence2;
         $result->incidence2_4day_smoothed = ((!$obj2) ? $obj->incidence2 : $obj2->incidence2);
         $result->alert_condition_4day = ((!$obj2) ? $obj->alert_condition : $obj2->alert_condition);
+        $result->alert_condition2_4day = ((!$obj2) ? $obj->alert_condition2 : $obj2->alert_condition2);
 
         return $result;
     }
@@ -1720,7 +1759,23 @@ class Client
         else
             $alert_condition_14day = -1;
         
+        if (isset($result->alert_condition2_4day))
+            $alert_condition2_4day = $result->alert_condition2_4day;
+        else
+            $alert_condition2_4day = -1;
+        
+        if (isset($result->alert_condition2_7day))
+            $alert_condition2_7day = $result->alert_condition2_7day;
+        else
+            $alert_condition2_7day = -1;
+        
+        if (isset($result->alert_condition2_14day))
+            $alert_condition2_14day = $result->alert_condition2_14day;
+        else
+            $alert_condition2_14day = -1;
+        
         self::result_object_merge($result, $this->calculate_alert_condition($alert_condition_4day, $alert_condition_7day, $alert_condition_14day));
+        self::result_object_merge($result, $this->calculate_alert_condition($alert_condition2_4day, $alert_condition2_7day, $alert_condition2_14day, true));
         
         return $result;        
     }

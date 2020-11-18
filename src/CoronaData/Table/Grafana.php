@@ -192,6 +192,11 @@ class Grafana extends Base
     protected $alert_condition_14day = null;
     protected $alert_condition_pointer = null;
     protected $alert_condition = null;
+    protected $alert_condition2_4day = null;
+    protected $alert_condition2_7day = null;
+    protected $alert_condition2_14day = null;
+    protected $alert_condition2_pointer = null;
+    protected $alert_condition2 = null;
     protected $flag_case_free = null;
     protected $flag_enforce_daily_need_deliveries = null;
     protected $flag_enforce_treatment_priorization = null;

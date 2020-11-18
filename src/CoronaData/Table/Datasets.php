@@ -117,6 +117,11 @@ class Datasets extends Base
     protected $alert_condition_14day = null;
     protected $alert_condition_pointer = null;
     protected $alert_condition = null;
+    protected $alert_condition2_4day = null;
+    protected $alert_condition2_7day = null;
+    protected $alert_condition2_14day = null;
+    protected $alert_condition2_pointer = null;
+    protected $alert_condition2 = null;
     protected $flag_case_free = null;
     protected $flag_enforce_daily_need_deliveries = null;
     protected $flag_enforce_treatment_priorization = null;
@@ -248,6 +253,11 @@ class Datasets extends Base
         `alert_condition_14day` smallint NOT NULL DEFAULT '-1',
         `alert_condition` smallint NOT NULL DEFAULT '-1',
         `alert_condition_pointer` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
+        `alert_condition2_4day` smallint NOT NULL DEFAULT '-1',
+        `alert_condition2_7day` smallint NOT NULL DEFAULT '-1',
+        `alert_condition2_14day` smallint NOT NULL DEFAULT '-1',
+        `alert_condition2` smallint NOT NULL DEFAULT '-1',
+        `alert_condition2_pointer` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
         `update_count` int UNSIGNED NOT NULL DEFAULT '0',
         `flag_updated` tinyint(1) NOT NULL DEFAULT '0',
         `flag_disabled` tinyint(1) NOT NULL DEFAULT '0',
