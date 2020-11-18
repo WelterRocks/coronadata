@@ -1034,7 +1034,7 @@ class Client
         return true;
     }
     
-    public function get_last_x_days($cases, $deaths, $days = 7, $skip_days = 0, &$reproduction_available = null)
+    public function get_last_x_days($cases, $deaths, $dates, $days = 7, $skip_days = 0, &$reproduction_available = null)
     {
         if ($days <= 0)
             return null;
@@ -1043,6 +1043,9 @@ class Client
             return null;
             
         if (!is_array($deaths))
+            return null;
+            
+        if (!is_array($dates))
             return null;
             
         if ($skip_days < 0)
@@ -1067,14 +1070,24 @@ class Client
             }
         }
     
+        if (count($dates) < $xindex)
+        {
+            for ($i = count($dates); $i < $xindex; $i++)
+            {
+                $dates[$i] = (int)0;
+            }
+        }
+    
         $result = array();
         
         for ($i = 0; $i < $days; $i++)
         {
             $tmp = new \stdClass;
             $tmp->day = $i + 1;
+            $tmp->date = (int)0;
             $tmp->cases = (int)0;
             $tmp->deaths = (int)0;
+            $tmp->set_date = false;
             $tmp->set_case = false;
             $tmp->set_deaths = false;
             
@@ -1091,6 +1104,12 @@ class Client
             $result[$n]->cases = $cases[$i];
             $result[$n]->set_case = true;
             
+            if (!isset($dates[$i]))
+                break;
+                
+            $result[$n]->date = $dates[$i];
+            $result[$n]->set_date = true;
+            
             if (!isset($deaths[$i]))
                 break;
                 
@@ -1103,14 +1122,14 @@ class Client
         return $result;
     }
     
-    public function calculate_x_day_fields($cases, $deaths, $population, $days = 7, $skip_days = 0, $incidence_factor = 100000)
+    public function calculate_x_day_fields($cases, $deaths, $population, $dates, $days = 7, $skip_days = 0, $incidence_factor = 100000)
     {
         if ($days <= 0)
             return null;
             
         $reproduction_available = false;
         
-        $last_x = $this->get_last_x_days($cases, $deaths, $days, $skip_days);
+        $last_x = $this->get_last_x_days($cases, $deaths, $dates, $days, $skip_days);
         
         $cases_now = $cases[0];
         $deaths_now = $deaths[0];
@@ -1172,7 +1191,7 @@ class Client
         return $result;
     }
 
-    public function calculate_x_day_r_value($cases, $deaths, $days = 7, $skip_days = 0, &$reproduction_available = null)
+    public function calculate_x_day_r_value($cases, $deaths, $dates, $days = 7, $skip_days = 0, &$reproduction_available = null)
     {
         if ($days <= 0)
             return null;
@@ -1181,8 +1200,8 @@ class Client
         
         $result = new \stdClass;
 
-        $result->prefix = $this->get_last_x_days($cases, $deaths, $days, $skip_days);
-        $result->suffix = $this->get_last_x_days($cases, $deaths, $days, ($skip_days + $days), $reproduction_available);
+        $result->prefix = $this->get_last_x_days($cases, $deaths, $dates, $days, $skip_days);
+        $result->suffix = $this->get_last_x_days($cases, $deaths, $dates, $days, ($skip_days + $days), $reproduction_available);
         
         if (!$reproduction_available)
             return false;        
@@ -1217,11 +1236,11 @@ class Client
         return $result;
     }
     
-    public function calculate_14day_r_value($cases, $deaths, $skip_days = 0)
+    public function calculate_14day_r_value($cases, $deaths, $dates, $skip_days = 0)
     {
         $reproduction_available = false;
         
-        $obj = $this->calculate_x_day_r_value($cases, $deaths, 14, $skip_days, $reproduction_available);
+        $obj = $this->calculate_x_day_r_value($cases, $deaths, $dates, 14, $skip_days, $reproduction_available);
         
         if (!$reproduction_available)
             return null;
@@ -1235,11 +1254,11 @@ class Client
         return $result;
     }
 
-    public function calculate_7day_r_value($cases, $deaths, $skip_days = 0)
+    public function calculate_7day_r_value($cases, $deaths, $dates, $skip_days = 0)
     {
         $reproduction_available = false;
         
-        $obj = $this->calculate_x_day_r_value($cases, $deaths, 7, $skip_days, $reproduction_available);
+        $obj = $this->calculate_x_day_r_value($cases, $deaths, $dates, 7, $skip_days, $reproduction_available);
         
         if (!$reproduction_available)
             return null;
@@ -1253,11 +1272,11 @@ class Client
         return $result;
     }
 
-    public function calculate_4day_r_value($cases, $deaths, $skip_days = 0)
+    public function calculate_4day_r_value($cases, $deaths, $dates, $skip_days = 0)
     {
         $reproduction_available = false;
         
-        $obj = $this->calculate_x_day_r_value($cases, $deaths, 4, $skip_days, $reproduction_available);
+        $obj = $this->calculate_x_day_r_value($cases, $deaths, $dates, 4, $skip_days, $reproduction_available);
         
         if (!$reproduction_available)
             return null;
@@ -1407,10 +1426,10 @@ class Client
         return $result;    
     }
 
-    public function calculate_14day_fields($cases, $deaths, $population, $incidence_factor = 100000)
+    public function calculate_14day_fields($cases, $deaths, $population, $dates, $incidence_factor = 100000)
     {
-        $obj = $this->calculate_x_day_fields($cases, $deaths, $population, 14, 0, $incidence_factor);
-        $obj2 = $this->calculate_x_day_fields($cases, $deaths, $population, 14, 3, $incidence_factor);
+        $obj = $this->calculate_x_day_fields($cases, $deaths, $population, $dates, 14, 0, $incidence_factor);
+        $obj2 = $this->calculate_x_day_fields($cases, $deaths, $population, $dates, 14, 3, $incidence_factor);
 
         if (!$obj)
             return null;
@@ -1431,10 +1450,10 @@ class Client
         return $result;
     }
 
-    public function calculate_7day_fields($cases, $deaths, $population, $incidence_factor = 100000)
+    public function calculate_7day_fields($cases, $deaths, $population, $dates, $incidence_factor = 100000)
     {
-        $obj = $this->calculate_x_day_fields($cases, $deaths, $population, 7, 0, $incidence_factor);
-        $obj2 = $this->calculate_x_day_fields($cases, $deaths, $population, 7, 3, $incidence_factor);
+        $obj = $this->calculate_x_day_fields($cases, $deaths, $population, $dates, 7, 0, $incidence_factor);
+        $obj2 = $this->calculate_x_day_fields($cases, $deaths, $population, $dates, 7, 3, $incidence_factor);
 
         if (!$obj)
             return null;
@@ -1452,12 +1471,12 @@ class Client
         return $result;
     }
 
-    public function calculate_case_and_death_ascension($cases, $deaths)
+    public function calculate_case_and_death_ascension($cases, $deaths, $dates)
     {
-        $last = $this->get_last_x_days($cases, $deaths, 1);
+        $last = $this->get_last_x_days($cases, $deaths, $dates, 1);
         
-        $cases_now = $cases[count($cases)-1];
-        $deaths_now = $deaths[count($deaths)-1];
+        $cases_now = $cases[0];
+        $deaths_now = $deaths[0];
 
         if ((!$last) || (count($last) == 0))
             return null;
@@ -1489,13 +1508,13 @@ class Client
         return $result;
     }
 
-    public function calculate_case_and_death_rates($cases, $deaths, $population)
+    public function calculate_case_and_death_rates($cases, $deaths, $population, $dates)
     {
         if ($population == 0)
             return false;
             
-        $cases_now = $cases[count($cases)-1];
-        $deaths_now = $deaths[count($deaths)-1];
+        $cases_now = $cases[0];
+        $deaths_now = $deaths[0];
             
         $result = new \stdClass;
 
@@ -1508,23 +1527,28 @@ class Client
         return $result;
     }
     
-    public function calculate_dataset_fields($cases, $deaths, $population, $incidence_factor = 100000)
+    public function calculate_dataset_fields($cases, $deaths, $population, $dates, $incidence_factor = 100000)
     {
         if (!is_array($cases))
             return null;
             
         if (!is_array($deaths))
             return null;
+            
+        if (!is_array($dates))
+            return null;
         
         $result = new \stdClass;
         
-        self::result_object_merge($result, $this->calculate_7day_fields($cases, $deaths, $population, $incidence_factor));
-        self::result_object_merge($result, $this->calculate_14day_fields($cases, $deaths, $population, $incidence_factor));
-        self::result_object_merge($result, $this->calculate_case_and_death_rates($cases, $deaths, $population));
-        self::result_object_merge($result, $this->calculate_case_and_death_ascension($cases, $deaths));
-        self::result_object_merge($result, $this->calculate_4day_r_value($cases, $deaths));
-        self::result_object_merge($result, $this->calculate_7day_r_value($cases, $deaths));
-        self::result_object_merge($result, $this->calculate_14day_r_value($cases, $deaths));
+        self::result_object_merge($result, $this->calculate_7day_fields($cases, $deaths, $population, $dates, $incidence_factor));
+        self::result_object_merge($result, $this->calculate_14day_fields($cases, $deaths, $population, $dates, $incidence_factor));
+        
+        self::result_object_merge($result, $this->calculate_case_and_death_rates($cases, $deaths, $population, $dates));
+        self::result_object_merge($result, $this->calculate_case_and_death_ascension($cases, $deaths, $dates));
+        
+        self::result_object_merge($result, $this->calculate_4day_r_value($cases, $deaths, $dates));
+        self::result_object_merge($result, $this->calculate_7day_r_value($cases, $deaths, $dates));
+        self::result_object_merge($result, $this->calculate_14day_r_value($cases, $deaths, $dates));
 
         if (isset($result->alert_condition_7day))
             $alert_condition_7day = $result->alert_condition_7day;
@@ -1612,6 +1636,7 @@ class Client
             {                
                 $cases = array();
                 $deaths = array();
+                $dates = array();
             
                 foreach ($data as $date2 => $hash2)
                 {
@@ -1620,8 +1645,9 @@ class Client
                         
                     array_push($cases, $datasets[$hash2]->cases);
                     array_push($deaths, $datasets[$hash2]->deaths);
+                    array_push($dates, $date2);
                 
-                    if (count($cases) >= 32)
+                    if (count($cases) > 32)
                         break;
                 }
                 
@@ -1629,9 +1655,10 @@ class Client
                 {
                     $cases[$i] = (int)0;
                     $deaths[$i] = (int)0;
+                    $dates[$i] = (int)0;
                 }
                 
-                self::result_object_merge($datasets[$hash], $this->calculate_dataset_fields($cases, $deaths, $this->countries[$country_hash]->population_count));                
+                self::result_object_merge($datasets[$hash], $this->calculate_dataset_fields($cases, $deaths, $this->countries[$country_hash]->population_count, $dates));
             }
         }
                     
@@ -1923,12 +1950,14 @@ class Client
             
             $cases_last = array();
             $deaths_last = array();
+            $dates_last = array();
             
             // Zero fill cases and deaths array
             for ($i = 0; $i < 32; $i++)
             {
                 $cases_last[$i] = 0;
                 $deaths_last[$i] = 0;
+                $dates_last[$i] = 0;
             }
             
             // We need the population from the corresponding location object
@@ -2009,11 +2038,13 @@ class Client
                 
                 array_shift($cases_last);
                 array_shift($deaths_last);
+                array_shift($dates_last);
                 
                 array_push($cases_last, $dataset->cases);
                 array_push($deaths_last, $dataset->deaths);
+                array_push($dates_last, $date);
                 
-                self::result_object_merge($dataset, $this->calculate_dataset_fields($cases_last, $deaths_last, $population));
+                self::result_object_merge($dataset, $this->calculate_dataset_fields($cases_last, $deaths_last, $population, $dates));
 
                 $dataset_hash = md5($dataset->district_hash.$dataset->date_rep);
                                 
