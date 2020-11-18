@@ -2036,6 +2036,36 @@ class Client
                 $dataset->new_deaths_smoothed_per_million = ($dataset->new_deaths_smoothed / $mil * $population);
                 $dataset->new_recovered_smoothed_per_million = ($dataset->new_recovered_smoothed / $mil * $population);
                 
+                // Before shifting and adding new values to array, check the date linearity and zero fill missing days
+                $last_date = $dates_last[count($dates_last)-1];
+                
+                $last_ts = mktime(0, 0, 0, (double)substr($last_date, 4, 2), (double)substr($last_date, 6, 2), (double)substr($last_date, 0, 4));
+                $this_ts = mktime(0, 0, 0, (double)substr($date, 4, 2), (double)substr($date, 6, 2), (double)substr($date, 0, 4));
+
+                $date_before = date("Ymd", ($this_ts - 86400));
+                
+                if ($last_ts != $date_before)
+                {
+                    $steps = ceil((($last_ts - $this_ts) / 86400));
+                    
+                    for ($i = 0; $i < $steps; $i++)
+                    {
+                        $next_ts = ($last_ts - (86400 * ($i+1)));
+                        $date_next = date("Ymd", $next_ts);
+                        
+                        if ($date_next == $date)
+                            break;
+                            
+                        array_shift($cases_last);
+                        array_shift($deaths_last);
+                        array_shift($dates_last);
+                            
+                        array_push($cases_last, 0);
+                        array_push($deaths_last, 0);
+                        array_push($dates_last, $date_next);
+                    }
+                }                
+                
                 array_shift($cases_last);
                 array_shift($deaths_last);
                 array_shift($dates_last);
