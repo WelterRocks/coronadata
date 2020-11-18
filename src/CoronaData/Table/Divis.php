@@ -48,7 +48,7 @@ class Divis extends Base
 
     protected function get_install_sql()
     {
-      return "CREATE TABLE IF NOT EXISTS `nowcasts` (
+      return "CREATE TABLE IF NOT EXISTS `divis` (
         `uid` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
         `locations_uid` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
         `timestamp_last_update` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
