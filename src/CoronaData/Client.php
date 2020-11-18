@@ -1228,7 +1228,7 @@ class Client
         return $result;
     }
     
-    public function calculate_x_day_fields($cases, $deaths, $population, $dates, $days = 7, $skip_days = 0, $incidence_factor = 100000)
+    public function calculate_x_day_fields($cases, $deaths, $population, $area, $dates, $days = 7, $skip_days = 0, $incidence_factor = 100000)
     {
         if ($days <= 0)
             return null;
@@ -1272,6 +1272,21 @@ class Client
             $result->incidence = ($result->cases / $population * $incidence_factor);
         else
             $result->incidence = 0;
+            
+        if (($area > 0) && ($population > 0))
+        {
+            $density = ($population / $area);
+            $case_density = ($result->cases / $area);
+            
+            if ($density > 0)
+                $result->incidence2 = ($density * $case_density);
+            else
+                $result->incidence2 = 0;
+        }
+        else
+        {
+            $result->incidence2 = 0;
+        }
 
         $result->incidence_factor = $incidence_factor;
 
@@ -1532,10 +1547,10 @@ class Client
         return $result;    
     }
 
-    public function calculate_14day_fields($cases, $deaths, $population, $dates, $incidence_factor = 100000)
+    public function calculate_14day_fields($cases, $deaths, $population, $area, $dates, $incidence_factor = 100000)
     {
-        $obj = $this->calculate_x_day_fields($cases, $deaths, $population, $dates, 14, 0, $incidence_factor);
-        $obj2 = $this->calculate_x_day_fields($cases, $deaths, $population, $dates, 14, 3, $incidence_factor);
+        $obj = $this->calculate_x_day_fields($cases, $deaths, $population, $area, $dates, 14, 0, $incidence_factor);
+        $obj2 = $this->calculate_x_day_fields($cases, $deaths, $population, $area, $dates, 14, 3, $incidence_factor);
 
         if (!$obj)
             return null;
@@ -1551,15 +1566,17 @@ class Client
         $result->exponence_14day_smoothed = ((!$obj2) ? $obj->exponence : $obj2->exponence);
         $result->incidence_14day = $obj->incidence;
         $result->incidence_14day_smoothed = ((!$obj2) ? $obj->incidence : $obj2->incidence);
+        $result->incidence2_14day = $obj->incidence2;
+        $result->incidence2_14day_smoothed = ((!$obj2) ? $obj->incidence2 : $obj2->incidence2);
         $result->alert_condition_14day = ((!$obj2) ? $obj->alert_condition : $obj2->alert_condition);
 
         return $result;
     }
 
-    public function calculate_7day_fields($cases, $deaths, $population, $dates, $incidence_factor = 100000)
+    public function calculate_7day_fields($cases, $deaths, $population, $area, $dates, $incidence_factor = 100000)
     {
-        $obj = $this->calculate_x_day_fields($cases, $deaths, $population, $dates, 7, 0, $incidence_factor);
-        $obj2 = $this->calculate_x_day_fields($cases, $deaths, $population, $dates, 7, 3, $incidence_factor);
+        $obj = $this->calculate_x_day_fields($cases, $deaths, $population, $area, $dates, 7, 0, $incidence_factor);
+        $obj2 = $this->calculate_x_day_fields($cases, $deaths, $population, $area, $dates, 7, 3, $incidence_factor);
 
         if (!$obj)
             return null;
@@ -1572,6 +1589,8 @@ class Client
         $result->exponence_7day_smoothed = ((!$obj2) ? $obj->exponence : $obj2->exponence);
         $result->incidence_7day = $obj->incidence;
         $result->incidence_7day_smoothed = ((!$obj2) ? $obj->incidence : $obj2->incidence);
+        $result->incidence2_7day = $obj->incidence2;
+        $result->incidence2_7day_smoothed = ((!$obj2) ? $obj->incidence2 : $obj2->incidence2);
         $result->alert_condition_7day = ((!$obj2) ? $obj->alert_condition : $obj2->alert_condition);
 
         return $result;
@@ -1639,7 +1658,7 @@ class Client
         return $result;
     }
     
-    public function calculate_dataset_fields($cases, $deaths, $population, $dates, $incidence_factor = 100000)
+    public function calculate_dataset_fields($cases, $deaths, $population, $area, $dates, $incidence_factor = 100000)
     {
         if (!is_array($cases))
             return null;
@@ -1652,8 +1671,8 @@ class Client
         
         $result = new \stdClass;
         
-        self::result_object_merge($result, $this->calculate_7day_fields($cases, $deaths, $population, $dates, $incidence_factor));
-        self::result_object_merge($result, $this->calculate_14day_fields($cases, $deaths, $population, $dates, $incidence_factor));
+        self::result_object_merge($result, $this->calculate_7day_fields($cases, $deaths, $population, $area, $dates, $incidence_factor));
+        self::result_object_merge($result, $this->calculate_14day_fields($cases, $deaths, $population, $area, $dates, $incidence_factor));
         
         self::result_object_merge($result, $this->calculate_case_and_death_rates($cases, $deaths, $population, $dates));
         self::result_object_merge($result, $this->calculate_case_and_death_ascension($cases, $deaths, $dates));
@@ -1772,7 +1791,7 @@ class Client
                 
                 $country_hash = $datasets[$hash]->country_hash;
                 
-                self::result_object_merge($datasets[$hash], $this->calculate_dataset_fields($cases, $deaths, $this->countries[$country_hash]->population_count, $dates));
+                self::result_object_merge($datasets[$hash], $this->calculate_dataset_fields($cases, $deaths, $this->countries[$country_hash]->population_count, $this->countries[$country_hash]->area, $dates));
             }
         }
                             
@@ -2100,13 +2119,18 @@ class Client
                     $population = $district->population_count;
                 else
                     $population = 0;
+                    
+                if (isset($district->area))
+                    $area = $district->area;
+                else
+                    $area = 0;
             }
             else
             {
                 $population = 0;
+                $area = 0;
             }
-            
-            
+                        
             if (is_object($district))
             {
                 if (!isset($state_cases[$district->state_hash]))
@@ -2188,7 +2212,7 @@ class Client
                 array_push($deaths_last, $dataset->deaths);
                 array_push($dates_last, $date);
                 
-                self::result_object_merge($dataset, $this->calculate_dataset_fields($cases_last, $deaths_last, $population, $dates_last));
+                self::result_object_merge($dataset, $this->calculate_dataset_fields($cases_last, $deaths_last, $population, $area, $dates_last));
 
                 $dataset_hash = md5($dataset->district_hash.$dataset->date_rep);
                                 
