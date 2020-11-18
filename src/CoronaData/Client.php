@@ -2044,7 +2044,7 @@ class Client
                 array_push($deaths_last, $dataset->deaths);
                 array_push($dates_last, $date);
                 
-                self::result_object_merge($dataset, $this->calculate_dataset_fields($cases_last, $deaths_last, $population, $dates));
+                self::result_object_merge($dataset, $this->calculate_dataset_fields($cases_last, $deaths_last, $population, $dates_last));
 
                 $dataset_hash = md5($dataset->district_hash.$dataset->date_rep);
                                 
