@@ -1522,7 +1522,7 @@ class Client
         foreach ($force_defaults as $key => $val)
             $result->$key = (int)$val;
         
-        switch ($result->alert_condition)
+        switch ($result->alert_condition2)
         {
             case 7:
                 $result->flag_enforce_daily_need_deliveries = 1;
