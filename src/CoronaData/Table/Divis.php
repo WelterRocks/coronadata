@@ -26,6 +26,7 @@ use WelterRocks\CoronaData\Table\Base;
 class Divis extends Base
 {
     protected $locations_uid = null;
+    protected $geo_id = null;
     protected $reporting_areas = null;
     protected $cases_covid = null;
     protected $cases_covid_ventilated = null;
@@ -63,6 +64,7 @@ class Divis extends Base
         `day` smallint UNSIGNED NOT NULL DEFAULT '0',
         `month` smallint UNSIGNED NOT NULL DEFAULT '0',
         `year` YEAR NOT NULL DEFAULT '0',
+        `geo_id` VARCHAR(8) NOT NULL,
         `continent_hash` VARCHAR(32) NOT NULL,
         `country_hash` VARCHAR(32) NOT NULL,
         `state_hash` VARCHAR(32) NOT NULL,
