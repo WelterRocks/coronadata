@@ -1473,26 +1473,24 @@ class Client
 
     public function calculate_case_and_death_ascension($cases, $deaths, $dates)
     {
-        $last = $this->get_last_x_days($cases, $deaths, $dates, 1);
-        
+        if (!is_array($cases))
+            return null;
+            
+        if (!is_array($deaths))
+            return null;
+            
         $cases_now = $cases[0];
         $deaths_now = $deaths[0];
 
-        if ((!$last) || (count($last) == 0))
-            return null;
-            
         $result = new \stdClass;
+        $result->cases_ascension = 0;
+        $result->deaths_ascension = 0;
 
-        if (isset($last[1]))
-        {
-            $result->cases_ascension = (int)($cases_now - $last[1]->cases) ?: 0;
-            $result->deaths_ascension = (int)($deaths_now - $last[1]->deaths) ?: 0;
-        }
-        else
-        {
-            $result->cases_ascension = 0;
-            $result->deaths_ascension = 0;
-        }
+        if (isset($cases[1]))
+            $result->cases_ascension = (int)($cases_now - $cases[1]) ?: 0;
+
+        if (isset($deaths[1]))
+            $result->deaths_ascension = (int)($deaths_now - $deaths[1]) ?: 0;
 
         $yesterday = ($cases_now - $result->cases_ascension);
 
