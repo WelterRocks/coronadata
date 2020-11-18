@@ -966,7 +966,7 @@ class Client
             }
         }
         
-        // Merge the district informations into divi data
+        // Fifth, merge the district informations into divi data
         if (is_array($german_divi))
         {
             foreach ($german_divi as $divi)
@@ -984,20 +984,10 @@ class Client
                     $district = $districts[$district_hash];
                     
                     $merge = array(
-                        "district_id",
                         "district_hash",
-                        "district_name",
-                        "district_type",
-                        "district_fullname",
-                        "state_id",
                         "state_hash",
-                        "state_name",
-                        "country_id",
                         "country_hash",
-                        "country_name",
-                        "continent_id",
-                        "continent_hash",
-                        "continent_name"
+                        "continent_hash"
                     );
                     
                     // Move district_id out of the way
@@ -1012,6 +1002,7 @@ class Client
                     }
                     
                     $divi->divi_hash = self::hash_name($divi->district_name.$divi->district_id.$divi->date_rep);
+                    $divi->beds_total = ($divi->beds_free + $divi->beds_occupied);
                     
                     $divis[$divi->divi_hash] = $divi;
 		}
@@ -1022,7 +1013,7 @@ class Client
         unset($german_districts_area);
         unset($german_districts_population);        
 
-        // Fifth, get the RKI nowcasting data and push the latest entry to the germany object
+        // Sixth, get the RKI nowcasting data and push the latest entry to the germany object
         $max_timestamp = -1;
         $max_data = null;
 
