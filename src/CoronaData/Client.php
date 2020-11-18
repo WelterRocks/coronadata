@@ -1541,7 +1541,7 @@ class Client
                 $result->flag_lockdown_gastronomy = 1;
                 $result->flag_lockdown_secondary_infrastructure = 1;
                 $result->flag_enforce_local_crisis_team_control = 1;
-                if ($result->alert_condition == 6)
+                if ($result->alert_condition2 == 6)
                 {
                     $result->enforce_distance_meters = 3;
                     $result->enforce_household_plus_persons_to = 1;
@@ -1554,7 +1554,7 @@ class Client
                 $result->flag_isolate_medium_risk_group = 1;
                 $result->flag_enforce_public_mask_wearing = 1;
                 $result->flag_reserve_icu_units = 1;
-                if ($result->alert_condition == 5)
+                if ($result->alert_condition2 == 5)
                 {
                     $result->enforce_distance_meters = 3;
                     $result->enforce_household_plus_persons_to = 2;
@@ -1564,7 +1564,7 @@ class Client
             case 4:
                 $result->flag_enforce_shopping_rules = 1;
                 $result->flag_isolate_high_risk_group = 1;
-                if ($result->alert_condition == 4)
+                if ($result->alert_condition2 == 4)
                 {
                     $result->enforce_distance_meters = 2;
                     $result->enforce_household_plus_persons_to = 5;
@@ -1572,7 +1572,7 @@ class Client
                     $result->enforce_public_events_to = 1000;
                 }
             case 3:
-                if ($result->alert_condition == 3)
+                if ($result->alert_condition2 == 3)
                 {
                     $result->enforce_distance_meters = 2;
                     $result->enforce_household_plus_persons_to = 10;
@@ -1581,7 +1581,7 @@ class Client
                 }
             case 2:
                 $result->flag_enforce_critical_mask_wearing = 1;
-                if ($result->alert_condition == 2)
+                if ($result->alert_condition2 == 2)
                 {
                     $result->enforce_distance_meters = 2;
                     $result->enforce_household_plus_persons_to = 10;
@@ -1593,7 +1593,7 @@ class Client
                 $result->flag_attention_on_symptoms = 1;
                 $result->flag_recommend_mask_wearing = 1;
                 $result->flag_wash_hands = 1;
-                if ($result->alert_condition == 1)
+                if ($result->alert_condition2 == 1)
                 {
                     $result->enforce_distance_meters = 2;
                     $result->enforce_household_plus_persons_to = 15;
