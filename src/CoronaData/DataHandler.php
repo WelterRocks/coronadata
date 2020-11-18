@@ -1150,6 +1150,21 @@ class DataHandler
         }
     }
     
+    public function http_handler_set_csv_delimiter($delimiter = ";")
+    {
+        $this->http_handler->csv_delimiter = $delimiter;
+    }
+    
+    public function http_handler_set_csv_enclosure($enclosure = "\"")
+    {
+        $this->http_handler->csv_enclosure = $enclosure;
+    }
+    
+    public function http_handler_set_csv_escape($escape = "\\")
+    {
+        $this->http_handler->csv_escape = $escape;
+    }
+    
     public function init_http_handler($url, $ssl_verifyhost = 2, $ssl_verifypeer = 1, $user_agent = null)
     {
         try

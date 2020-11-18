@@ -2727,6 +2727,9 @@ class Client
             $this->cov_infocast = $this->get_template(new DataHandler($this->config, $this->config->url_cov_infocast));
             $this->divi_intens = $this->get_template(new DataHandler($this->config, $this->config->url_divi_intens));
             
+            // This is important, because divi has a different delimiter!
+            $this->divi_intens->http_handler_set_csv_delimiter(",");
+            
             $this->gen_territory_area = $this->get_template(new DataHandler($this->config, null, "territory", "area"));
             $this->gen_territory_district_area = $this->get_template(new DataHandler($this->config, null, "territory", "district_area"));
             $this->gen_population = $this->get_template(new DataHandler($this->config, null, "population", "total"));
