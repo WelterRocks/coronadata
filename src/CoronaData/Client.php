@@ -1658,10 +1658,12 @@ class Client
                     $dates[$i] = (int)0;
                 }
                 
+                $country_hash = $datasets[$hash]->country_hash;
+                
                 self::result_object_merge($datasets[$hash], $this->calculate_dataset_fields($cases, $deaths, $this->countries[$country_hash]->population_count, $dates));
             }
         }
-                    
+                            
         foreach ($this->cov_infocast->handler->get_data() as $country_code => $record)
         {
             if (!isset($record->continent))
