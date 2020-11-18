@@ -936,6 +936,90 @@ class DataHandler
         return true;
     }
     
+    public function transform_divi_intens()
+    {
+        $header = array();
+        $buffer = array();
+
+        $header_transform = array(
+            "bundesland" => "state_id",
+            "gemeindeschluessel" => "district_id",
+            "anzahl_meldebereiche" => "reporting_areas",
+            "faelle_covid_aktuell" => "cases_covid",
+            "faelle_covid_aktuell_beatmet" => "cases_covid_ventilated",
+            "anzahl_standorte" => "locations_count",
+            "betten_frei" => "beds_free",
+            "betten_belegt" => "beds_occupied",
+            "daten_stand" => "timestamp_represent"
+        );
+        
+        $row = $this->data[0];
+        
+        foreach ($row as $id => $key)
+        {
+            if (isset($header_transform[$key]))
+                $key = $header_transform[$key];
+                
+            $header[$id] = $key;
+        }
+        
+        if ((!isset($header[0])) || ($header[0] != "timestamp_represent"))
+            return false;
+
+        for ($i = 1; $i < count($this->data); $i++)
+        {
+            $row = $this->data[$i];
+            
+            if (($row[0] == "") && ($row[1] == "") && ($row[2] == ""))
+                break;
+                
+            $obj = new \stdClass;
+
+            foreach ($row as $id => $val)
+            {
+		$key = $header[$id];
+		
+                if ($val === 0)
+                    $val = null;
+
+		if ($key == "timestamp_represent")
+		{
+		    $ts = strtotime($val);
+
+		    $obj->$key = date("Y-m-d H:i:s", $ts);
+		    $obj->date_rep = date("Y-m-d", $ts);
+		    $obj->day_of_week = (int)date("w", $ts);
+		    $obj->day = (int)date("j", $ts);
+		    $obj->month = (int)date("n", $ts);
+		    $obj->year = (int)date("Y", $ts);
+                }
+		elseif (strstr($val, ","))
+		{
+		    $obj->$key = (float)str_replace(",", ".", str_replace(".", "", $val));
+                }
+		else
+		{
+		    $obj->$key = (double)str_replace(",", ".", str_replace(".", "", $val));
+                }
+            }
+	
+            array_push($buffer, $obj); 
+        }
+        
+        $json = json_encode($buffer);
+        
+        unset($buffer);
+        unset($header);
+        unset($header_transform);
+        
+        $this->data = json_decode($json);
+        $this->length = strlen($json);
+        
+        unset($json);
+        
+        return true;
+    }
+    
     public function get_cache_filename()
     {
         return 

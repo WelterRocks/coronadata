@@ -39,6 +39,7 @@ class Client
     private $rki_nowcast = null;    
     private $rki_rssfeed = null;    
     private $cov_infocast = null;
+    private $divi_intens = null;
     
     private $gen_territory_area = null;
     private $gen_territory_district_area = null;
@@ -59,6 +60,7 @@ class Client
     
     private $datasets = null;
     private $testresults = null;
+    private $icudata = null;
     
     public static function result_object_merge(&$result, $obj)
     {
@@ -240,6 +242,11 @@ class Client
        return $this->retrieve_obj_data($this->cov_infocast, "transform_cov_infocast", $cache_timeout);       
     }
     
+    public function retrieve_divi_intens($cache_timeout = 14400)
+    {
+       return $this->retrieve_obj_data($this->divi_intens, "transform_divi_intens", $cache_timeout);
+    }
+    
     public function export_eu_datacast(&$length = null, &$timestamp = null)
     {
         $length = $this->eu_datacast->handler->get_length();
@@ -280,6 +287,14 @@ class Client
         return $this->cov_infocast->handler->get_data();
     }
     
+    public function export_divi_intens(&$length = null, &$timestamp = null)
+    {
+        $length = $this->divi_intens->handler->get_length();
+        $timestamp = $this->divi_intens->handler->get_timestamp();
+        
+        return $this->divi_intens->handler->get_data();
+    }
+    
     public function database_check_installation(&$error = null)
     {
         $error = null;
@@ -315,6 +330,11 @@ class Client
     public function get_cov_infocast()
     {
        return $this->cov_infocast;
+    }
+    
+    public function get_divi_intens()
+    {
+       return $this->divi_intens; 
     }
     
     public function get_gen_territory_area()
@@ -2664,6 +2684,9 @@ class Client
             $this->stores_loaded_bytes += $this->retrieve_rki_positive($cache_timeout);
             $this->stores_loaded_count++;
                                    
+            $this->stores_loaded_bytes += $this->retrieve_divi_intens($cache_timeout);
+            $this->stores_loaded_count++;
+                                   
             $this->stores_loaded_bytes += $this->retrieve_gen_territory_area($cache_timeout);
             $this->stores_loaded_count++;
                        
@@ -2702,6 +2725,7 @@ class Client
             $this->rki_nowcast = $this->get_template(new DataHandler($this->config, $this->config->url_rki_nowcast));
             $this->rki_rssfeed = $this->get_template(new DataHandler($this->config, $this->config->url_rki_rssfeed));
             $this->cov_infocast = $this->get_template(new DataHandler($this->config, $this->config->url_cov_infocast));
+            $this->divi_intens = $this->get_template(new DataHandler($this->config, $this->config->url_divi_intens));
             
             $this->gen_territory_area = $this->get_template(new DataHandler($this->config, null, "territory", "area"));
             $this->gen_territory_district_area = $this->get_template(new DataHandler($this->config, null, "territory", "district_area"));

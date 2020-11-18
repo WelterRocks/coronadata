@@ -27,6 +27,7 @@ final class Config
     private $url_rki_nowcast = 'https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/Nowcasting_Zahlen_csv.csv?__blob=publicationFile';
     private $url_rki_rssfeed = 'https://www.rki.de/SiteGlobals/Functions/RSSFeed/RSSGenerator_nCoV.xml';
     private $url_cov_infocast = 'https://github.com/owid/covid-19-data/raw/master/public/data/owid-covid-data.json';
+    private $url_divi_intens = 'https://diviexchange.blob.core.windows.net/%24web/DIVI_Intensivregister_Auszug_pro_Landkreis.csv';
     private $url_genesis_api = 'https://www-genesis.destatis.de/genesisWS/rest/2020/';
     
     private $genesis_username = "DEXXXXXXXXX";
