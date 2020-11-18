@@ -155,9 +155,9 @@ class Client
         return $tmpl;
     }
     
-    private function retrieve_obj_data(\stdClass $obj, $transform = null, $cache_timeout = 14400, $target_filename = true, $target_compression_level = 9, $not_json_encoded = false)
+    private function retrieve_obj_data(\stdClass $obj, $transform = null, $cache_timeout = 14400, $target_filename = true, $target_compression_level = 9, $not_json_encoded = false, $force_content_type = null)
     {
-       if ($retval = $obj->handler->retrieve($target_filename, $cache_timeout, $target_compression_level, $not_json_encoded))
+       if ($retval = $obj->handler->retrieve($target_filename, $cache_timeout, $target_compression_level, $not_json_encoded, $force_content_type))
        {
            if ($transform)
            {
@@ -244,7 +244,7 @@ class Client
     
     public function retrieve_divi_intens($cache_timeout = 14400)
     {
-       return $this->retrieve_obj_data($this->divi_intens, "transform_divi_intens", $cache_timeout);
+       return $this->retrieve_obj_data($this->divi_intens, "transform_divi_intens", $cache_timeout, true, 9, false, "application/csv");
     }
     
     public function export_eu_datacast(&$length = null, &$timestamp = null)

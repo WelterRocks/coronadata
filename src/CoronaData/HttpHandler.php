@@ -294,9 +294,12 @@ class HttpHandler
         return json_decode($this->get_result(true, $content_type));
     }
     
-    public function get_result($raw = false, &$content_type = null)
+    public function get_result($raw = false, &$content_type = null, $force_content_null = null)
     {        
-        $content_type = strtolower(explode(";", $this->return_header["content_type"])[0]);
+        if ($force_content_type)
+            $content_type = $force_content_type;
+        else
+            $content_type = strtolower(explode(";", $this->return_header["content_type"])[0]);
 
         if ($raw)	
             return $this->result;            
@@ -339,7 +342,7 @@ class HttpHandler
         return $this->transfertime;
     }
     
-    public function retrieve($method = "get", $query = null, $postdata = null, $add_options = null, &$data = null)
+    public function retrieve($method = "get", $query = null, $postdata = null, $add_options = null, &$data = null, $force_content_type = null, $force_raw = false, &$content_type = null)
     {
         $data = null;
         
@@ -364,7 +367,9 @@ class HttpHandler
         $this->set_return_header();
         $this->close();
         
-        $data = $this->get_result();
+        $content_type = null;
+        
+        $data = $this->get_result($force_raw, $content_type, $force_content_type);
                 
         return $length;
     }
