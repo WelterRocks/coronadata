@@ -23,34 +23,34 @@
 use WelterRocks\CoronaData\Exception;
 use WelterRocks\CoronaData\Table\Base;
 
-class Nowcasts extends Base
+class Divis extends Base
 {
-    protected $continent_hash = null;
-    protected $country_hash = null;
+    protected $locations_uid = null;
+    protected $reporting_areas = null;
+    protected $cases_covid = null;
+    protected $cases_covid_ventilated = null;
+    protected $locations_count = null;
+    protected $beds_free = null;
+    protected $beds_occupied = null;
+    protected $beds_total = null;
     protected $timestamp_represent = null;
     protected $date_rep = null;
+    protected $day_of_week = null;
     protected $day = null;
     protected $month = null;
-    protected $day_of_week = null;
     protected $year = null;
-    protected $esteem_new_diseases = null;
-    protected $lower_new_diseases = null;
-    protected $upper_new_diseases = null;
-    protected $esteem_new_diseases_ma4 = null;
-    protected $lower_new_diseases_ma4 = null;
-    protected $upper_new_diseases_ma4 = null;
-    protected $esteem_reproduction_r = null;
-    protected $lower_reproduction_r = null;
-    protected $upper_reproduction_r = null;
-    protected $esteem_7day_r_value = null;
-    protected $lower_7day_r_value = null;
-    protected $upper_7day_r_value = null;
-    protected $flag_casted_r_values = null;
-    
+    protected $geo_id = null;
+    protected $district_hash = null;
+    protected $state_hash = null;
+    protected $countryhash = null;
+    protected $continent_hash = null;
+    protected $divi_hash = null;
+
     protected function get_install_sql()
     {
       return "CREATE TABLE IF NOT EXISTS `nowcasts` (
         `uid` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
+        `locations_uid` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
         `timestamp_last_update` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         `timestamp_registration` timestamp NOT NULL,
         `timestamp_deleted` timestamp NULL DEFAULT NULL,
@@ -65,25 +65,26 @@ class Nowcasts extends Base
         `year` YEAR NOT NULL DEFAULT '0',
         `continent_hash` VARCHAR(32) NOT NULL,
         `country_hash` VARCHAR(32) NOT NULL,
-        `esteem_new_diseases` INT NOT NULL DEFAULT '0',
-        `lower_new_diseases` INT NOT NULL DEFAULT '0',
-        `upper_new_diseases` INT NOT NULL DEFAULT '0',
-        `esteem_new_diseases_ma4` INT NOT NULL DEFAULT '0',
-        `lower_new_diseases_ma4` INT NOT NULL DEFAULT '0',
-        `upper_new_diseases_ma4` INT NOT NULL DEFAULT '0',
-        `esteem_reproduction_r` FLOAT NOT NULL DEFAULT '0',
-        `lower_reproduction_r` FLOAT NOT NULL DEFAULT '0',
-        `upper_reproduction_r` FLOAT NOT NULL DEFAULT '0',
-        `esteem_7day_r_value` FLOAT NOT NULL DEFAULT '0',
-        `lower_7day_r_value` FLOAT NOT NULL DEFAULT '0',
-        `upper_7day_r_value` FLOAT NOT NULL DEFAULT '0',
+        `state_hash` VARCHAR(32) NOT NULL,
+        `district_hash` VARCHAR(32) NOT NULL,
+        `divi_hash` VARCHAR(32) NOT NULL,
+        `reporting_areas` INT NOT NULL DEFAULT '0',
+        `cases_covid` INT NOT NULL DEFAULT '0',
+        `cases_covid_ventilated` INT NOT NULL DEFAULT '0',
+        `locations_count` INT NOT NULL DEFAULT '0',
+        `beds_free` INT NOT NULL DEFAULT '0',
+        `beds_occupied` INT NOT NULL DEFAULT '0',
+        `beds_total` INT NOT NULL DEFAULT '0',
         `update_count` int UNSIGNED NOT NULL DEFAULT '0',
         `flag_updated` tinyint(1) NOT NULL DEFAULT '0',
         `flag_disabled` tinyint(1) NOT NULL DEFAULT '0',
         `flag_deleted` tinyint(1) NOT NULL DEFAULT '0',
-        `flag_casted_r_values` tinyint(1) NOT NULL DEFAULT '0',
         PRIMARY KEY (`uid`),
-        UNIQUE KEY `location_date_rep` (`continent_hash`,`country_hash`,`date_rep`),
+        UNIQUE KEY `divi_hash` (`divi_hash`),
+        KEY `date_rep` (`date_rep`),
+        KEY `locations_uid` (`locations_uid`),
+        KEY `district_hash` (`district_hash`),
+        KEY `state_hash` (`state_hash`),
         KEY `country_hash` (`country_hash`),
         KEY `continent_hash` (`continent_hash`)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

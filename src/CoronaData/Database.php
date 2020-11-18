@@ -24,6 +24,7 @@ use WelterRocks\CoronaData\Table\Locations;
 use WelterRocks\CoronaData\Table\Datasets;
 use WelterRocks\CoronaData\Table\Testresults;
 use WelterRocks\CoronaData\Table\Nowcasts;
+use WelterRocks\CoronaData\Table\Divis;
 use WelterRocks\CoronaData\Table\Grafana;
 use WelterRocks\CoronaData\Config;
 use WelterRocks\CoronaData\Exception;
@@ -63,6 +64,11 @@ class Database
     public function new_nowcast()
     {
         return new Nowcasts($this->db);
+    }
+    
+    public function new_divi()
+    {
+        return new Divis($this->db);
     }
     
     public function new_grafana()
@@ -491,6 +497,7 @@ class Database
           "Datasets" => true,
           "Testresults" => true,
           "Nowcasts" => true,
+          "Divis" => true,
           "Grafana" => false
         );
         
