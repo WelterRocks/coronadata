@@ -963,7 +963,7 @@ class DataHandler
             $header[$id] = $key;
         }
         
-        if ((!isset($header[0])) || ($header[0] != "timestamp_represent"))
+        if ((!isset($header[0])) || ($header[0] != "state_id"))
             return false;
 
         for ($i = 1; $i < count($this->data); $i++)

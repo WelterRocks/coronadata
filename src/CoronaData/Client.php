@@ -60,7 +60,7 @@ class Client
     
     private $datasets = null;
     private $testresults = null;
-    private $icudata = null;
+    private $divis = null;
     
     public static function result_object_merge(&$result, $obj)
     {
@@ -468,6 +468,7 @@ class Client
         $districts = array();
         $states = array();
         $locations = array();
+        $divis = array();
         
         // Create an index for districts, so that RKI positives can be assigned faster
         $district_index = array();
@@ -899,6 +900,9 @@ class Client
         // Forth, we add the german districts
         $german_districts_area = $this->gen_territory_district_area->handler->get_data()->districts_area;
         $german_districts_population = $this->gen_population_by_district->handler->get_data()->districts;
+        
+        // Also load the divi data, because we (have to) use the genesis files to assign the correct districts
+        $german_divi = $this->divi_intens->handler->get_data();
 
         if (is_array($german_districts_area))
         {
@@ -962,6 +966,59 @@ class Client
             }
         }
         
+        // Merge the district informations into divi data
+        if (is_array($german_divi))
+        {
+            foreach ($german_divi as $divi)
+            {
+                if (isset($district_index[$divi->district_id]))
+                {
+                    $district_hash = $district_index[$divi->district_id];
+                    
+                    if (!$district_hash)
+                        continue;
+                        
+                    if (!isset($districts[$district_hash]))
+                        continue;
+                        
+                    $district = $districts[$district_hash];
+                    
+                    $merge = array(
+                        "district_id",
+                        "district_hash",
+                        "district_name",
+                        "district_type",
+                        "district_fullname",
+                        "state_id",
+                        "state_hash",
+                        "state_name",
+                        "country_id",
+                        "country_hash",
+                        "country_name",
+                        "continent_id",
+                        "continent_hash",
+                        "continent_name"
+                    );
+                    
+                    // Move district_id out of the way
+                    $divi->geo_id = $divi->district_id;
+                    
+                    foreach ($merge as $key)
+                    {
+                        if (!isset($district->$key))
+                            continue;
+                            
+                        $divi->$key = $district->$key;
+                    }
+                    
+                    $divi->divi_hash = self::hash_name($divi->district_name.$divi->district_id.$divi->date_rep);
+                    
+                    $divis[$divi->divi_hash] = $divi;
+		}
+            }
+        }
+                
+        unset($german_divi);
         unset($german_districts_area);
         unset($german_districts_population);        
 
@@ -1040,10 +1097,12 @@ class Client
         $this->states = $states;
         $this->districts = $districts;
         $this->locations = $locations;
+        $this->divis = $divis;
         
         // Free the memory, which is no longer need (if hold data is not requested)
         if (!$hold_data)
         {
+            $this->divi_intens->handler->free();
             $this->gen_territory_area->handler->free();
             $this->gen_territory_district_area->handler->free();
             $this->gen_population->handler->free();
