@@ -294,7 +294,7 @@ class HttpHandler
         return json_decode($this->get_result(true, $content_type));
     }
     
-    public function get_result($raw = false, &$content_type = null, $force_content_null = null)
+    public function get_result($raw = false, &$content_type = null, $force_content_type = null)
     {        
         if ($force_content_type)
             $content_type = $force_content_type;
