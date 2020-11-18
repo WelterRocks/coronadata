@@ -39,12 +39,14 @@ class Datasets extends Base
     protected $month = null;
     protected $year = null;
     protected $cases = null;
+    protected $cases_4day = null;
     protected $cases_7day = null;
     protected $cases_14day = null;
     protected $cases_rate = null;
     protected $cases_ascension = null;
     protected $cases_pointer = null;
     protected $deaths = null;
+    protected $deaths_4day = null;
     protected $deaths_7day = null;
     protected $deaths_14day = null;
     protected $deaths_rate = null;
@@ -88,22 +90,29 @@ class Datasets extends Base
     protected $weekly_hosp_admissions_per_million = null;
     protected $weekly_icu_admissions = null;
     protected $weekly_icu_admissions_per_million = null;
+    protected $incidence_4day = null;
     protected $incidence_7day = null;
     protected $incidence_14day = null;
+    protected $incidence_4day_smoothed = null;
     protected $incidence_7day_smoothed = null;
     protected $incidence_14day_smoothed = null;
+    protected $incidence2_4day = null;
     protected $incidence2_7day = null;
     protected $incidence2_14day = null;
+    protected $incidence2_4day_smoothed = null;
     protected $incidence2_7day_smoothed = null;
     protected $incidence2_14day_smoothed = null;
     protected $exponence_yesterday = null;
+    protected $exponence_4day = null;
     protected $exponence_7day = null;
     protected $exponence_14day = null;
+    protected $exponence_4day_smoothed = null;
     protected $exponence_7day_smoothed = null;
     protected $exponence_14day_smoothed = null;
     protected $reproduction_4day = null;
     protected $reproduction_7day = null;
     protected $reproduction_14day = null;
+    protected $alert_condition_4day = null;
     protected $alert_condition_7day = null;
     protected $alert_condition_14day = null;
     protected $alert_condition_pointer = null;
@@ -162,12 +171,14 @@ class Datasets extends Base
         `month` smallint UNSIGNED NOT NULL DEFAULT '0',
         `year` YEAR NOT NULL DEFAULT '0',
         `cases` BIGINT NOT NULL DEFAULT '0',
+        `cases_4day` BIGINT NOT NULL DEFAULT '0',
         `cases_7day` BIGINT NOT NULL DEFAULT '0',
         `cases_14day` BIGINT NOT NULL DEFAULT '0',
         `cases_rate` FLOAT NOT NULL DEFAULT '0',
         `cases_ascension` FLOAT NOT NULL DEFAULT '0',
         `cases_pointer` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
         `deaths` BIGINT NOT NULL DEFAULT '0',
+        `deaths_4day` BIGINT NOT NULL DEFAULT '0',
         `deaths_7day` BIGINT NOT NULL DEFAULT '0',
         `deaths_14day` BIGINT NOT NULL DEFAULT '0',
         `deaths_rate` FLOAT NOT NULL DEFAULT '0',
@@ -210,22 +221,29 @@ class Datasets extends Base
         `weekly_hosp_admissions_per_million` FLOAT NOT NULL DEFAULT '0',
         `weekly_icu_admissions` INT NOT NULL DEFAULT '0',
         `weekly_icu_admissions_per_million` FLOAT NOT NULL DEFAULT '0',
+        `incidence_4day` FLOAT NOT NULL DEFAULT '0',
         `incidence_7day` FLOAT NOT NULL DEFAULT '0',
         `incidence_14day` FLOAT NOT NULL DEFAULT '0',
+        `incidence_4day_smoothed` FLOAT NOT NULL DEFAULT '0',
         `incidence_7day_smoothed` FLOAT NOT NULL DEFAULT '0',
         `incidence_14day_smoothed` FLOAT NOT NULL DEFAULT '0',
+        `incidence2_4day` FLOAT NOT NULL DEFAULT '0',
         `incidence2_7day` FLOAT NOT NULL DEFAULT '0',
         `incidence2_14day` FLOAT NOT NULL DEFAULT '0',
+        `incidence2_4day_smoothed` FLOAT NOT NULL DEFAULT '0',
         `incidence2_7day_smoothed` FLOAT NOT NULL DEFAULT '0',
         `incidence2_14day_smoothed` FLOAT NOT NULL DEFAULT '0',
         `exponence_yesterday` FLOAT NOT NULL DEFAULT '0',
+        `exponence_4day` FLOAT NOT NULL DEFAULT '0',
         `exponence_7day` FLOAT NOT NULL DEFAULT '0',
         `exponence_14day` FLOAT NOT NULL DEFAULT '0',
+        `exponence_4day_smoothed` FLOAT NOT NULL DEFAULT '0',
         `exponence_7day_smoothed` FLOAT NOT NULL DEFAULT '0',
         `exponence_14day_smoothed` FLOAT NOT NULL DEFAULT '0',        
         `reproduction_4day` FLOAT NOT NULL DEFAULT '0',
         `reproduction_7day` FLOAT NOT NULL DEFAULT '0',
         `reproduction_14day` FLOAT NOT NULL DEFAULT '0',
+        `alert_condition_4day` smallint NOT NULL DEFAULT '-1',
         `alert_condition_7day` smallint NOT NULL DEFAULT '-1',
         `alert_condition_14day` smallint NOT NULL DEFAULT '-1',
         `alert_condition` smallint NOT NULL DEFAULT '-1',

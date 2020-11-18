@@ -1411,11 +1411,11 @@ class Client
         return $result;
     }
 
-    public function calculate_alert_condition($alert_condition_7day, $alert_condition_14day)
+    public function calculate_alert_condition($alert_condition_4day, $alert_condition_7day, $alert_condition_14day)
     {
         $result = new \stdClass;
         
-        $result->alert_condition = round((($alert_condition_7day + $alert_condition_14day) / 2));
+        $result->alert_condition = round((($alert_condition_4day + $alert_condition_7day + $alert_condition_14day) / 3));
         
         // These are example recommendations!!!! NOT A STRICT TO DO LIST!!!
         // Suggestions are welcome.
@@ -1596,6 +1596,29 @@ class Client
         return $result;
     }
 
+    public function calculate_4day_fields($cases, $deaths, $population, $area, $dates, $incidence_factor = 100000)
+    {
+        $obj = $this->calculate_x_day_fields($cases, $deaths, $population, $area, $dates, 4, 0, $incidence_factor);
+        $obj2 = $this->calculate_x_day_fields($cases, $deaths, $population, $area, $dates, 4, 3, $incidence_factor);
+
+        if (!$obj)
+            return null;
+
+        $result = new \stdClass;
+
+        $result->cases_4day = $obj->cases;
+        $result->deaths_4day = $obj->deaths;
+        $result->exponence_4day = $obj->exponence;
+        $result->exponence_4day_smoothed = ((!$obj2) ? $obj->exponence : $obj2->exponence);
+        $result->incidence_4day = $obj->incidence;
+        $result->incidence_4day_smoothed = ((!$obj2) ? $obj->incidence : $obj2->incidence);
+        $result->incidence2_4day = $obj->incidence2;
+        $result->incidence2_4day_smoothed = ((!$obj2) ? $obj->incidence2 : $obj2->incidence2);
+        $result->alert_condition_4day = ((!$obj2) ? $obj->alert_condition : $obj2->alert_condition);
+
+        return $result;
+    }
+
     public function calculate_case_and_death_ascension($cases, $deaths, $dates)
     {
         if (!is_array($cases))
@@ -1671,6 +1694,7 @@ class Client
         
         $result = new \stdClass;
         
+        self::result_object_merge($result, $this->calculate_4day_fields($cases, $deaths, $population, $area, $dates, $incidence_factor));
         self::result_object_merge($result, $this->calculate_7day_fields($cases, $deaths, $population, $area, $dates, $incidence_factor));
         self::result_object_merge($result, $this->calculate_14day_fields($cases, $deaths, $population, $area, $dates, $incidence_factor));
         
@@ -1681,6 +1705,11 @@ class Client
         self::result_object_merge($result, $this->calculate_7day_r_value($cases, $deaths, $dates));
         self::result_object_merge($result, $this->calculate_14day_r_value($cases, $deaths, $dates));
 
+        if (isset($result->alert_condition_4day))
+            $alert_condition_4day = $result->alert_condition_4day;
+        else
+            $alert_condition_4day = -1;
+        
         if (isset($result->alert_condition_7day))
             $alert_condition_7day = $result->alert_condition_7day;
         else
@@ -1691,7 +1720,7 @@ class Client
         else
             $alert_condition_14day = -1;
         
-        self::result_object_merge($result, $this->calculate_alert_condition($alert_condition_7day, $alert_condition_14day));
+        self::result_object_merge($result, $this->calculate_alert_condition($alert_condition_4day, $alert_condition_7day, $alert_condition_14day));
         
         return $result;        
     }
