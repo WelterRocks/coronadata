@@ -1430,7 +1430,7 @@ class Client
         return $result;
     }
 
-    public function calculate_alert_condition($alert_condition_4day, $alert_condition_7day, $alert_condition_14day, $set_flags = false)
+    public function calculate_alert_condition($alert_condition_4day, $alert_condition_7day, $alert_condition_14day)
     {
         $result = new \stdClass;
         
@@ -1457,8 +1457,35 @@ class Client
         else
             $result->alert_condition_pointer = "sty";
             
-        if (!$set_flags)
-            return $result;
+        return $result;
+    }
+                
+    public function calculate_alert_condition2($alert_condition_4day, $alert_condition_7day, $alert_condition_14day)
+    {
+        $result = new \stdClass;
+        
+        $result->alert_condition2 = round((($alert_condition_4day + $alert_condition_7day + $alert_condition_14day) / 3));
+        
+        if (($alert_condition_4day > $alert_condition_7day) && ($alert_condition_7day > $alert_condition_14day))
+            $result->alert_condition2_pointer = "asc";
+        elseif (($alert_condition_4day == $alert_condition_7day) && ($alert_condition_7day > $alert_condition_14day))
+            $result->alert_condition2_pointer = "asc";
+        elseif (($alert_condition_4day < $alert_condition_7day) && ($alert_condition_7day > $alert_condition_14day) && ($alert_condition_4day > $alert_condition_14day))
+            $result->alert_condition2_pointer = "asc";
+        elseif (($alert_condition_4day > $alert_condition_7day) && ($alert_condition_7day == $alert_condition_14day))
+            $result->alert_condition2_pointer = "asc";
+        elseif (($alert_condition_4day > $alert_condition_7day) && ($alert_condition_7day < $alert_condition_14day) && ($alert_condition_4day > $alert_condition_14day))
+            $result->alert_condition2_pointer = "asc";
+        elseif (($alert_condition_4day < $alert_condition_7day) && ($alert_condition_7day < $alert_condition_14day))
+            $result->alert_condition2_pointer = "desc";
+        elseif (($alert_condition_4day < $alert_condition_7day) && ($alert_condition_7day > $alert_condition_14day) && ($alert_condition_4day < $alert_condition_14day))
+            $result->alert_condition2_pointer = "desc";
+        elseif (($alert_condition_4day == $alert_condition_7day) && ($alert_condition_7day < $alert_condition_14day))
+            $result->alert_condition2_pointer = "desc";
+        elseif (($alert_condition_4day < $alert_condition_7day) && ($alert_condition_7day == $alert_condition_14day))
+            $result->alert_condition2_pointer = "desc";
+        else
+            $result->alert_condition2_pointer = "sty";
             
         // These are example recommendations!!!! NOT A STRICT TO DO LIST!!!
         // Suggestions are welcome.
@@ -1775,7 +1802,7 @@ class Client
             $alert_condition2_14day = -1;
         
         self::result_object_merge($result, $this->calculate_alert_condition($alert_condition_4day, $alert_condition_7day, $alert_condition_14day));
-        self::result_object_merge($result, $this->calculate_alert_condition($alert_condition2_4day, $alert_condition2_7day, $alert_condition2_14day, true));
+        self::result_object_merge($result, $this->calculate_alert_condition2($alert_condition2_4day, $alert_condition2_7day, $alert_condition2_14day));
         
         return $result;        
     }
