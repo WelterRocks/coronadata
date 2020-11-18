@@ -209,6 +209,15 @@ class Grafana extends Base
     protected $location_timestamp_enabled = null;
     protected $location_timestamp_deleted = null;
     protected $location_timestamp_undeleted = null;
+    
+    // Divi fields
+    protected $divi_reporting_areas = null;
+    protected $divi_locations_count = null;
+    protected $divi_cases_covid = null;
+    protected $divi_cases_covid_ventilated = null;
+    protected $divi_beds_free = null;
+    protected $divi_beds_occupied = null;
+    protected $divi_beds_total = null;
 
     protected function get_install_sql()
     {
@@ -219,6 +228,8 @@ class Grafana extends Base
       {
         if ($key == "dataset_hash")
           $prefix = "datasets";
+        elseif ($key == "reporting_areas")
+          $prefix = "divis";
           
         if (substr($key, 0, 2) == "__")
           continue;
@@ -253,10 +264,14 @@ class Grafana extends Base
             continue(2);
         }
         
-        $k[$key] = "`".$prefix."`.`".$key."` as '".$key."'";
+        if ($prefix == "divis")
+          $k[$key] = "SUM(`".$prefix."`.`".substr($key, 5)."`) as '".$key."'";
+        else
+          $k[$key] = "`".$prefix."`.`".$key."` as '".$key."'";
       }
          
-      $sql = "CREATE VIEW grafana AS SELECT\n\t".implode(",\n\t", $k)."\nFROM\n\t`locations`,`datasets`\nWHERE\n";
+      $sql = "CREATE VIEW grafana AS SELECT\n\t".implode(",\n\t", $k)."\nFROM\n\t`locations`,`datasets`\n";
+      $sql .= "LEFT OUTER JOIN `divis` ON (`location`.`uid` = `divis`.`locations_uid` AND `datasets`.`date_rep` = `divis`.`date_rep`)\nWHERE\n";
       $sql .= "\t(`locations`.`uid` = `datasets`.`locations_uid`)\n";
       $sql .= "ORDER BY `datasets`.`timestamp_represent` DESC;";
 
