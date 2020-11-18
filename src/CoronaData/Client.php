@@ -2502,6 +2502,44 @@ class Client
         return $count;
     }
     
+    public function save_divis(&$count = null, &$any = null, &$errors = null)
+    {
+        $count = 0;
+        $any = 0;
+        
+        $errors = array();
+        
+        if (!is_array($this->divis))
+            return null;
+            
+        $this->database_transaction_begin("save_divi");
+        
+        foreach ($this->divis as $hash => $obj)
+        {
+            $db_obj = $this->database->new_divi();
+            
+            foreach ($obj as $key => $val)
+                $db_obj->$key = $val;
+                
+            $x_hash = "D".$obj->district_hash;
+            
+            $db_obj->locations_uid = $this->location_index[$x_hash];
+            
+            $error = null;
+            
+            if ($db_obj->save(null, null, false, false, $error))
+                $count++;
+            else
+                array_push($errors, $error);
+
+            $any++;
+        }
+        
+        $this->database_transaction_commit("save_divi");
+        
+        return $count;
+    }
+    
     public function save_datasets(&$count = null, &$any = null, &$errors = null)
     {
         $count = 0;

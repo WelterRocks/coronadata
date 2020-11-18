@@ -188,6 +188,10 @@ function worker_loop(Client $client, $oneshot = false)
                 $client->save_locations($count, $any, $errors);
                 $cli->log("Stored ".$count." from ".$any." location records.", LOG_INFO);
                 
+                $cli->log("Storing divi records.", LOG_INFO);
+                $client->save_divis($count, $any, $errors);
+                $cli->log("Stored ".$count." from ".$any." divi records.", LOG_INFO);
+                
                 $cli->log("Storing nowcast records.", LOG_INFO);
                 $client->save_nowcasts($count, $any, $errors);
                 $cli->log("Stored ".$count." from ".$any." nowcast records.", LOG_INFO);
