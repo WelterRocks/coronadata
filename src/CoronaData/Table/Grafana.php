@@ -167,6 +167,10 @@ class Grafana extends Base
     protected $incidence_14day = null;
     protected $incidence_7day_smoothed = null;
     protected $incidence_14day_smoothed = null;
+    protected $incidence2_7day = null;
+    protected $incidence2_14day = null;
+    protected $incidence2_7day_smoothed = null;
+    protected $incidence2_14day_smoothed = null;
     protected $exponence_yesterday = null;
     protected $exponence_7day = null;
     protected $exponence_14day = null;
