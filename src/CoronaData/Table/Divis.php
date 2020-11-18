@@ -26,7 +26,6 @@ use WelterRocks\CoronaData\Table\Base;
 class Divis extends Base
 {
     protected $locations_uid = null;
-    protected $geo_id = null;
     protected $reporting_areas = null;
     protected $cases_covid = null;
     protected $cases_covid_ventilated = null;
