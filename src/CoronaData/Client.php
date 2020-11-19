@@ -2602,10 +2602,10 @@ class Client
         if (!is_array($this->testresults))
             return null;
             
-        $this->database_transaction_begin("save_testresult");
-        
         // Because of "strange" behaviour of the testresults foreign_identifier (see timestamps and id), we are forced to clear the table to get rid of duplicate datasets
         $this->database->new_testresult()->clear_records();
+        
+        $this->database_transaction_begin("save_testresult");
         
         $errors = array();
         
