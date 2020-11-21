@@ -89,6 +89,8 @@ class Divis extends Base
         KEY `country_hash` (`country_hash`),
         KEY `continent_hash` (`continent_hash`)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      
+      ALTER TABLE `divis` ADD CONSTRAINT `divis_locations_uid` FOREIGN KEY (`locations_uid`) REFERENCES `locations`(`uid`) ON DELETE CASCADE ON UPDATE CASCADE;
       ";
     }
 }
