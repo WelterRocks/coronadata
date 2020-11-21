@@ -96,11 +96,9 @@ class Client
         return $retval;
     }
     
-    public static function hash_name($str)
+    public static function hash_name($prefix, $name, $suffix = null)
     {
-        $retval = md5(self::clean_str($str));
-        
-        return $retval;
+        return md5($prefix."#".self::clean_str($name)."#".$suffix);
     }
     
     public static function threeletter_encode($str)
@@ -519,15 +517,15 @@ class Client
         // First, we use the EU datacast
         foreach ($this->eu_datacast->handler->get_data()->records as $id => $record)
         {
-            $continent_hash = self::hash_name($record->continent);
-            $country_hash = self::hash_name($record->country);
+            $continent_hash = self::hash_name("continent", $record->continent);
+            $country_hash = self::hash_name("country", $record->country, $continent_hash);
             
             if (!isset($continents[$continent_hash]))                
                 $continent = clone $tmpl;
             else
                 $continent = $continents[$continent_hash];
             
-            $continent->location_hash = md5('continent'.$continent_hash);
+            $continent->location_hash = self::hash_name("location", "continent", $continent_hash);
             $continent->continent_id = self::threeletter_encode($record->continent);
             $continent->geo_id = substr($continent->continent_id, 0, 2);
             $continent->continent_hash = $continent_hash;
@@ -565,7 +563,7 @@ class Client
             else
                 $country = $countries[$country_hash];
                 
-            $country->location_hash = md5('country'.$continent_hash.$country_hash);
+            $country->location_hash = self::hash_name("location", "country", $country_hash);
             $country->continent_id = self::threeletter_encode($record->continent);
             $country->continent_hash = $continent_hash;
             $country->continent_name = $record->continent;
@@ -620,8 +618,8 @@ class Client
             if (stristr($record->continent, "America"))
                 $record->continent = "America";
             
-            $continent_hash = self::hash_name($record->continent);
-            $country_hash = self::hash_name($record->location);
+            $continent_hash = self::hash_name("continent", $record->continent);
+            $country_hash = self::hash_name("country", $record->location, $continent_hash);
             
             $continent_created = false;
             $country_created = false;
@@ -638,7 +636,7 @@ class Client
             
             if ($continent_created)
             {
-                $continent->location_hash = md5('continent'.$continent_hash);
+                $continent->location_hash = self::hash_name("location", "continent", $continent_hash);
                 $continent->continent_id = self::threeletter_encode($record->continent);
                 $continent->geo_id = substr($continent->continent_id, 0, 2);
                 $continent->continent_hash = $continent_hash;
@@ -660,7 +658,7 @@ class Client
             
             if ($country_created)
             {
-                $country->location_hash = md5('country'.$continent_hash.$country_hash);
+                $country->location_hash = self::hash_name("country", "country", $country_hash);
                 $country->continent_id = self::threeletter_encode($record->continent);
                 $country->geo_id = substr($country->continent_id, 0, 2);
                 $country->continent_hash = $continent_hash;
@@ -817,8 +815,8 @@ class Client
         unset($filter_outer);
         
         // Third, we add the german states
-        $europe_hash = self::hash_name("Europe");
-        $germany_hash = self::hash_name("Germany");
+        $europe_hash = self::hash_name("continent", "Europe");
+        $germany_hash = self::hash_name("country", "Germany", $europe_hash);
                 
         $europe = $continents[$europe_hash];
         $germany = $countries[$germany_hash];
@@ -836,7 +834,7 @@ class Client
         {
             foreach ($german_states_area as $state_name => $area)
             {
-                $state_hash = self::hash_name($state_name);
+                $state_hash = self::hash_name("state", $state_name, $germany_hash);
                 
                 if (!isset($states[$state_hash]))
                     $state = clone $tmpl;
@@ -845,7 +843,7 @@ class Client
                 
                 $real_state_name = null;
                     
-                $state->location_hash = md5('state'.$europe->continent_hash.$germany->country_hash.$state_hash);
+                $state->location_hash = self::hash_name("location", "state", $state_hash);
                 $state->geo_id = DataHandler::german_state_id_by_name($state_name, $real_state_name);
                 $state->continent_id = $europe->continent_id;
                 $state->continent_hash = $europe->continent_hash;
@@ -876,7 +874,7 @@ class Client
         {
             foreach ($german_states_population as $state_name => $data)
             {
-                $state_hash = self::hash_name($state_name);
+                $state_hash = self::hash_name("state", $state_name, $germany_hash);
                 $state_created = false;
                 
                 if (!isset($states[$state_hash]))
@@ -893,7 +891,7 @@ class Client
                 {
                     $real_state_name = null;
                         
-                    $state->location_hash = md5('state'.$europe->continent_hash.$germany->country_hash.$state_hash);
+                    $state->location_hash = self::hash_name("location", "state", $state_hash);
                     $state->geo_id = DataHandler::german_state_id_by_name($state_name, $real_state_name);
                     $state->continent_id = $europe->continent_id;
                     $state->continent_hash = $europe->continent_hash;
@@ -943,9 +941,8 @@ class Client
             foreach ($german_districts_area as $district_id => $data)
             {	
                 $state_name = DataHandler::german_state_by_district_geo_id($data->id);                
-                $state_hash = self::hash_name($state_name);
-                
-                $district_hash = self::hash_name($state_name.$data->name);
+                $state_hash = self::hash_name("state", $state_name, $germany_hash);                
+                $district_hash = self::hash_name("district", $data->name, $state_hash);
                 
                 if (!isset($states[$state_hash]))
                     continue;
@@ -959,7 +956,7 @@ class Client
                     
                 $district_index[$district_id] = $district_hash;
                     
-                $district->location_hash = md5('district'.$europe->continent_hash.$germany->country_hash.$state->state_hash.$district_hash);
+                $district->location_hash = self::hash_name("location", "district", $district_hash);
                 $district->geo_id = $district_id;
                 $district->continent_id = $europe->continent_id;
                 $district->continent_hash = $europe->continent_hash;
@@ -1035,7 +1032,7 @@ class Client
                         $divi->$key = $district->$key;
                     }
                     
-                    $divi->divi_hash = self::hash_name($district->district_name.$divi->geo_id.$divi->date_rep);
+                    $divi->divi_hash = self::hash_name("divi", $district_hash, $divi->geo_id.$divi->date_rep);
                     $divi->beds_total = ($divi->beds_free + $divi->beds_occupied);
                     
                     // Remove no longer needed things
@@ -1864,9 +1861,9 @@ class Client
             
         foreach ($this->eu_datacast->handler->get_data()->records as $id => $record)
         {
-            $country_hash = self::hash_name($record->country);
-            $continent_hash = self::hash_name($record->continent);
-            $dataset_hash = md5(self::hash_name($record->country).$record->date_rep);
+            $continent_hash = self::hash_name("continent", $record->continent);
+            $country_hash = self::hash_name("country", $record->country, $continent_hash);
+            $dataset_hash = self::hash_name("dataset-country", $country_hash, $record->date_rep);
             
             if (!isset($datasets[$dataset_hash]))
                 $dataset = clone $tmpl;
@@ -1938,12 +1935,12 @@ class Client
             if (!isset($record->continent))
                 continue;
                 
-            $country_hash = self::hash_name($record->location);
-            $continent_hash = self::hash_name($record->continent);
+            $continent_hash = self::hash_name("continent", $record->continent);
+            $country_hash = self::hash_name("country", $record->location, $continent_hash);
             
             foreach ($record->data as $data)
             {
-                $dataset_hash = md5(self::hash_name($record->location).$data->date);
+                $dataset_hash = self::hash_name("dataset-country", $country_hash, $data->date);
                 $dataset_created = false;
                 
                 if (!isset($datasets[$dataset_hash]))
@@ -2061,8 +2058,8 @@ class Client
         if ($this->stores_loaded_count < 10)
             return false;
             
-        $europe_hash = self::hash_name("Europe");
-        $germany_hash = self::hash_name("Germany");
+        $europe_hash = self::hash_name("continent", "Europe");
+        $germany_hash = self::hash_name("country", "Germany", $europe_hash);
         
         // Get the country and zero some fields
         $germany = $this->countries[$germany_hash];
@@ -2108,13 +2105,14 @@ class Client
         {
             // Before we do anything, we must map the district name!
             $data->district_name = $this->district_map($data->district_name);
-        
+
+            // Get hashes        
+            $state_hash = self::hash_name("state", $data->state, $germany_hash);
+            $district_hash = self::hash_name("district", $data->district_name, $state_hash);
+
             // The result hash must have another part to be unique, date is not sufficient here
             // So maybe its a good idea to use the foreign identifier, delivered by the data itself
-            $result_hash = md5(self::hash_name($data->district_name).$data->date_rep."#".$data->foreign_identifier);
-
-            $district_hash = self::hash_name($data->state.$data->district_name);
-            $state_hash = self::hash_name($data->state);
+            $result_hash = self::hash_name("result", $district_hash, $data->date_rep."#".$data->foreign_identifier);
             
             if (!isset($this->districts[$district_hash]))
             {
@@ -2149,7 +2147,7 @@ class Client
             {
                 $dataset = clone $tmpl;
                 
-                $dataset->dataset_hash = md5("positive#".self::hash_name($data->district_name).$data->date_rep);
+                $dataset->dataset_hash = self::hash_name("dataset-district", $district_hash, $data->date_rep);
                 $dataset->district_hash = $district_hash;
                 $dataset->state_hash = $state_hash;
                 $dataset->country_hash = $germany_hash;
@@ -2352,7 +2350,7 @@ class Client
                 
                 self::result_object_merge($dataset, $this->calculate_dataset_fields($cases_last, $deaths_last, $population, $area, $dates_last));
 
-                $dataset_hash = md5($dataset->district_hash.$dataset->date_rep);
+                $dataset_hash = self::hash_name("dataset-district", $dataset->district_hash, $dataset->date_rep);
                                 
                 if (isset($this->datasets[$dataset_hash]))
                 {
@@ -2817,8 +2815,8 @@ class Client
         $lower_7day_r_value = 0;
         $upper_7day_r_value = 0;
         
-        $europe_hash = self::hash_name("Europe");
-        $germany_hash = self::hash_name("Germany");        
+        $europe_hash = self::hash_name("continent", "Europe");
+        $germany_hash = self::hash_name("country", "Germany", $europe_hash);
         
         $errors = array();
         
