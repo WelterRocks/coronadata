@@ -150,6 +150,7 @@ class Grafana extends Base
     protected $new_tests_smoothed = null;
     protected $new_tests_smoothed_per_thousand = null;
     protected $positive_rate = null;
+    protected $reproduction_rate = null;
     protected $stringency_index = null;
     protected $tests_per_case = null;
     protected $tests_units = null;

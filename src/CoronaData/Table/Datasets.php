@@ -75,6 +75,7 @@ class Datasets extends Base
     protected $new_tests_smoothed = null;
     protected $new_tests_smoothed_per_thousand = null;
     protected $positive_rate = null;
+    protected $reproduction_rate = null;
     protected $stringency_index = null;
     protected $tests_per_case = null;
     protected $tests_units = null;
@@ -211,6 +212,7 @@ class Datasets extends Base
         `new_tests_smoothed` INT NOT NULL DEFAULT '0',
         `new_tests_smoothed_per_thousand` FLOAT NOT NULL DEFAULT '0',
         `positive_rate` FLOAT NOT NULL DEFAULT '0',
+        `reproduction_rate` FLOAT NOT NULL DEFAULT '0',
         `stringency_index` FLOAT NOT NULL DEFAULT '0',
         `tests_per_case` FLOAT NOT NULL DEFAULT '0',
         `tests_units` VARCHAR(32) DEFAULT NULL,
