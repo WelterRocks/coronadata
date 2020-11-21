@@ -2099,6 +2099,9 @@ class Client
         
         $unknown_districts = array();
         $unknown_states = array();
+        
+        // Define a million
+        $mil = 1000000;
                 
         // No need for templates here, just clone data and add the hashes
         foreach($this->rki_positive->handler->get_data() as $data)
@@ -2174,21 +2177,89 @@ class Client
                 $dataset = $datasets[$index][$date];
             }
             
-            $dataset->cases += $data->cases_count;
-            $dataset->deaths += $data->deaths_count;
-            $dataset->recovered += $data->recovered_count;
-            
-            $dataset->new_cases += $data->cases_new;
-            $dataset->new_deaths += $data->deaths_new;
-            $dataset->new_recovered += $data->recovered_new;
-            
-            if ($data->flag_is_disease_beginning)
-            {
-                $dataset->new_cases_smoothed += $data->cases_new;
-                $dataset->new_deaths_smoothed += $data->deaths_new;
-                $dataset->new_recovered_smoothed += $data->recovered_new;
-            }
+            /* METADATA by 2020-11-21
                         
+            Beschreibung der Daten des RKI Covid-19-Dashboards (https://corona.rki.de)
+
+            Dem Dashboard liegen aggregierte Daten der gemäß IfSG von den Gesundheitsämtern an das RKI übermittelten Covid-19-Fälle zu Grunde
+            Mit den Daten wird der tagesaktuelle Stand (00:00 Uhr) abgebildet und es werden die Veränderungen bei den Fällen und Todesfällen zum Vortag dargstellt
+            In der Datenquelle sind folgende Parameter enthalten:
+            IdBundesland: Id des Bundeslands des Falles mit 1=Schleswig-Holstein bis 16=Thüringen
+            Bundesland: Name des Bundeslanes
+            Landkreis ID: Id des Landkreises des Falles in der üblichen Kodierung 1001 bis 16077=LK Altenburger Land
+            Landkreis: Name des Landkreises
+            Altersgruppe: Altersgruppe des Falles aus den 6 Gruppe 0-4, 5-14, 15-34, 35-59, 60-79, 80+ sowie unbekannt
+            Altersgruppe2: Altersgruppe des Falles aus 5-Jahresgruppen 0-4, 5-9, 10-14, ..., 75-79, 80+ sowie unbekannt
+            Geschlecht: Geschlecht des Falles M0männlich, W=weiblich und unbekannt
+            AnzahlFall: Anzahl der Fälle in der entsprechenden Gruppe
+            AnzahlTodesfall: Anzahl der Todesfälle in der entsprechenden Gruppe
+            Meldedatum: Datum, wann der Fall dem Gesundheitsamt bekannt geworden ist
+            Datenstand: Datum, wann der Datensatz zuletzt aktualisiert worden ist
+            NeuerFall: 
+            0: Fall ist in der Publikation für den aktuellen Tag und in der für den Vortag enthalten
+            1: Fall ist nur in der aktuellen Publikation enthalten
+            -1: Fall ist nur in der Publikation des Vortags enthalten
+            damit ergibt sich: Anzahl Fälle der aktuellen Publikation als Summe(AnzahlFall), wenn NeuerFall in (0,1); Delta zum Vortag als Summe(AnzahlFall) wenn NeuerFall in (-1,1)
+            NeuerTodesfall:
+            0: Fall ist in der Publikation für den aktuellen Tag und in der für den Vortag jeweils ein Todesfall
+            1: Fall ist in der aktuellen Publikation ein Todesfall, nicht jedoch in der Publikation des Vortages
+            -1: Fall ist in der aktuellen Publikation kein Todesfall, jedoch war er in der Publikation des Vortags ein Todesfall
+            -9: Fall ist weder in der aktuellen Publikation noch in der des Vortages ein Todesfall
+            damit ergibt sich: Anzahl Todesfälle der aktuellen Publikation als Summe(AnzahlTodesfall) wenn NeuerTodesfall in (0,1); Delta zum Vortag als Summe(AnzahlTodesfall) wenn NeuerTodesfall in (-1,1)
+            Referenzdatum: Erkrankungsdatum bzw. wenn das nicht bekannt ist, das Meldedatum
+            AnzahlGenesen: Anzahl der Genesenen in der entsprechenden Gruppe
+            NeuGenesen:
+            0: Fall ist in der Publikation für den aktuellen Tag und in der für den Vortag jeweils Genesen
+            1: Fall ist in der aktuellen Publikation Genesen, nicht jedoch in der Publikation des Vortages
+            -1: Fall ist in der aktuellen Publikation nicht Genesen, jedoch war er in der Publikation des Vortags Genesen
+            -9: Fall ist weder in der aktuellen Publikation noch in der des Vortages Genesen 
+            damit ergibt sich: Anzahl Genesen der aktuellen Publikation als Summe(AnzahlGenesen) wenn NeuGenesen in (0,1); Delta zum Vortag als Summe(AnzahlGenesen) wenn NeuGenesen in (-1,1)
+            IstErkrankungsbeginn: 1, wenn das Refdatum der Erkrankungsbeginn ist, 0 sonst
+            */
+            
+            // New calculation stuff
+            $district = $this->districts[$district_hash];
+            $population = 0;
+            
+            if (is_object($district))
+                $population = $district->population_count;
+            
+            if (($data->cases_new == 0) || ($data->cases_new == 1))
+                $dataset->cases += $data->cases_count;
+            if (($data->cases_new == -1) || ($data->cases_new == 1))
+                $dataset->new_cases += $data->cases_count;
+            if ($data->cases_new == 0)
+                $dataset->new_cases_smoothed += $data->cases_count;
+                
+            $dataset->total_cases = ($dataset->new_cases - $dataset->cases);
+            
+            if ($population > 0)
+                $dataset->total_cases_per_million = ($dataset->total_cases / $population * $mil);
+
+            if (($data->deaths_new == 0) || ($data->deaths_new == 1))
+                $dataset->deaths += $data->deaths_count;
+            if (($data->deaths_new == -1) || ($data->deaths_new == 1))
+                $dataset->new_deaths += $data->deaths_count;
+            if ($data->deaths_new == 0)
+                $dataset->new_deaths_smoothed += $data->deaths_count;
+                
+            $dataset->total_deaths = ($dataset->new_deaths - $dataset->deaths);
+
+            if ($population > 0)
+                $dataset->total_deaths_per_million = ($dataset->total_deaths / $population * $mil);
+
+            if (($data->recovered_new == 0) || ($data->recovered_new == 1))
+                $dataset->recovered += $data->recovered_count;
+            if (($data->recovered_new == -1) || ($data->recovered_new == 1))
+                $dataset->new_recovered += $data->recovered_count;
+            if ($data->recovered_new == 0)
+                $dataset->new_recovered_smoothed += $data->recovered_count;
+                
+            $dataset->total_recovered = ($dataset->new_recovered - $dataset->recovered);
+
+            if ($population > 0)
+                $dataset->total_recovered_per_million = ($dataset->total_recovered / $population * $mil);
+                                                                
             if (!isset($datasets[$index]))
                 $datasets[$index] = array();
                                 
@@ -2197,9 +2268,6 @@ class Client
             
             krsort($datasets[$index]);
         }
-
-        // Define a "million" to prevent typos
-        $mil = 1000000;
 
         // Global counters        
         $states_cases = array();
