@@ -735,7 +735,7 @@ class Client
                 if ((double)$continent->population_year == 0)
                     $continent->population_year = date("Y");
                 
-                if ($continent->population_density > 0)
+                if ((isset($continent->population_density)) && ($continent->population_density > 0))
                     $continent->area = ($continent->population_count / $continent->population_density);
             }
             
@@ -744,7 +744,7 @@ class Client
                 if ((double)$country->population_year == 0)
                     $country->population_year = date("Y");
                 
-                if ($country->population_density > 0)
+                if ((isset($country->population_density)) && ($country->population_density > 0))
                     $country->area = ($country->population_count / $country->population_density);
             }
             
@@ -788,15 +788,23 @@ class Client
             if ($country->area > 0)
             {
                 $country->infection_density = ($country->cases_count / $country->area);
-                $country->infection_area = (1 / $country->infection_density);
-                $country->infection_probability = (100 / ($country->infection_area * $country->population_density));
+                
+                if ($country->infection_density > 0)
+                {
+                    $country->infection_area = (1 / $country->infection_density);
+                    $country->infection_probability = (100 / ($country->infection_area * $country->population_density));
+                }
             }            
 
             if ($continent->area > 0)
             {
                 $continent->infection_density = ($continent->cases_count / $continent->area);
-                $continent->infection_area = (1 / $continent->infection_density);
-                $continent->infection_probability = (100 / ($continent->infection_area * $continent->population_density));
+                
+                if ($continent->infection_density > 0)
+                {
+                    $continent->infection_area = (1 / $continent->infection_density);
+                    $continent->infection_probability = (100 / ($continent->infection_area * $continent->population_density));
+                }
             }            
 
             // We must override the used addressed space, if objects just have been created, they will get lost if we dont force this
