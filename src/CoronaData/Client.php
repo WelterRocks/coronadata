@@ -436,6 +436,7 @@ class Client
                 "new_tests_per_thousand" => "avg",
                 "new_tests_smoothed" => "sum",
                 "new_tests_smoothed_per_thousand" => "avg",
+                "reproduction_rate" => "avg",
                 "positive_rate" => "avg",
                 "stringency_index" => "avg",
                 "tests_per_case" => "sum",
@@ -727,6 +728,24 @@ class Client
                     elseif ($type == "sum")
                         $country->$filter += $data->$filter;
                 }
+            }
+            
+            if ($continent->population_count > 0)
+            {
+                if ((double)$continent->population_year == 0)
+                    $continent->population_year = date("Y");
+                
+                if ($continent->population_density > 0)
+                    $continent->area = ($continent->population_count / $continent->population_density);
+            }
+            
+            if ($country->population_count > 0)
+            {
+                if ((double)$country->population_year == 0)
+                    $country->population_year = date("Y");
+                
+                if ($country->population_density > 0)
+                    $country->area = ($country->population_count / $country->population_density);
             }
             
             unset($data);
