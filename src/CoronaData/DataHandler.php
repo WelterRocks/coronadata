@@ -571,24 +571,7 @@ class DataHandler
         return true;        
     }
     
-    public function transform_cov_infocast()
-    {
-        if (is_object($this->data))
-            return true;
-            
-        $data = json_decode($this->data);
-        
-        if (!$data)
-            return false;
-            
-        $this->data = clone $data;
-        
-        unset($data);
-        
-        return true;
-    }
-    
-    public function transform_eu_datacast()
+    public function transform_eu_coviddata()
     {       
         $transform_keys = array(
             "dateRep" => "date_rep",
@@ -610,7 +593,7 @@ class DataHandler
                     if ($val === null)
                         $val = "";
                     
-                    // Because EU datacast has no location field, we set it to current country and replace the _ to space
+                    // Because EU coviddata has no location field, we set it to current country and replace the _ to space
                     if ($new_key == "country")
                     {
                         $val = str_replace("_", " ", $val);

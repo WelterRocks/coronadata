@@ -22,11 +22,10 @@
 
 final class Config
 {
-    private $url_eu_datacast = 'https://opendata.ecdc.europa.eu/covid19/casedistribution/json/';
+    private $url_eu_coviddata = 'https://opendata.ecdc.europa.eu/covid19/casedistribution/json/';
     private $url_rki_positive = 'https://opendata.arcgis.com/datasets/dd4580c810204019a7b8eb3e0b329dd6_0.geojson';
     private $url_rki_nowcast = 'https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/Nowcasting_Zahlen_csv.csv?__blob=publicationFile';
     private $url_rki_rssfeed = 'https://www.rki.de/SiteGlobals/Functions/RSSFeed/RSSGenerator_nCoV.xml';
-    private $url_cov_infocast = 'https://github.com/owid/covid-19-data/raw/master/public/data/owid-covid-data.json';
     private $url_divi_intens = 'https://diviexchange.blob.core.windows.net/%24web/DIVI_Intensivregister_Auszug_pro_Landkreis.csv';
     private $url_genesis_api = 'https://www-genesis.destatis.de/genesisWS/rest/2020/';
     
@@ -92,13 +91,12 @@ final class Config
         $this->allow_override = false;
     }
     
-    public function override_urls($url_eu_datacast, $url_rki_nowcast, $url_cov_infocast)
+    public function override_urls($url_eu_coviddata, $url_rki_nowcast)
     {
         if (!$this->allow_override) return false;
 
-        $this->url_eu_datacast = $url_eu_datacast;
+        $this->url_eu_coviddata = $url_eu_coviddata;
         $this->url_rki_nowcast = $url_rki_nowcast;
-        $this->url_cov_infocast = $url_cov_infocast;
         
         return true;
     }

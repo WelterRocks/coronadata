@@ -27,70 +27,203 @@ class Datasets extends Base
 {
     protected $locations_uid = null;
     protected $location_type = null;
+
     protected $dataset_hash = null;
+
     protected $location_hash = null;
     protected $district_hash = null;
     protected $state_hash = null;
     protected $country_hash = null;
     protected $continent_hash = null;
+
     protected $date_rep = null;
     protected $day_of_week = null;
     protected $day = null;
     protected $month = null;
     protected $year = null;
-    protected $cases = null;
-    protected $cases_4day = null;
-    protected $cases_7day = null;
-    protected $cases_14day = null;
-    protected $cases_rate = null;
-    protected $cases_ascension = null;
+
+    protected $cases_new = null;
+    protected $cases_count = null;
+    protected $cases_delta = null;
+    protected $cases_today = null;
+    protected $cases_yesterday = null;
+    protected $cases_total = null;
     protected $cases_pointer = null;
-    protected $deaths = null;
-    protected $deaths_4day = null;
-    protected $deaths_7day = null;
-    protected $deaths_14day = null;
-    protected $deaths_rate = null;
-    protected $deaths_ascension = null;
+    
+    protected $cases_4day_average = null;
+    protected $cases_7day_average = null;
+    protected $cases_14day_average = null;
+    
+    protected $cases_new_agegroup_0_4 = null;
+    protected $cases_new_agegroup_5_14 = null;
+    protected $cases_new_agegroup_15_34 = null;
+    protected $cases_new_agegroup_35_59 = null;
+    protected $cases_new_agegroup_60_79 = null;
+    protected $cases_new_agegroup_80_plus = null;
+    protected $cases_new_agegroup_unknown = null;
+
+    protected $cases_count_agegroup_0_4 = null;
+    protected $cases_count_agegroup_5_14 = null;
+    protected $cases_count_agegroup_15_34 = null;
+    protected $cases_count_agegroup_35_59 = null;
+    protected $cases_count_agegroup_60_79 = null;
+    protected $cases_count_agegroup_80_plus = null;
+    protected $cases_count_agegroup_unknown = null;
+    
+    protected $cases_delta_agegroup_0_4 = null;
+    protected $cases_delta_agegroup_5_14 = null;
+    protected $cases_delta_agegroup_15_34 = null;
+    protected $cases_delta_agegroup_35_59 = null;
+    protected $cases_delta_agegroup_60_79 = null;
+    protected $cases_delta_agegroup_80_plus = null;
+    protected $cases_delta_agegroup_unknown = null;
+    
+    protected $cases_today_agegroup_0_4 = null;
+    protected $cases_today_agegroup_5_14 = null;
+    protected $cases_today_agegroup_15_34 = null;
+    protected $cases_today_agegroup_35_59 = null;
+    protected $cases_today_agegroup_60_79 = null;
+    protected $cases_today_agegroup_80_plus = null;
+    protected $cases_today_agegroup_unknown = null;
+    
+    protected $cases_total_agegroup_0_4 = null;
+    protected $cases_total_agegroup_5_14 = null;
+    protected $cases_total_agegroup_15_34 = null;
+    protected $cases_total_agegroup_35_59 = null;
+    protected $cases_total_agegroup_60_79 = null;
+    protected $cases_total_agegroup_80_plus = null;
+    protected $cases_total_agegroup_unknown = null;
+    
+    protected $cases_pointer_agegroup_0_4 = null;
+    protected $cases_pointer_agegroup_5_14 = null;
+    protected $cases_pointer_agegroup_15_34 = null;
+    protected $cases_pointer_agegroup_35_59 = null;
+    protected $cases_pointer_agegroup_60_79 = null;
+    protected $cases_pointer_agegroup_80_plus = null;
+    protected $cases_pointer_agegroup_unknown = null;
+    
+    protected $deaths_new = null;
+    protected $deaths_count = null;
+    protected $deaths_delta = null;
+    protected $deaths_today = null;
+    protected $deaths_yesterday = null;
+    protected $deaths_total = null;
     protected $deaths_pointer = null;
-    protected $recovered = null;
+    
+    protected $deaths_4day_average = null;
+    protected $deaths_7day_average = null;
+    protected $deaths_14day_average = null;
+    
+    protected $deaths_new_agegroup_0_4 = null;
+    protected $deaths_new_agegroup_5_14 = null;
+    protected $deaths_new_agegroup_15_34 = null;
+    protected $deaths_new_agegroup_35_59 = null;
+    protected $deaths_new_agegroup_60_79 = null;
+    protected $deaths_new_agegroup_80_plus = null;
+    protected $deaths_new_agegroup_unknown = null;
+
+    protected $deaths_count_agegroup_0_4 = null;
+    protected $deaths_count_agegroup_5_14 = null;
+    protected $deaths_count_agegroup_15_34 = null;
+    protected $deaths_count_agegroup_35_59 = null;
+    protected $deaths_count_agegroup_60_79 = null;
+    protected $deaths_count_agegroup_80_plus = null;
+    protected $deaths_count_agegroup_unknown = null;
+    
+    protected $deaths_delta_agegroup_0_4 = null;
+    protected $deaths_delta_agegroup_5_14 = null;
+    protected $deaths_delta_agegroup_15_34 = null;
+    protected $deaths_delta_agegroup_35_59 = null;
+    protected $deaths_delta_agegroup_60_79 = null;
+    protected $deaths_delta_agegroup_80_plus = null;
+    protected $deaths_delta_agegroup_unknown = null;
+    
+    protected $deaths_today_agegroup_0_4 = null;
+    protected $deaths_today_agegroup_5_14 = null;
+    protected $deaths_today_agegroup_15_34 = null;
+    protected $deaths_today_agegroup_35_59 = null;
+    protected $deaths_today_agegroup_60_79 = null;
+    protected $deaths_today_agegroup_80_plus = null;
+    protected $deaths_today_agegroup_unknown = null;
+    
+    protected $deaths_total_agegroup_0_4 = null;
+    protected $deaths_total_agegroup_5_14 = null;
+    protected $deaths_total_agegroup_15_34 = null;
+    protected $deaths_total_agegroup_35_59 = null;
+    protected $deaths_total_agegroup_60_79 = null;
+    protected $deaths_total_agegroup_80_plus = null;
+    protected $deaths_total_agegroup_unknown = null;
+    
+    protected $deaths_pointer_agegroup_0_4 = null;
+    protected $deaths_pointer_agegroup_5_14 = null;
+    protected $deaths_pointer_agegroup_15_34 = null;
+    protected $deaths_pointer_agegroup_35_59 = null;
+    protected $deaths_pointer_agegroup_60_79 = null;
+    protected $deaths_pointer_agegroup_80_plus = null;
+    protected $deaths_pointer_agegroup_unknown = null;
+    
+    protected $recovered_new = null;
+    protected $recovered_count = null;
+    protected $recovered_delta = null;
+    protected $recovered_today = null;
+    protected $recovered_yesterday = null;
+    protected $recovered_total = null;
+    protected $recovered_pointer = null;
+    
+    protected $recovered_4day_average = null;
+    protected $recovered_7day_average = null;
+    protected $recovered_14day_average = null;
+    
+    protected $recovered_new_agegroup_0_4 = null;
+    protected $recovered_new_agegroup_5_14 = null;
+    protected $recovered_new_agegroup_15_34 = null;
+    protected $recovered_new_agegroup_35_59 = null;
+    protected $recovered_new_agegroup_60_79 = null;
+    protected $recovered_new_agegroup_80_plus = null;
+    protected $recovered_new_agegroup_unknown = null;
+
+    protected $recovered_count_agegroup_0_4 = null;
+    protected $recovered_count_agegroup_5_14 = null;
+    protected $recovered_count_agegroup_15_34 = null;
+    protected $recovered_count_agegroup_35_59 = null;
+    protected $recovered_count_agegroup_60_79 = null;
+    protected $recovered_count_agegroup_80_plus = null;
+    protected $recovered_count_agegroup_unknown = null;
+    
+    protected $recovered_delta_agegroup_0_4 = null;
+    protected $recovered_delta_agegroup_5_14 = null;
+    protected $recovered_delta_agegroup_15_34 = null;
+    protected $recovered_delta_agegroup_35_59 = null;
+    protected $recovered_delta_agegroup_60_79 = null;
+    protected $recovered_delta_agegroup_80_plus = null;
+    protected $recovered_delta_agegroup_unknown = null;
+    
+    protected $recovered_today_agegroup_0_4 = null;
+    protected $recovered_today_agegroup_5_14 = null;
+    protected $recovered_today_agegroup_15_34 = null;
+    protected $recovered_today_agegroup_35_59 = null;
+    protected $recovered_today_agegroup_60_79 = null;
+    protected $recovered_today_agegroup_80_plus = null;
+    protected $recovered_today_agegroup_unknown = null;
+    
+    protected $recovered_total_agegroup_0_4 = null;
+    protected $recovered_total_agegroup_5_14 = null;
+    protected $recovered_total_agegroup_15_34 = null;
+    protected $recovered_total_agegroup_35_59 = null;
+    protected $recovered_total_agegroup_60_79 = null;
+    protected $recovered_total_agegroup_80_plus = null;
+    protected $recovered_total_agegroup_unknown = null;
+    
+    protected $recovered_pointer_agegroup_0_4 = null;
+    protected $recovered_pointer_agegroup_5_14 = null;
+    protected $recovered_pointer_agegroup_15_34 = null;
+    protected $recovered_pointer_agegroup_35_59 = null;
+    protected $recovered_pointer_agegroup_60_79 = null;
+    protected $recovered_pointer_agegroup_80_plus = null;
+    protected $recovered_pointer_agegroup_unknown = null;
+    
     protected $timestamp_represent = null;
-    protected $hosp_patients = null;
-    protected $hosp_patients_per_million = null;
-    protected $icu_patients = null;
-    protected $icu_patients_per_million = null;
-    protected $new_cases = null;
-    protected $new_cases_per_million = null;
-    protected $new_cases_smoothed = null;
-    protected $new_cases_smoothed_per_million = null;
-    protected $new_deaths = null;
-    protected $new_deaths_per_million = null;
-    protected $new_deaths_smoothed = null;
-    protected $new_deaths_smoothed_per_million = null;
-    protected $new_recovered = null;
-    protected $new_recovered_per_million = null;
-    protected $new_recovered_smoothed = null;
-    protected $new_recovered_smoothed_per_million = null;
-    protected $new_tests = null;
-    protected $new_tests_per_thousand = null;
-    protected $new_tests_smoothed = null;
-    protected $new_tests_smoothed_per_thousand = null;
-    protected $positive_rate = null;
-    protected $reproduction_rate = null;
-    protected $stringency_index = null;
-    protected $tests_per_case = null;
-    protected $tests_units = null;
-    protected $total_cases = null;
-    protected $total_cases_per_million = null;
-    protected $total_deaths = null;
-    protected $total_deaths_per_million = null;
-    protected $total_recovered = null;
-    protected $total_recovered_per_million = null;
-    protected $total_tests = null;
-    protected $total_tests_per_thousand = null;
-    protected $weekly_hosp_admissions = null;
-    protected $weekly_hosp_admissions_per_million = null;
-    protected $weekly_icu_admissions = null;
-    protected $weekly_icu_admissions_per_million = null;
+
     protected $incidence_4day = null;
     protected $incidence_7day = null;
     protected $incidence_14day = null;
@@ -103,6 +236,7 @@ class Datasets extends Base
     protected $incidence2_4day_smoothed = null;
     protected $incidence2_7day_smoothed = null;
     protected $incidence2_14day_smoothed = null;
+
     protected $exponence_yesterday = null;
     protected $exponence_4day = null;
     protected $exponence_7day = null;
@@ -110,19 +244,23 @@ class Datasets extends Base
     protected $exponence_4day_smoothed = null;
     protected $exponence_7day_smoothed = null;
     protected $exponence_14day_smoothed = null;
+
     protected $reproduction_4day = null;
     protected $reproduction_7day = null;
     protected $reproduction_14day = null;
+
     protected $alert_condition_4day = null;
     protected $alert_condition_7day = null;
     protected $alert_condition_14day = null;
     protected $alert_condition_pointer = null;
     protected $alert_condition = null;
+
     protected $alert_condition2_4day = null;
     protected $alert_condition2_7day = null;
     protected $alert_condition2_14day = null;
     protected $alert_condition2_pointer = null;
     protected $alert_condition2 = null;
+
     protected $flag_case_free = null;
     protected $flag_enforce_daily_need_deliveries = null;
     protected $flag_enforce_treatment_priorization = null;
@@ -147,6 +285,7 @@ class Datasets extends Base
     protected $flag_enforce_critical_mask_wearing = null;
     protected $flag_enforce_public_mask_wearing = null;
     protected $flag_isolate_low_risk_group = null;
+
     protected $enforce_distance_meters = null;
     protected $enforce_household_plus_persons_to = null;
     protected $enforce_public_groups_to = null;
@@ -166,68 +305,172 @@ class Datasets extends Base
         `timestamp_enabled` timestamp NULL DEFAULT NULL,
         `timestamp_represent` timestamp NULL DEFAULT NULL,
         `date_rep` DATE NULL DEFAULT NULL,
+        `day_of_week` smallint UNSIGNED NOT NULL DEFAULT '0',
+        `day` smallint UNSIGNED NOT NULL DEFAULT '0',
+        `month` smallint UNSIGNED NOT NULL DEFAULT '0',
+        `year` YEAR NOT NULL DEFAULT '0',
         `dataset_hash` VARCHAR(32) NULL DEFAULT NULL,
         `continent_hash` VARCHAR(32) NULL DEFAULT NULL,
         `country_hash` VARCHAR(32) NULL DEFAULT NULL,
         `state_hash` VARCHAR(32) NULL DEFAULT NULL,
         `district_hash` VARCHAR(32) NULL DEFAULT NULL,
         `location_hash` VARCHAR(32) NULL DEFAULT NULL,
-        `day_of_week` smallint UNSIGNED NOT NULL DEFAULT '0',
-        `day` smallint UNSIGNED NOT NULL DEFAULT '0',
-        `month` smallint UNSIGNED NOT NULL DEFAULT '0',
-        `year` YEAR NOT NULL DEFAULT '0',
-        `cases` BIGINT NOT NULL DEFAULT '0',
-        `cases_4day` BIGINT NOT NULL DEFAULT '0',
-        `cases_7day` BIGINT NOT NULL DEFAULT '0',
-        `cases_14day` BIGINT NOT NULL DEFAULT '0',
-        `cases_rate` FLOAT NOT NULL DEFAULT '0',
-        `cases_ascension` FLOAT NOT NULL DEFAULT '0',
-        `cases_pointer` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
-        `deaths` BIGINT NOT NULL DEFAULT '0',
-        `deaths_4day` BIGINT NOT NULL DEFAULT '0',
-        `deaths_7day` BIGINT NOT NULL DEFAULT '0',
-        `deaths_14day` BIGINT NOT NULL DEFAULT '0',
-        `deaths_rate` FLOAT NOT NULL DEFAULT '0',
-        `deaths_ascension` FLOAT NOT NULL DEFAULT '0',
+        `cases_new` int unsigned NOT NULL DEFAULT '0',
+        `cases_count` int unsigned NOT NULL DEFAULT '0',
+        `cases_delta` int unsigned NOT NULL DEFAULT '0',
+        `cases_today` int unsigned NOT NULL DEFAULT '0',
+        `cases_yesterday` int unsigned NOT NULL DEFAULT '0',
+        `cases_total` int unsigned NOT NULL DEFAULT '0',
+        `cases_pointer` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',   
+        `cases_4day_average` FLOAT NOT NULL DEFAULT '0',
+        `cases_7day_average` FLOAT NOT NULL DEFAULT '0',
+        `cases_14day_average` FLOAT NOT NULL DEFAULT '0',    
+        `cases_new_agegroup_0_4` int unsigned NOT NULL DEFAULT '0',
+        `cases_new_agegroup_5_14` int unsigned NOT NULL DEFAULT '0',
+        `cases_new_agegroup_15_34` int unsigned NOT NULL DEFAULT '0',
+        `cases_new_agegroup_35_59` int unsigned NOT NULL DEFAULT '0',
+        `cases_new_agegroup_60_79` int unsigned NOT NULL DEFAULT '0',
+        `cases_new_agegroup_80_plus` int unsigned NOT NULL DEFAULT '0',
+        `cases_new_agegroup_unknown` int unsigned NOT NULL DEFAULT '0',
+        `cases_count_agegroup_0_4` int unsigned NOT NULL DEFAULT '0',
+        `cases_count_agegroup_5_14` int unsigned NOT NULL DEFAULT '0',
+        `cases_count_agegroup_15_34` int unsigned NOT NULL DEFAULT '0',
+        `cases_count_agegroup_35_59` int unsigned NOT NULL DEFAULT '0',
+        `cases_count_agegroup_60_79` int unsigned NOT NULL DEFAULT '0',
+        `cases_count_agegroup_80_plus` int unsigned NOT NULL DEFAULT '0',
+        `cases_count_agegroup_unknown` int unsigned NOT NULL DEFAULT '0',
+        `cases_delta_agegroup_0_4` int unsigned NOT NULL DEFAULT '0',
+        `cases_delta_agegroup_5_14` int unsigned NOT NULL DEFAULT '0',
+        `cases_delta_agegroup_15_34` int unsigned NOT NULL DEFAULT '0',
+        `cases_delta_agegroup_35_59` int unsigned NOT NULL DEFAULT '0',
+        `cases_delta_agegroup_60_79` int unsigned NOT NULL DEFAULT '0',
+        `cases_delta_agegroup_80_plus` int unsigned NOT NULL DEFAULT '0',
+        `cases_delta_agegroup_unknown` int unsigned NOT NULL DEFAULT '0',
+        `cases_today_agegroup_0_4` int unsigned NOT NULL DEFAULT '0',
+        `cases_today_agegroup_5_14` int unsigned NOT NULL DEFAULT '0',
+        `cases_today_agegroup_15_34` int unsigned NOT NULL DEFAULT '0',
+        `cases_today_agegroup_35_59` int unsigned NOT NULL DEFAULT '0',
+        `cases_today_agegroup_60_79` int unsigned NOT NULL DEFAULT '0',
+        `cases_today_agegroup_80_plus` int unsigned NOT NULL DEFAULT '0',
+        `cases_today_agegroup_unknown` int unsigned NOT NULL DEFAULT '0',
+        `cases_total_agegroup_0_4` int unsigned NOT NULL DEFAULT '0',
+        `cases_total_agegroup_5_14` int unsigned NOT NULL DEFAULT '0',
+        `cases_total_agegroup_15_34` int unsigned NOT NULL DEFAULT '0',
+        `cases_total_agegroup_35_59` int unsigned NOT NULL DEFAULT '0',
+        `cases_total_agegroup_60_79` int unsigned NOT NULL DEFAULT '0',
+        `cases_total_agegroup_80_plus` int unsigned NOT NULL DEFAULT '0',
+        `cases_total_agegroup_unknown` int unsigned NOT NULL DEFAULT '0',
+        `cases_pointer_agegroup_0_4` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
+        `cases_pointer_agegroup_5_14` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
+        `cases_pointer_agegroup_15_34` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
+        `cases_pointer_agegroup_35_59` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
+        `cases_pointer_agegroup_60_79` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
+        `cases_pointer_agegroup_80_plus` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
+        `cases_pointer_agegroup_unknown` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
+        `deaths_new` int unsigned NOT NULL DEFAULT '0',
+        `deaths_count` int unsigned NOT NULL DEFAULT '0',
+        `deaths_delta` int unsigned NOT NULL DEFAULT '0',
+        `deaths_today` int unsigned NOT NULL DEFAULT '0',
+        `deaths_yesterday` int unsigned NOT NULL DEFAULT '0',
+        `deaths_total` int unsigned NOT NULL DEFAULT '0',
         `deaths_pointer` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
-        `recovered` BIGINT NOT NULL DEFAULT '0',
-        `hosp_patients` INT NOT NULL DEFAULT '0',
-        `hosp_patients_per_million` FLOAT NOT NULL DEFAULT '0',
-        `icu_patients` INT NOT NULL DEFAULT '0',
-        `icu_patients_per_million` FLOAT NOT NULL DEFAULT '0',
-        `new_cases` INT NOT NULL DEFAULT '0',
-        `new_cases_per_million` FLOAT NOT NULL DEFAULT '0',
-        `new_cases_smoothed` INT NOT NULL DEFAULT '0',
-        `new_cases_smoothed_per_million` FLOAT NOT NULL DEFAULT '0',
-        `new_deaths` INT NOT NULL DEFAULT '0',
-        `new_deaths_per_million` FLOAT NOT NULL DEFAULT '0',
-        `new_deaths_smoothed` INT NOT NULL DEFAULT '0',
-        `new_deaths_smoothed_per_million` FLOAT NOT NULL DEFAULT '0',
-        `new_recovered` INT NOT NULL DEFAULT '0',
-        `new_recovered_per_million` FLOAT NOT NULL DEFAULT '0',
-        `new_recovered_smoothed` INT NOT NULL DEFAULT '0',
-        `new_recovered_smoothed_per_million` FLOAT NOT NULL DEFAULT '0',
-        `new_tests` INT NOT NULL DEFAULT '0',
-        `new_tests_per_thousand` FLOAT NOT NULL DEFAULT '0',
-        `new_tests_smoothed` INT NOT NULL DEFAULT '0',
-        `new_tests_smoothed_per_thousand` FLOAT NOT NULL DEFAULT '0',
-        `positive_rate` FLOAT NOT NULL DEFAULT '0',
-        `reproduction_rate` FLOAT NOT NULL DEFAULT '0',
-        `stringency_index` FLOAT NOT NULL DEFAULT '0',
-        `tests_per_case` FLOAT NOT NULL DEFAULT '0',
-        `tests_units` VARCHAR(32) DEFAULT NULL,
-        `total_cases` BIGINT NOT NULL DEFAULT '0',
-        `total_cases_per_million` FLOAT NOT NULL DEFAULT '0',
-        `total_deaths` BIGINT NOT NULL DEFAULT '0',
-        `total_deaths_per_million` FLOAT NOT NULL DEFAULT '0',
-        `total_recovered` BIGINT NOT NULL DEFAULT '0',
-        `total_recovered_per_million` FLOAT NOT NULL DEFAULT '0',
-        `total_tests` INT NOT NULL DEFAULT '0',
-        `total_tests_per_thousand` FLOAT NOT NULL DEFAULT '0',
-        `weekly_hosp_admissions` INT NOT NULL DEFAULT '0',
-        `weekly_hosp_admissions_per_million` FLOAT NOT NULL DEFAULT '0',
-        `weekly_icu_admissions` INT NOT NULL DEFAULT '0',
-        `weekly_icu_admissions_per_million` FLOAT NOT NULL DEFAULT '0',
+        `deaths_4day_average` FLOAT NOT NULL DEFAULT '0',
+        `deaths_7day_average` FLOAT NOT NULL DEFAULT '0',
+        `deaths_14day_average` FLOAT NOT NULL DEFAULT '0',
+        `deaths_new_agegroup_0_4` int unsigned NOT NULL DEFAULT '0',
+        `deaths_new_agegroup_5_14` int unsigned NOT NULL DEFAULT '0',
+        `deaths_new_agegroup_15_34` int unsigned NOT NULL DEFAULT '0',
+        `deaths_new_agegroup_35_59` int unsigned NOT NULL DEFAULT '0',
+        `deaths_new_agegroup_60_79` int unsigned NOT NULL DEFAULT '0',
+        `deaths_new_agegroup_80_plus` int unsigned NOT NULL DEFAULT '0',
+        `deaths_new_agegroup_unknown` int unsigned NOT NULL DEFAULT '0',
+        `deaths_count_agegroup_0_4` int unsigned NOT NULL DEFAULT '0',
+        `deaths_count_agegroup_5_14` int unsigned NOT NULL DEFAULT '0',
+        `deaths_count_agegroup_15_34` int unsigned NOT NULL DEFAULT '0',
+        `deaths_count_agegroup_35_59` int unsigned NOT NULL DEFAULT '0',
+        `deaths_count_agegroup_60_79` int unsigned NOT NULL DEFAULT '0',
+        `deaths_count_agegroup_80_plus` int unsigned NOT NULL DEFAULT '0',
+        `deaths_count_agegroup_unknown` int unsigned NOT NULL DEFAULT '0',
+        `deaths_delta_agegroup_0_4` int unsigned NOT NULL DEFAULT '0',
+        `deaths_delta_agegroup_5_14` int unsigned NOT NULL DEFAULT '0',
+        `deaths_delta_agegroup_15_34` int unsigned NOT NULL DEFAULT '0',
+        `deaths_delta_agegroup_35_59` int unsigned NOT NULL DEFAULT '0',
+        `deaths_delta_agegroup_60_79` int unsigned NOT NULL DEFAULT '0',
+        `deaths_delta_agegroup_80_plus` int unsigned NOT NULL DEFAULT '0',
+        `deaths_delta_agegroup_unknown` int unsigned NOT NULL DEFAULT '0',
+        `deaths_today_agegroup_0_4` int unsigned NOT NULL DEFAULT '0',
+        `deaths_today_agegroup_5_14` int unsigned NOT NULL DEFAULT '0',
+        `deaths_today_agegroup_15_34` int unsigned NOT NULL DEFAULT '0',
+        `deaths_today_agegroup_35_59` int unsigned NOT NULL DEFAULT '0',
+        `deaths_today_agegroup_60_79` int unsigned NOT NULL DEFAULT '0',
+        `deaths_today_agegroup_80_plus` int unsigned NOT NULL DEFAULT '0',
+        `deaths_today_agegroup_unknown` int unsigned NOT NULL DEFAULT '0',
+        `deaths_total_agegroup_0_4` int unsigned NOT NULL DEFAULT '0',
+        `deaths_total_agegroup_5_14` int unsigned NOT NULL DEFAULT '0',
+        `deaths_total_agegroup_15_34` int unsigned NOT NULL DEFAULT '0',
+        `deaths_total_agegroup_35_59` int unsigned NOT NULL DEFAULT '0',
+        `deaths_total_agegroup_60_79` int unsigned NOT NULL DEFAULT '0',
+        `deaths_total_agegroup_80_plus` int unsigned NOT NULL DEFAULT '0',
+        `deaths_total_agegroup_unknown` int unsigned NOT NULL DEFAULT '0',
+        `deaths_pointer_agegroup_0_4` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
+        `deaths_pointer_agegroup_5_14` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
+        `deaths_pointer_agegroup_15_34` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
+        `deaths_pointer_agegroup_35_59` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
+        `deaths_pointer_agegroup_60_79` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
+        `deaths_pointer_agegroup_80_plus` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
+        `deaths_pointer_agegroup_unknown` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
+        `recovered_new` int unsigned NOT NULL DEFAULT '0',
+        `recovered_count` int unsigned NOT NULL DEFAULT '0',
+        `recovered_delta` int unsigned NOT NULL DEFAULT '0',
+        `recovered_today` int unsigned NOT NULL DEFAULT '0',
+        `recovered_yesterday` int unsigned NOT NULL DEFAULT '0',
+        `recovered_total` int unsigned NOT NULL DEFAULT '0',
+        `recovered_pointer` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
+        `recovered_4day_average` FLOAT NOT NULL DEFAULT '0',
+        `recovered_7day_average` FLOAT NOT NULL DEFAULT '0',
+        `recovered_14day_average` FLOAT NOT NULL DEFAULT '0',
+        `recovered_new_agegroup_0_4` int unsigned NOT NULL DEFAULT '0',
+        `recovered_new_agegroup_5_14` int unsigned NOT NULL DEFAULT '0',
+        `recovered_new_agegroup_15_34` int unsigned NOT NULL DEFAULT '0',
+        `recovered_new_agegroup_35_59` int unsigned NOT NULL DEFAULT '0',
+        `recovered_new_agegroup_60_79` int unsigned NOT NULL DEFAULT '0',
+        `recovered_new_agegroup_80_plus` int unsigned NOT NULL DEFAULT '0',
+        `recovered_new_agegroup_unknown` int unsigned NOT NULL DEFAULT '0',
+        `recovered_count_agegroup_0_4` int unsigned NOT NULL DEFAULT '0',
+        `recovered_count_agegroup_5_14` int unsigned NOT NULL DEFAULT '0',
+        `recovered_count_agegroup_15_34` int unsigned NOT NULL DEFAULT '0',
+        `recovered_count_agegroup_35_59` int unsigned NOT NULL DEFAULT '0',
+        `recovered_count_agegroup_60_79` int unsigned NOT NULL DEFAULT '0',
+        `recovered_count_agegroup_80_plus` int unsigned NOT NULL DEFAULT '0',
+        `recovered_count_agegroup_unknown` int unsigned NOT NULL DEFAULT '0',
+        `recovered_delta_agegroup_0_4` int unsigned NOT NULL DEFAULT '0',
+        `recovered_delta_agegroup_5_14` int unsigned NOT NULL DEFAULT '0',
+        `recovered_delta_agegroup_15_34` int unsigned NOT NULL DEFAULT '0',
+        `recovered_delta_agegroup_35_59` int unsigned NOT NULL DEFAULT '0',
+        `recovered_delta_agegroup_60_79` int unsigned NOT NULL DEFAULT '0',
+        `recovered_delta_agegroup_80_plus` int unsigned NOT NULL DEFAULT '0',
+        `recovered_delta_agegroup_unknown` int unsigned NOT NULL DEFAULT '0',
+        `recovered_today_agegroup_0_4` int unsigned NOT NULL DEFAULT '0',
+        `recovered_today_agegroup_5_14` int unsigned NOT NULL DEFAULT '0',
+        `recovered_today_agegroup_15_34` int unsigned NOT NULL DEFAULT '0',
+        `recovered_today_agegroup_35_59` int unsigned NOT NULL DEFAULT '0',
+        `recovered_today_agegroup_60_79` int unsigned NOT NULL DEFAULT '0',
+        `recovered_today_agegroup_80_plus` int unsigned NOT NULL DEFAULT '0',
+        `recovered_today_agegroup_unknown` int unsigned NOT NULL DEFAULT '0',
+        `recovered_total_agegroup_0_4` int unsigned NOT NULL DEFAULT '0',
+        `recovered_total_agegroup_5_14` int unsigned NOT NULL DEFAULT '0',
+        `recovered_total_agegroup_15_34` int unsigned NOT NULL DEFAULT '0',
+        `recovered_total_agegroup_35_59` int unsigned NOT NULL DEFAULT '0',
+        `recovered_total_agegroup_60_79` int unsigned NOT NULL DEFAULT '0',
+        `recovered_total_agegroup_80_plus` int unsigned NOT NULL DEFAULT '0',
+        `recovered_total_agegroup_unknown` int unsigned NOT NULL DEFAULT '0',
+        `recovered_pointer_agegroup_0_4` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
+        `recovered_pointer_agegroup_5_14` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
+        `recovered_pointer_agegroup_15_34` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
+        `recovered_pointer_agegroup_35_59` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
+        `recovered_pointer_agegroup_60_79` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
+        `recovered_pointer_agegroup_80_plus` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
+        `recovered_pointer_agegroup_unknown` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
         `incidence_4day` FLOAT NOT NULL DEFAULT '0',
         `incidence_7day` FLOAT NOT NULL DEFAULT '0',
         `incidence_14day` FLOAT NOT NULL DEFAULT '0',

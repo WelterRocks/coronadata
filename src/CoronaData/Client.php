@@ -34,11 +34,10 @@ class Client
     private $stores_loaded_count = null;
     private $stores_loaded_bytes = null;
         
-    private $eu_datacast = null;    
+    private $eu_coviddata = null;    
     private $rki_positive = null;    
     private $rki_nowcast = null;    
     private $rki_rssfeed = null;    
-    private $cov_infocast = null;
     private $divi_intens = null;
     
     private $gen_territory_area = null;
@@ -212,9 +211,9 @@ class Client
        return $this->retrieve_obj_data($this->gen_population_by_district, "transform_gen_population_by_district", $cache_timeout);
     }
     
-    public function retrieve_eu_datacast($cache_timeout = 14400)
+    public function retrieve_eu_coviddata($cache_timeout = 14400)
     {
-       return $this->retrieve_obj_data($this->eu_datacast, "transform_eu_datacast", $cache_timeout);
+       return $this->retrieve_obj_data($this->eu_coviddata, "transform_eu_coviddata", $cache_timeout);
     }
     
     public function retrieve_rki_positive($cache_timeout = 14400)
@@ -235,22 +234,17 @@ class Client
        return $this->retrieve_obj_data($this->rki_rssfeed, null, $cache_timeout, $target_filename, -1, true);
     }
     
-    public function retrieve_cov_infocast($cache_timeout = 14400)
-    {
-       return $this->retrieve_obj_data($this->cov_infocast, "transform_cov_infocast", $cache_timeout);       
-    }
-    
     public function retrieve_divi_intens($cache_timeout = 14400)
     {
        return $this->retrieve_obj_data($this->divi_intens, "transform_divi_intens", $cache_timeout, true, 9, false, "application/csv");
     }
     
-    public function export_eu_datacast(&$length = null, &$timestamp = null)
+    public function export_eu_coviddata(&$length = null, &$timestamp = null)
     {
-        $length = $this->eu_datacast->handler->get_length();
-        $timestamp = $this->eu_datacast->handler->get_timestamp();
+        $length = $this->eu_coviddata->handler->get_length();
+        $timestamp = $this->eu_coviddata->handler->get_timestamp();
         
-        return $this->eu_datacast->handler->get_data();
+        return $this->eu_coviddata->handler->get_data();
     }
     
     public function export_rki_nowcast(&$length = null, &$timestamp = null)
@@ -277,14 +271,6 @@ class Client
         return $this->rki_rssfeed->handler->get_data();
     }
     
-    public function export_cov_infocast(&$length = null, &$timestamp = null)
-    {
-        $length = $this->cov_infocast->handler->get_length();
-        $timestamp = $this->cov_infocast->handler->get_timestamp();
-        
-        return $this->cov_infocast->handler->get_data();
-    }
-    
     public function export_divi_intens(&$length = null, &$timestamp = null)
     {
         $length = $this->divi_intens->handler->get_length();
@@ -305,9 +291,9 @@ class Client
         return $this->database->clear_records();
     }
     
-    public function get_eu_datacast()
+    public function get_eu_coviddata()
     {
-        return $this->eu_datacast;
+        return $this->eu_coviddata;
     }
     
     public function get_rki_positive()
@@ -323,11 +309,6 @@ class Client
     public function get_rki_rssfeed()
     {
        return $this->rki_rssfeed; 
-    }
-    
-    public function get_cov_infocast()
-    {
-       return $this->cov_infocast;
     }
     
     public function get_divi_intens()
@@ -394,66 +375,6 @@ class Client
         return $retval;
     }
     
-    public static function get_infocast_filter($type = "outer")
-    {
-       $filter = null;
-
-        if ($type == "outer")
-            $filter = array(
-                "aged_65_older",
-                "aged_70_older",
-                "cardiovasc_death_rate",
-                "diabetes_prevalence",
-                "extreme_poverty",
-                "female_smokers",
-                "gdp_per_capita",
-                "handwashing_facilities",
-                "hospital_beds_per_thousand",
-                "human_development_index",
-                "life_expectancy",
-                "male_smokers",
-                "median_age",
-                "population_density"
-            );
-        
-        if ($type == "inner")
-            $filter = array(
-                "hosp_patients" => "sum",
-                "hosp_patients_per_million" => "avg",
-                "icu_patients" => "sum",
-                "icu_patients_per_million" => "avg",
-                "new_cases" => "sum",
-                "new_cases_per_million" => "avg",
-                "new_cases_smoothed" => "sum",
-                "new_cases_smoothed_per_million" => "avg",
-                "new_deaths" => "sum",
-                "new_deaths_per_million" => "avg",
-                "new_deaths_smoothed" => "sum",
-                "new_deaths_smoothed_per_million" => "avg",
-                "new_tests" => "sum",
-                "new_tests_per_thousand" => "avg",
-                "new_tests_smoothed" => "sum",
-                "new_tests_smoothed_per_thousand" => "avg",
-                "reproduction_rate" => "avg",
-                "positive_rate" => "avg",
-                "stringency_index" => "avg",
-                "tests_per_case" => "sum",
-                "tests_units" => "str",
-                "total_cases" => "sum",
-                "total_cases_per_million" => "avg",
-                "total_deaths" => "sum",
-                "total_deaths_per_million" => "avg",
-                "total_tests" => "sum",
-                "total_tests_per_thousand" => "avg",
-                "weekly_hosp_admissions" => "sum",
-                "weekly_hosp_admissions_per_million" => "avg",
-                "weekly_icu_admissions" => "sum",
-                "weekly_icu_admissions_per_million" => "avg" 
-            );
-            
-       return $filter;     
-    }
-    
     public function master_locations($hold_data = false)
     {
         // After stores are loaded, extract locations from all data sources and build a standardized tree
@@ -473,6 +394,7 @@ class Client
         $district_index = array();
         
         // Create a template
+        // DEPRECATION WARNING: There is no longer need to store any kind of cases data in the location table.
         $tmpl = new \stdClass;
         $tmpl->continent_id = null;
         $tmpl->continent_hash = null;
@@ -498,24 +420,10 @@ class Client
         $tmpl->population_females = 0;
         $tmpl->population_males = 0;
         $tmpl->area = 0;
-        $tmpl->deaths_count = 0;
-        $tmpl->deaths_min = 999999999999;
-        $tmpl->deaths_max = 0;
-        $tmpl->cases_count = 0;
-        $tmpl->cases_min = 999999999999;
-        $tmpl->cases_max = 0;
-        $tmpl->timestamp_min = (time() + 86400);
-        $tmpl->timestamp_max = 0;
-        $tmpl->divi_beds_free = 0;
-        $tmpl->divi_beds_occupied = 0;
-        $tmpl->divi_beds_total = 0;
-        $tmpl->divi_cases_covid = 0;
-        $tmpl->divi_cases_covid_ventilated = 0;
-        $tmpl->divi_reporting_areas = 0;
-        $tmpl->divi_locations_count = 0;
 
-        // First, we use the EU datacast
-        foreach ($this->eu_datacast->handler->get_data()->records as $id => $record)
+        // First, we use the EU coviddata, but skip any kind of cases data.
+        // This will be a static table in future versions, to speed things up massivly.
+        foreach ($this->eu_coviddata->handler->get_data()->records as $id => $record)
         {
             $continent_hash = self::hash_name("continent", $record->continent);
             $country_hash = self::hash_name("country", $record->country, $continent_hash);
@@ -532,32 +440,10 @@ class Client
             $continent->continent_name = $record->continent;
             $continent->location_type = 'continent';
             $continent->population_count += $record->population;
-            $continent->deaths_count += $record->deaths;
-            $continent->cases_count += $record->cases;
             
             if ($continent->population_year > $record->population_year)
                 $continent->population_year = $record->population_year;
             
-            $timestamp = strtotime($record->timestamp_represent);
-            
-            if ($continent->timestamp_min > $timestamp)
-                $continent->timestamp_min = $timestamp;
-                
-            if ($continent->timestamp_max < $timestamp)
-                $continent->timestamp_max = $timestamp;
-                
-            if ($continent->deaths_min > $record->deaths)
-                $continent->deaths_min = $record->deaths;
-
-            if ($continent->deaths_max < $record->deaths)
-                $continent->deaths_max = $record->deaths;
-
-            if ($continent->cases_min > $record->cases)
-                $continent->cases_min = $record->cases;
-
-            if ($continent->cases_max < $record->cases)
-                $continent->cases_max = $record->cases;
-                
             if (!isset($countries[$country_hash]))
                 $country = clone $tmpl;
             else
@@ -573,246 +459,16 @@ class Client
             $country->location_type = 'country';
             $country->geo_id = $record->geo_id ?: substr($record->country, 0, 2);
             $country->population_count = $record->population;
-            $country->deaths_count = $record->deaths;
-            $country->cases_count = $record->cases;
             
             if ($country->population_year > $record->population_year)
                 $country->population_year = $record->population_year;
             
-            $timestamp = strtotime($record->timestamp_represent);
-            
-            if ($country->timestamp_min > $timestamp)
-                $country->timestamp_min = $timestamp;
-                
-            if ($country->timestamp_max < $timestamp)
-                $country->timestamp_max = $timestamp;
-                
-            if ($country->deaths_min > $record->deaths)
-                $country->deaths_min = $record->deaths;
-
-            if ($country->deaths_max < $record->deaths)
-                $country->deaths_max = $record->deaths;
-
-            if ($country->cases_min > $record->cases)
-                $country->cases_min = $record->cases;
-
-            if ($country->cases_max < $record->cases)
-                $country->cases_max = $record->cases;            
-                
             $countries[$country_hash] = $country;
             $continents[$continent_hash] = $continent;
         }
         
-        // Setup inner and outer iteration filters
-        $filter_outer = self::get_infocast_filter("outer");        
-        $filter_inner = self::get_infocast_filter("inner");
-        
-        // Second, we use the COV infocast to extend, but EU has always preference, because it is an official data source
-        foreach ($this->cov_infocast->handler->get_data() as $country_code => $record)
-        {
-            // This will also skip "WORLD", but we dont need it
-            if (!isset($record->continent))
-                continue;
-                
-            // We have to make sure, America is set properly, so we merge north and south together for EU datacast compat
-            if (stristr($record->continent, "America"))
-                $record->continent = "America";
-            
-            $continent_hash = self::hash_name("continent", $record->continent);
-            $country_hash = self::hash_name("country", $record->location, $continent_hash);
-            
-            $continent_created = false;
-            $country_created = false;
-            
-            if (!isset($continents[$continent_hash]))
-            {
-                $continent = clone $tmpl;
-                $continent_created = true;
-            }
-            else
-            {
-                $continent = $continents[$continent_hash];
-            }
-            
-            if ($continent_created)
-            {
-                $continent->location_hash = self::hash_name("location", "continent", $continent_hash);
-                $continent->continent_id = self::threeletter_encode($record->continent);
-                $continent->geo_id = substr($continent->continent_id, 0, 2);
-                $continent->continent_hash = $continent_hash;
-                $continent->continent_name = $record->continent;
-                $continent->location_type = 'continent';
-            }
-
-            $continent->population_count += $record->population;
-            
-            if (!isset($countries[$country_hash]))
-            {
-                $country = clone $tmpl;
-                $country_created = true;
-            }
-            else
-            {
-                $country = $countries[$country_hash];
-            }
-            
-            if ($country_created)
-            {
-                $country->location_hash = self::hash_name("country", "country", $country_hash);
-                $country->continent_id = self::threeletter_encode($record->continent);
-                $country->geo_id = substr($country->continent_id, 0, 2);
-                $country->continent_hash = $continent_hash;
-                $country->continent_name = $record->continent;
-                $country->country_hash = $country_hash;
-                $country->country_id = $country_code ?: self::threeletter_encode($record->location);
-                $country->country_name = $record->location;
-                $country->location_type = 'country';
-                $country->population_count = $record->population;
-            }
-
-            foreach ($filter_outer as $filter)
-            {
-                if (!isset($record->$filter))
-                    continue;
-                    
-                if (!isset($continent->$filter))
-                    $continent->$filter = $record->$filter;
-                    
-                $continent->$filter = (($continent->$filter + $record->$filter) / 2);
-
-                if (!isset($country->$filter))
-                    $country->$filter = $record->$filter;
-                    
-                $country->$filter = (($country->$filter + $record->$filter) / 2);
-            }
-            
-            // We only need the last dataset to update the location objects
-            $last_index = (count($record->data) - 1);            
-            $data = $record->data[$last_index];
-            
-            foreach ($filter_inner as $filter => $type)
-            {
-                if (!isset($data->$filter))
-                    continue;
-                    
-                if (!isset($continent->$filter))
-                {
-                    if ($type != "sum")
-                        $continent->$filter = $data->$filter;
-                    else
-                        $continent->$filter = 0;
-                }
-            
-                if (is_numeric($data->$filter))
-                {
-                    if ($type == "avg")
-                        $continent->$filter = (($continent->$filter + $data->$filter) / 2);
-                    elseif ($type == "sum")
-                        $continent->$filter += $data->$filter;
-                }
-
-                if (!isset($country->$filter))
-                {
-                    if ($type != "sum")
-                        $country->$filter = $data->$filter;
-                    else
-                        $country->$filter = 0;
-                }
-                    
-                if (is_numeric($data->$filter))
-                {
-                    if ($type == "avg")
-                        $country->$filter = (($country->$filter + $data->$filter) / 2);
-                    elseif ($type == "sum")
-                        $country->$filter += $data->$filter;
-                }
-            }
-            
-            if ($continent->population_count > 0)
-            {
-                if ((double)$continent->population_year == 0)
-                    $continent->population_year = date("Y");
-                
-                if ((isset($continent->population_density)) && ($continent->population_density > 0))
-                    $continent->area = ($continent->population_count / $continent->population_density);
-            }
-            
-            if ($country->population_count > 0)
-            {
-                if ((double)$country->population_year == 0)
-                    $country->population_year = date("Y");
-                
-                if ((isset($country->population_density)) && ($country->population_density > 0))
-                    $country->area = ($country->population_count / $country->population_density);
-            }
-            
-            unset($data);
-            unset($last_index);
-
-            // Try to calculate contamination status
-            if ((isset($country->total_cases)) && ($country->total_cases > 0))
-            {
-                if ($country->population_count)
-                    $country->contamination_total = (100 / $country->population_count * $country->total_cases);
-                    
-                $country->contamination_rundays = ((time() - $country->timestamp_min) / 60 / 60 / 24);
-
-                if ($country->contamination_rundays > 0)
-                    $country->contamination_per_day = ($country->total_cases / $country->contamination_rundays);
-                else
-                    $country->contamination_per_day = 0;
-
-                if ($country->contamination_per_day > 0)
-                    $country->contamination_target = (($country->population_count - $country->total_cases) / $country->contamination_per_day);
-            }
-
-            if ((isset($continent->total_cases)) && ($continent->total_cases > 0))
-            {
-                if ($continent->population_count)
-                    $continent->contamination_total = (100 / $continent->population_count * $continent->total_cases);
-                    
-                $continent->contamination_rundays = ((time() - $continent->timestamp_min) / 60 / 60 / 24);
-
-                if ($continent->contamination_rundays > 0)
-                    $continent->contamination_per_day = ($continent->total_cases / $continent->contamination_rundays);
-                else
-                    $continent->contamination_per_day = 0;
-
-                if ($continent->contamination_per_day > 0)
-                    $continent->contamination_target = (($continent->population_count - $continent->total_cases) / $continent->contamination_per_day);
-            }
-            
-            // Try to set infection status
-            if ($country->area > 0)
-            {
-                $country->infection_density = ($country->cases_count / $country->area);
-                
-                if ($country->infection_density > 0)
-                {
-                    $country->infection_area = (1 / $country->infection_density);
-                    $country->infection_probability = (100 / ($country->infection_area * $country->population_density));
-                }
-            }            
-
-            if ($continent->area > 0)
-            {
-                $continent->infection_density = ($continent->cases_count / $continent->area);
-                
-                if ($continent->infection_density > 0)
-                {
-                    $continent->infection_area = (1 / $continent->infection_density);
-                    $continent->infection_probability = (100 / ($continent->infection_area * $continent->population_density));
-                }
-            }            
-
-            // We must override the used addressed space, if objects just have been created, they will get lost if we dont force this
-            $countries[$country_hash] = $country;
-            $continents[$continent_hash] = $continent;
-        }
-
-        // No longer needed, so clean them up        
-        unset($filter_inner);
-        unset($filter_outer);
+        // Second, we would use the OWID source, but this is disabled because of invalid data
+        // We will skip this, until a new official data source is found.
         
         // Third, we add the german states
         $europe_hash = self::hash_name("continent", "Europe");
@@ -933,9 +589,6 @@ class Client
         $german_districts_area = $this->gen_territory_district_area->handler->get_data()->districts_area;
         $german_districts_population = $this->gen_population_by_district->handler->get_data()->districts;
         
-        // Also load the divi data, because we (have to) use the genesis files to assign the correct districts
-        $german_divi = $this->divi_intens->handler->get_data();
-
         if (is_array($german_districts_area))
         {
             foreach ($german_districts_area as $district_id => $data)
@@ -998,6 +651,10 @@ class Client
         }
         
         // Fifth, merge the district informations into divi data
+        // DEPRECATED! We will merge the data later into datasets
+        /*
+        $german_divi = $this->divi_intens->handler->get_data();
+
         if (is_array($german_divi))
         {
             foreach ($german_divi as $divi)
@@ -1070,10 +727,14 @@ class Client
         }
                 
         unset($german_divi);
+        */
+        
         unset($german_districts_area);
         unset($german_districts_population);        
 
         // Sixth, get the RKI nowcasting data and push the latest entry to the germany object
+        // DEPRECATED: This will be moved to datasets
+        /*
         $max_timestamp = -1;
         $max_data = null;
 
@@ -1139,6 +800,7 @@ class Client
         }
         
         unset($max_data);
+        */
         
         // Force update of the "germany" object
         $countries[$germany_hash] = $germany;
@@ -1851,15 +1513,10 @@ class Client
         $tmpl->cases = null;
         $tmpl->deaths = null;
         $tmpl->timestamp_represent = null;
-        
-        $filter = self::get_infocast_filter("inner");
-        
-        foreach ($filter as $key => $type)
-            $tmpl->$key = null;
-            
+                
         $dataset_index = array();
             
-        foreach ($this->eu_datacast->handler->get_data()->records as $id => $record)
+        foreach ($this->eu_coviddata->handler->get_data()->records as $id => $record)
         {
             $continent_hash = self::hash_name("continent", $record->continent);
             $country_hash = self::hash_name("country", $record->country, $continent_hash);
@@ -1930,64 +1587,10 @@ class Client
             }
         }
                             
-        foreach ($this->cov_infocast->handler->get_data() as $country_code => $record)
-        {
-            if (!isset($record->continent))
-                continue;
-                
-            $continent_hash = self::hash_name("continent", $record->continent);
-            $country_hash = self::hash_name("country", $record->location, $continent_hash);
-            
-            foreach ($record->data as $data)
-            {
-                $dataset_hash = self::hash_name("dataset-country", $country_hash, $data->date);
-                $dataset_created = false;
-                
-                if (!isset($datasets[$dataset_hash]))
-                {
-                    $dataset = clone $tmpl;
-                    $dataset_created = true;
-                }
-                else
-                {
-                    $dataset = $datasets[$dataset_hash];
-                }
-        
-                if ($dataset_created)
-                {
-                    $ts = strtotime($data->date." 23:59:59");
-                        
-                    $dataset->dataset_hash = $dataset_hash;
-                    $dataset->country_hash = $country_hash;
-                    $dataset->continent_hash = $continent_hash;
-                    $dataset->day_of_week = date("w", $ts);
-                    $dataset->day = date("j", $ts);
-                    $dataset->month = date("m", $ts);
-                    $dataset->year = date("Y", $ts);
-                    $dataset->timestamp_represent = date("Y-m-d H:i:s", $ts);
-                    $dataset->location_type = "country";
-                }
-                
-                foreach ($filter as $key => $type)
-                {
-                    if (!isset($data->$key))
-                        continue;
-                        
-                    if ($key == "date")
-                        continue;
-                        
-                    $dataset->$key = $data->$key;
-                }
-                
-                $datasets[$dataset_hash] = $dataset;
-            }
-        }
-        
         // Free the memory, which is no longer need (if hold data is not requested)
         if (!$hold_data)
         {
-            $this->eu_datacast->handler->free();
-            $this->cov_infocast->handler->free();
+            $this->eu_coviddata->handler->free();
         }
         
         $this->datasets = $datasets;
@@ -2090,11 +1693,6 @@ class Client
         $tmpl->recovered = null;
         $tmpl->timestamp_represent = null;
         
-        $filter = self::get_infocast_filter("inner");
-        
-        foreach ($filter as $key => $type)
-            $tmpl->$key = null;
-            
         $datasets = array();
         
         $unknown_districts = array();
@@ -3024,12 +2622,9 @@ class Client
         
         try
         {
-            $this->stores_loaded_bytes += $this->retrieve_eu_datacast($cache_timeout);
+            $this->stores_loaded_bytes += $this->retrieve_eu_coviddata($cache_timeout);
             $this->stores_loaded_count++;
             
-            $this->stores_loaded_bytes += $this->retrieve_cov_infocast($cache_timeout);
-            $this->stores_loaded_count++;
-                       
             $this->stores_loaded_bytes += $this->retrieve_rki_rssfeed($cache_timeout);
             $this->stores_loaded_count++;
                        
@@ -3075,11 +2670,10 @@ class Client
 
         try
         {        
-            $this->eu_datacast = $this->get_template(new DataHandler($this->config, $this->config->url_eu_datacast));
+            $this->eu_coviddata = $this->get_template(new DataHandler($this->config, $this->config->url_eu_coviddata));
             $this->rki_positive = $this->get_template(new DataHandler($this->config, $this->config->url_rki_positive));
             $this->rki_nowcast = $this->get_template(new DataHandler($this->config, $this->config->url_rki_nowcast));
             $this->rki_rssfeed = $this->get_template(new DataHandler($this->config, $this->config->url_rki_rssfeed));
-            $this->cov_infocast = $this->get_template(new DataHandler($this->config, $this->config->url_cov_infocast));
             $this->divi_intens = $this->get_template(new DataHandler($this->config, $this->config->url_divi_intens));
             
             // This is important, because divi has a different delimiter!
