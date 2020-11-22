@@ -86,6 +86,14 @@ class Datasets extends Base
     protected $cases_today_agegroup_80_plus = null;
     protected $cases_today_agegroup_unknown = null;
     
+    protected $cases_yesterday_agegroup_0_4 = null;
+    protected $cases_yesterday_agegroup_5_14 = null;
+    protected $cases_yesterday_agegroup_15_34 = null;
+    protected $cases_yesterday_agegroup_35_59 = null;
+    protected $cases_yesterday_agegroup_60_79 = null;
+    protected $cases_yesterday_agegroup_80_plus = null;
+    protected $cases_yesterday_agegroup_unknown = null;
+    
     protected $cases_total_agegroup_0_4 = null;
     protected $cases_total_agegroup_5_14 = null;
     protected $cases_total_agegroup_15_34 = null;
@@ -146,6 +154,14 @@ class Datasets extends Base
     protected $deaths_today_agegroup_80_plus = null;
     protected $deaths_today_agegroup_unknown = null;
     
+    protected $deaths_yesterday_agegroup_0_4 = null;
+    protected $deaths_yesterday_agegroup_5_14 = null;
+    protected $deaths_yesterday_agegroup_15_34 = null;
+    protected $deaths_yesterday_agegroup_35_59 = null;
+    protected $deaths_yesterday_agegroup_60_79 = null;
+    protected $deaths_yesterday_agegroup_80_plus = null;
+    protected $deaths_yesterday_agegroup_unknown = null;
+    
     protected $deaths_total_agegroup_0_4 = null;
     protected $deaths_total_agegroup_5_14 = null;
     protected $deaths_total_agegroup_15_34 = null;
@@ -205,6 +221,14 @@ class Datasets extends Base
     protected $recovered_today_agegroup_60_79 = null;
     protected $recovered_today_agegroup_80_plus = null;
     protected $recovered_today_agegroup_unknown = null;
+    
+    protected $recovered_yesterday_agegroup_0_4 = null;
+    protected $recovered_yesterday_agegroup_5_14 = null;
+    protected $recovered_yesterday_agegroup_15_34 = null;
+    protected $recovered_yesterday_agegroup_35_59 = null;
+    protected $recovered_yesterday_agegroup_60_79 = null;
+    protected $recovered_yesterday_agegroup_80_plus = null;
+    protected $recovered_yesterday_agegroup_unknown = null;
     
     protected $recovered_total_agegroup_0_4 = null;
     protected $recovered_total_agegroup_5_14 = null;
@@ -353,6 +377,13 @@ class Datasets extends Base
         `cases_today_agegroup_60_79` int unsigned NOT NULL DEFAULT '0',
         `cases_today_agegroup_80_plus` int unsigned NOT NULL DEFAULT '0',
         `cases_today_agegroup_unknown` int unsigned NOT NULL DEFAULT '0',
+        `cases_yesterday_agegroup_0_4` int unsigned NOT NULL DEFAULT '0',
+        `cases_yesterday_agegroup_5_14` int unsigned NOT NULL DEFAULT '0',
+        `cases_yesterday_agegroup_15_34` int unsigned NOT NULL DEFAULT '0',
+        `cases_yesterday_agegroup_35_59` int unsigned NOT NULL DEFAULT '0',
+        `cases_yesterday_agegroup_60_79` int unsigned NOT NULL DEFAULT '0',
+        `cases_yesterday_agegroup_80_plus` int unsigned NOT NULL DEFAULT '0',
+        `cases_yesterday_agegroup_unknown` int unsigned NOT NULL DEFAULT '0',
         `cases_total_agegroup_0_4` int unsigned NOT NULL DEFAULT '0',
         `cases_total_agegroup_5_14` int unsigned NOT NULL DEFAULT '0',
         `cases_total_agegroup_15_34` int unsigned NOT NULL DEFAULT '0',
@@ -405,6 +436,13 @@ class Datasets extends Base
         `deaths_today_agegroup_60_79` int unsigned NOT NULL DEFAULT '0',
         `deaths_today_agegroup_80_plus` int unsigned NOT NULL DEFAULT '0',
         `deaths_today_agegroup_unknown` int unsigned NOT NULL DEFAULT '0',
+        `deaths_yesterday_agegroup_0_4` int unsigned NOT NULL DEFAULT '0',
+        `deaths_yesterday_agegroup_5_14` int unsigned NOT NULL DEFAULT '0',
+        `deaths_yesterday_agegroup_15_34` int unsigned NOT NULL DEFAULT '0',
+        `deaths_yesterday_agegroup_35_59` int unsigned NOT NULL DEFAULT '0',
+        `deaths_yesterday_agegroup_60_79` int unsigned NOT NULL DEFAULT '0',
+        `deaths_yesterday_agegroup_80_plus` int unsigned NOT NULL DEFAULT '0',
+        `deaths_yesterday_agegroup_unknown` int unsigned NOT NULL DEFAULT '0',
         `deaths_total_agegroup_0_4` int unsigned NOT NULL DEFAULT '0',
         `deaths_total_agegroup_5_14` int unsigned NOT NULL DEFAULT '0',
         `deaths_total_agegroup_15_34` int unsigned NOT NULL DEFAULT '0',
@@ -457,6 +495,13 @@ class Datasets extends Base
         `recovered_today_agegroup_60_79` int unsigned NOT NULL DEFAULT '0',
         `recovered_today_agegroup_80_plus` int unsigned NOT NULL DEFAULT '0',
         `recovered_today_agegroup_unknown` int unsigned NOT NULL DEFAULT '0',
+        `recovered_yesterday_agegroup_0_4` int unsigned NOT NULL DEFAULT '0',
+        `recovered_yesterday_agegroup_5_14` int unsigned NOT NULL DEFAULT '0',
+        `recovered_yesterday_agegroup_15_34` int unsigned NOT NULL DEFAULT '0',
+        `recovered_yesterday_agegroup_35_59` int unsigned NOT NULL DEFAULT '0',
+        `recovered_yesterday_agegroup_60_79` int unsigned NOT NULL DEFAULT '0',
+        `recovered_yesterday_agegroup_80_plus` int unsigned NOT NULL DEFAULT '0',
+        `recovered_yesterday_agegroup_unknown` int unsigned NOT NULL DEFAULT '0',
         `recovered_total_agegroup_0_4` int unsigned NOT NULL DEFAULT '0',
         `recovered_total_agegroup_5_14` int unsigned NOT NULL DEFAULT '0',
         `recovered_total_agegroup_15_34` int unsigned NOT NULL DEFAULT '0',
@@ -503,6 +548,7 @@ class Datasets extends Base
         `alert_condition2_14day` smallint NOT NULL DEFAULT '-1',
         `alert_condition2` smallint NOT NULL DEFAULT '-1',
         `alert_condition2_pointer` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
+        `data_checksum` VARCHAR(40) NULL DEFAULT NULL,
         `update_count` int UNSIGNED NOT NULL DEFAULT '0',
         `flag_updated` tinyint(1) NOT NULL DEFAULT '0',
         `flag_disabled` tinyint(1) NOT NULL DEFAULT '0',
@@ -543,7 +589,8 @@ class Datasets extends Base
         KEY `district_hash` (`district_hash`),
         KEY `location_hash` (`location_hash`),
         KEY `location_type` (`location_type`),
-        KEY `locations_uid` (`locations_uid`)
+        KEY `locations_uid` (`locations_uid`),
+        KEY `data_checksum` (`data_checksum`)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
       
       ALTER TABLE `datasets` ADD CONSTRAINT `dataset_location` FOREIGN KEY (`locations_uid`) REFERENCES `locations`(`uid`) ON DELETE CASCADE ON UPDATE CASCADE;

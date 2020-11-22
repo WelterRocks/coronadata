@@ -39,11 +39,11 @@ class Locations extends Base
     protected $district_hash = null;
     protected $district_name = null;
     protected $district_type = null;
-    protected $district_fullname = null;
     protected $location_id = null;
     protected $location_hash = null;
     protected $location_name = null;
     protected $location_type = null;
+    protected $location_tags = null;
     protected $geo_id = null;
     protected $population_year = null;
     protected $population_count = null;
@@ -76,10 +76,10 @@ class Locations extends Base
         `district_hash` VARCHAR(32) NULL DEFAULT NULL,
         `district_name` VARCHAR(64) NULL DEFAULT NULL,
         `district_type` VARCHAR(64) NULL DEFAULT NULL,
-        `district_fullname` VARCHAR(64) NULL DEFAULT NULL,
         `location_id` VARCHAR(16) NULL DEFAULT NULL,
         `location_hash` VARCHAR(32) NULL DEFAULT NULL,
         `location_name` VARCHAR(64) NULL DEFAULT NULL,
+        `location_tags` VARCHAR(255) NULL DEFAULT NULL,
         `geo_id` VARCHAR(16) NULL DEFAULT NULL,
         `population_year` YEAR NULL DEFAULT NULL,
         `population_count` BIGINT UNSIGNED NULL DEFAULT '0',
@@ -87,6 +87,7 @@ class Locations extends Base
         `population_males` BIGINT UNSIGNED NULL DEFAULT '0',
         `population_density` FLOAT NOT NULL DEFAULT '0',
         `area` FLOAT DEFAULT NULL,
+        `data_checksum` VARCHAR(40) NULL DEFAULT NULL,
         `update_count` int UNSIGNED NOT NULL DEFAULT '0',
         `flag_updated` tinyint(1) NOT NULL DEFAULT '0',
         `flag_disabled` tinyint(1) NOT NULL DEFAULT '0',
@@ -95,11 +96,13 @@ class Locations extends Base
         UNIQUE KEY `location_hash` (`location_hash`),
         KEY `location_type` (`location_type`),
         KEY `geo_id` (`geo_id`),
+        KEY `data_checksum` (`data_checksum`),
         KEY `continent_name` (`continent_name`),
         KEY `country_name` (`country_name`),
         KEY `state_name` (`state_name`),
         KEY `district_name` (`district_name`),
         KEY `location_name` (`location_name`),
+        KEY `location_tags` (`location_tags`),
         KEY `district_hash` (`district_hash`),
         KEY `state_hash` (`state_hash`),
         KEY `country_hash` (`country_hash`),

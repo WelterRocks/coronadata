@@ -61,6 +61,24 @@ class Client
     private $testresults = null;
     private $divis = null;
     
+    public static function object_checksum($obj, $prefix = null)
+    {
+        if ((!is_object($obj)) && (!is_array($obj)))
+            return null;
+            
+        $buffer = array();
+            
+        foreach ($obj as $key => $val)
+        {
+            if ((is_object($val)) || (is_array($val)))
+                array_push($buffer, $key.":".self::object_checksum($val));
+            else
+                array_push($buffer, $key.":".$val);
+        }
+        
+        return sha1($prefix.implode("\n", $buffer));
+    }
+    
     public static function result_object_merge(&$result, $obj)
     {
         if (!is_object($obj))
@@ -394,7 +412,6 @@ class Client
         $district_index = array();
         
         // Create a template
-        // DEPRECATION WARNING: There is no longer need to store any kind of cases data in the location table.
         $tmpl = new \stdClass;
         $tmpl->continent_id = null;
         $tmpl->continent_hash = null;
@@ -409,17 +426,18 @@ class Client
         $tmpl->district_hash = null;
         $tmpl->district_name = null;
         $tmpl->district_type = null;
-        $tmpl->district_fullname = null;
         $tmpl->location_id = null;
         $tmpl->location_hash = null;
         $tmpl->location_name = null;
         $tmpl->location_type = null;
+        $tmpl->location_tags = null;
         $tmpl->geo_id = null;
         $tmpl->population_year = 0;
         $tmpl->population_count = 0;
         $tmpl->population_females = 0;
         $tmpl->population_males = 0;
         $tmpl->area = 0;
+        $tmpl->data_checksum = null;
 
         // First, we use the EU coviddata, but skip any kind of cases data.
         // This will be a static table in future versions, to speed things up massivly.
@@ -434,6 +452,7 @@ class Client
                 $continent = $continents[$continent_hash];
             
             $continent->location_hash = self::hash_name("location", "continent", $continent_hash);
+            $continent->location_tags = "continent, ".$record->continent;
             $continent->continent_id = self::threeletter_encode($record->continent);
             $continent->geo_id = substr($continent->continent_id, 0, 2);
             $continent->continent_hash = $continent_hash;
@@ -450,6 +469,7 @@ class Client
                 $country = $countries[$country_hash];
                 
             $country->location_hash = self::hash_name("location", "country", $country_hash);
+            $country->location_tags = "country, ".$record->continent.", ".$record->country;
             $country->continent_id = self::threeletter_encode($record->continent);
             $country->continent_hash = $continent_hash;
             $country->continent_name = $record->continent;
@@ -462,6 +482,9 @@ class Client
             
             if ($country->population_year > $record->population_year)
                 $country->population_year = $record->population_year;
+                
+            $country->data_checksum = self::object_checksum($country);
+            $continent->data_checksum = self::object_checksum($continent);
             
             $countries[$country_hash] = $country;
             $continents[$continent_hash] = $continent;
@@ -500,6 +523,7 @@ class Client
                 $real_state_name = null;
                     
                 $state->location_hash = self::hash_name("location", "state", $state_hash);
+                $state->location_tags = "state, ".$europe->continent_name.", ".$germany->country_name.", ".$real_state_name ?: $state_name;
                 $state->geo_id = DataHandler::german_state_id_by_name($state_name, $real_state_name);
                 $state->continent_id = $europe->continent_id;
                 $state->continent_hash = $europe->continent_hash;
@@ -517,6 +541,8 @@ class Client
                     $germany->area = 0;
                                 
                 $germany->area += $area;
+                
+                $state->data_checksum = self::object_checksum($state);
                 
                 $states[$state_hash] = $state;
             }
@@ -548,6 +574,7 @@ class Client
                     $real_state_name = null;
                         
                     $state->location_hash = self::hash_name("location", "state", $state_hash);
+                    $state->location_tags = "state, ".$europe->continent_name.", ".$germany->country_name.", ".$real_state_name ?: $state_name;
                     $state->geo_id = DataHandler::german_state_id_by_name($state_name, $real_state_name);
                     $state->continent_id = $europe->continent_id;
                     $state->continent_hash = $europe->continent_hash;
@@ -578,6 +605,8 @@ class Client
                 $germany->population_males += $data->males;
                 
                 $state->population_year = $data->date->format("Y");
+                
+                $state->data_checksum = self::object_checksum($state);
                 
                 $states[$state_hash] = $state;
             }            
@@ -610,6 +639,7 @@ class Client
                 $district_index[$district_id] = $district_hash;
                     
                 $district->location_hash = self::hash_name("location", "district", $district_hash);
+                $district->location_tags = "district, ".$europe->continent_name.", ".$germany->country_name.", ".$state->state_name.", ".$data->type.", ".$data->name;
                 $district->geo_id = $district_id;
                 $district->continent_id = $europe->continent_id;
                 $district->continent_hash = $europe->continent_hash;
@@ -624,7 +654,6 @@ class Client
                 $district->district_hash = $district_hash;
                 $district->district_name = $data->name;
                 $district->district_type = $data->type;
-                $district->district_fullname = $data->fullname;
                 $district->location_type = 'district';
                 $district->area = $data->area;
                 
@@ -645,10 +674,16 @@ class Client
                         unset($data2);
                     }
                 }
+                
+                $district->data_checksum = self::object_checksum($district);
                                 
                 $districts[$district_hash] = $district;
             }
         }
+        
+        // Recalculate the checksums for the germany and europe object
+        $germany->data_checksum = self::object_checksum($germany);
+        $europe->data_checksum = self::object_checksum($europe);
         
         // Fifth, merge the district informations into divi data
         // DEPRECATED! We will merge the data later into datasets
@@ -802,20 +837,19 @@ class Client
         unset($max_data);
         */
         
-        // Force update of the "germany" object
+        // Force update of the "germany" and "europe" objects
         $countries[$germany_hash] = $germany;
+        $continents[$europe_hash] = $europe;
         
         $this->continents = $continents;
         $this->countries = $countries;
         $this->states = $states;
         $this->districts = $districts;
         $this->locations = $locations;
-        $this->divis = $divis;
         
         // Free the memory, which is no longer need (if hold data is not requested)
         if (!$hold_data)
         {
-            $this->divi_intens->handler->free();
             $this->gen_territory_area->handler->free();
             $this->gen_territory_district_area->handler->free();
             $this->gen_population->handler->free();
@@ -1309,8 +1343,8 @@ class Client
         if ($obj->cases == 0)
             $result->flag_case_free = 0;
         
-        $result->cases_14day = $obj->cases;
-        $result->deaths_14day = $obj->deaths;
+        $result->cases_14day_average = $obj->cases;
+        $result->deaths_14day_average = $obj->deaths;
         $result->exponence_14day = $obj->exponence;
         $result->exponence_14day_smoothed = ((!$obj2) ? $obj->exponence : $obj2->exponence);
         $result->incidence_14day = $obj->incidence;
@@ -1333,8 +1367,8 @@ class Client
 
         $result = new \stdClass;
 
-        $result->cases_7day = $obj->cases;
-        $result->deaths_7day = $obj->deaths;
+        $result->cases_7day_average = $obj->cases;
+        $result->deaths_7day_average = $obj->deaths;
         $result->exponence_7day = $obj->exponence;
         $result->exponence_7day_smoothed = ((!$obj2) ? $obj->exponence : $obj2->exponence);
         $result->incidence_7day = $obj->incidence;
@@ -1357,8 +1391,8 @@ class Client
 
         $result = new \stdClass;
 
-        $result->cases_4day = $obj->cases;
-        $result->deaths_4day = $obj->deaths;
+        $result->cases_4day_average = $obj->cases;
+        $result->deaths_4day_average = $obj->deaths;
         $result->exponence_4day = $obj->exponence;
         $result->exponence_4day_smoothed = ((!$obj2) ? $obj->exponence : $obj2->exponence);
         $result->incidence_4day = $obj->incidence;
@@ -1501,29 +1535,46 @@ class Client
         if ($this->stores_loaded_count < 10)
             return false;
             
-        // Create a template
-        $tmpl = new \stdClass;
-        $tmpl->dataset_hash = null;
-        $tmpl->country_hash = null;
-        $tmpl->continent_hash = null;
-        $tmpl->day_of_week = null;
-        $tmpl->day = null;
-        $tmpl->month = null;
-        $tmpl->year = null;
-        $tmpl->cases = null;
-        $tmpl->deaths = null;
-        $tmpl->timestamp_represent = null;
-                
         $dataset_index = array();
             
         foreach ($this->eu_coviddata->handler->get_data()->records as $id => $record)
         {
             $continent_hash = self::hash_name("continent", $record->continent);
             $country_hash = self::hash_name("country", $record->country, $continent_hash);
-            $dataset_hash = self::hash_name("dataset-country", $country_hash, $record->date_rep);
+
+            $dataset_hash = self::hash_name("dataset-continent", $continent_hash, $record->date_rep);
             
             if (!isset($datasets[$dataset_hash]))
-                $dataset = clone $tmpl;
+                $dataset = $this->create_dataset_template();
+            else
+                $dataset = $datasets[$dataset_hash];
+                
+            $dataset->dataset_hash = $dataset_hash;
+            $dataset->continent_hash = $continent_hash;
+            $dataset->day_of_week = $record->day_of_week;
+            $dataset->day = $record->day;
+            $dataset->month = $record->month;
+            $dataset->year = $record->year;
+            $dataset->cases_count += $record->cases;
+            $dataset->deaths_count += $record->deaths;
+            $dataset->timestamp_represent = $record->timestamp_represent;
+            $dataset->location_type = "continent";
+            
+            $index = "N".$dataset->continent_hash;
+            
+            if (!isset($dataset_index[$index]))
+                $dataset_index[$index] = array();
+                
+            $date = date("Ymd", strtotime($record->timestamp_represent));
+                
+            $dataset_index[$index][$date] = $dataset_hash;
+            
+            $datasets[$dataset_hash] = $dataset;
+
+            $dataset_hash = self::hash_name("dataset-country", $country_hash, $record->date_rep);
+
+            if (!isset($datasets[$dataset_hash]))
+                $dataset = $this->get_dataset_template();
             else
                 $dataset = $datasets[$dataset_hash];
                 
@@ -1534,12 +1585,12 @@ class Client
             $dataset->day = $record->day;
             $dataset->month = $record->month;
             $dataset->year = $record->year;
-            $dataset->cases = $record->cases;
-            $dataset->deaths = $record->deaths;
+            $dataset->cases_count += $record->cases;
+            $dataset->deaths_count += $record->deaths;
             $dataset->timestamp_represent = $record->timestamp_represent;
             $dataset->location_type = "country";
             
-            $index = $dataset->continent_hash.$dataset->country_hash;
+            $index = "C".$dataset->continent_hash.$dataset->country_hash;
             
             if (!isset($dataset_index[$index]))
                 $dataset_index[$index] = array();
@@ -1566,8 +1617,8 @@ class Client
                     if ($date2 > $date)
                         continue;
                         
-                    array_push($cases, $datasets[$hash2]->cases);
-                    array_push($deaths, $datasets[$hash2]->deaths);
+                    array_push($cases, $datasets[$hash2]->cases_count);
+                    array_push($deaths, $datasets[$hash2]->deaths_count);
                     array_push($dates, $date2);
                 
                     if (count($cases) > 32)
@@ -1594,7 +1645,7 @@ class Client
         }
         
         $this->datasets = $datasets;
-
+        
         return true;
     }
     
@@ -1653,6 +1704,83 @@ class Client
         return $district_name;
     }
     
+    public function get_age_groups()
+    {
+        return array(
+            "0:4",
+            "5:14",
+            "15:34",
+            "35:59",
+            "60:79",
+            "80:plus",
+            "unknown"
+        );    
+    }
+    
+    public function create_dataset_template()
+    {
+        // Create a dataset template
+        $tmpl = new \stdClass;
+        $tmpl->location_type = null;
+        $tmpl->dataset_hash = null;
+        $tmpl->district_hash = null;
+        $tmpl->state_hash = null;
+        $tmpl->country_hash = null;
+        $tmpl->continent_hash = null;
+        $tmpl->day_of_week = null;
+        $tmpl->day = null;
+        $tmpl->month = null;
+        $tmpl->year = null;
+        $tmpl->timestamp_represent = null;
+        
+        $age_groups = $this->get_age_groups();
+        
+        foreach (array("cases", "deaths", "recovered") as $prefix)
+        {
+            $suffixes = array(
+                "new",
+                "count",
+                "delta",
+                "today",
+                "yesterday",
+                "total",
+                "pointer",
+                "4day_average",
+                "7day_average",
+                "14day_average"
+            );
+            
+            foreach ($suffixes as $suffix)
+            {
+                $key = $prefix."_".$suffix;
+                
+                if (substr($suffix, -7) == "average")
+                    $tmpl->$key = (float)0;
+                elseif ($suffix == "pointer")
+                    $tmpl->$key = "sty";
+                else
+                    $tmpl->$key = (int)0;
+            }
+            
+            foreach (array("new", "count", "delta", "today", "total", "pointer") as $suffix)
+            {
+                foreach ($age_groups as $agegroup)
+                {
+                    $ag = str_replace(":", "_", $age_group);
+                    
+                    $key = $prefix."_".$suffix."_agegroup_".$ag;
+                    
+                    if ($suffix == "pointer")
+                        $tmpl->$key = "sty";
+                    else
+                        $tmpl->$key = (int)0;
+                }
+            }
+        }
+        
+        return $tmpl;    
+    }
+    
     public function master_testresults($hold_data = false, &$unknown_states = null, &$unknown_districts = null)
     {
         // After stores are loaded, create the testresult pool with common fields
@@ -1667,40 +1795,12 @@ class Client
         // Get the country and zero some fields
         $germany = $this->countries[$germany_hash];
         
-        $germany->cases_count = 0;
-        $germany->deaths_count = 0;
-        $germany->recovered_count = 0;
-        $germany->cases_min = 0; 
-        $germany->deaths_min = 0;
-        $germany->recovered_min = 0;
-        $germany->cases_max = 0; 
-        $germany->deaths_max = 0;
-        $germany->recovered_max = 0;
-        
-        // Create a dataset template
-        $tmpl = new \stdClass;
-        $tmpl->dataset_hash = null;
-        $tmpl->district_hash = null;
-        $tmpl->state_hash = null;
-        $tmpl->country_hash = null;
-        $tmpl->continent_hash = null;
-        $tmpl->day_of_week = null;
-        $tmpl->day = null;
-        $tmpl->month = null;
-        $tmpl->year = null;
-        $tmpl->cases = null;
-        $tmpl->deaths = null;
-        $tmpl->recovered = null;
-        $tmpl->timestamp_represent = null;
-        
         $datasets = array();
+        $age_groups = $this->get_age_groups();
         
         $unknown_districts = array();
         $unknown_states = array();
-        
-        // Define a million
-        $mil = 1000000;
-                
+                        
         // No need for templates here, just clone data and add the hashes
         foreach($this->rki_positive->handler->get_data() as $data)
         {
@@ -1743,10 +1843,10 @@ class Client
             $ts = strtotime($testresult->timestamp_represent);
             $date = date("Ymd", $ts);
 
-            // Create or update dateset
+            // Create or update district dateset
             if (!isset($datasets[$index][$date]))
             {
-                $dataset = clone $tmpl;
+                $dataset = $this->create_dataset_template();
                 
                 $dataset->dataset_hash = self::hash_name("dataset-district", $district_hash, $data->date_rep);
                 $dataset->district_hash = $district_hash;
@@ -1757,15 +1857,6 @@ class Client
                 $dataset->day = $data->day;
                 $dataset->month = $data->month;
                 $dataset->year = $data->year;
-                $dataset->cases = 0;
-                $dataset->deaths = 0;
-                $dataset->recovered = 0;
-                $dataset->new_cases = 0;
-                $dataset->new_deaths = 0;
-                $dataset->new_recovered = 0;
-                $dataset->new_cases_smoothed = 0;
-                $dataset->new_deaths_smoothed = 0;
-                $dataset->new_recovered_smoothed = 0;
                 $dataset->timestamp_represent = $data->timestamp_represent;
                 $dataset->date_rep = $data->date_rep;
                 $dataset->location_type = "district";
@@ -1814,50 +1905,196 @@ class Client
             damit ergibt sich: Anzahl Genesen der aktuellen Publikation als Summe(AnzahlGenesen) wenn NeuGenesen in (0,1); Delta zum Vortag als Summe(AnzahlGenesen) wenn NeuGenesen in (-1,1)
             IstErkrankungsbeginn: 1, wenn das Refdatum der Erkrankungsbeginn ist, 0 sonst
             */
-            
-            // New calculation stuff
-            $district = $this->districts[$district_hash];
-            $population = 0;
-            
-            if (is_object($district))
-                $population = $district->population_count;
-            
+
             if (($data->cases_new == 0) || ($data->cases_new == 1))
-                $dataset->cases += $data->cases_count;
+                $dataset->cases_new += $data->cases_count;
             if (($data->cases_new == -1) || ($data->cases_new == 1))
-                $dataset->new_cases += $data->cases_count;
+                $dataset->cases_delta += $data->cases_count;
             if ($data->cases_new == 0)
-                $dataset->new_cases_smoothed += $data->cases_count;
+                $dataset->cases_today += $data->cases_count;
+            if ($data->cases_new == -1)
+                $dataset->cases_yesterday += $data->cases_count;
                 
-            $dataset->total_cases = ($dataset->new_cases - $dataset->cases);
+            if ($dataset->cases_today == $dataset->cases_yesterday)
+                $dataset->cases_pointer = "sty";
+            elseif ($dataset->cases_today > $dataset->cases_yesterday)
+                $dataset->cases_pointer = "asc";
+            elseif ($dataset->cases_today < $dataset->cases_yesterday)
+                $dataset->cases_pointer = "desc";                
+                
+            $dataset->cases_count = ($dataset->cases_delta - $dataset->cases_new);
             
-            if ($population > 0)
-                $dataset->total_cases_per_million = ($dataset->total_cases / $population * $mil);
-
             if (($data->deaths_new == 0) || ($data->deaths_new == 1))
-                $dataset->deaths += $data->deaths_count;
+                $dataset->deaths_new += $data->deaths_count;
             if (($data->deaths_new == -1) || ($data->deaths_new == 1))
-                $dataset->new_deaths += $data->deaths_count;
+                $dataset->deaths_delta += $data->deaths_count;
             if ($data->deaths_new == 0)
-                $dataset->new_deaths_smoothed += $data->deaths_count;
+                $dataset->deaths_today += $data->deaths_count;
+            if ($data->deaths_new == -1)
+                $dataset->deaths_yesterday += $data->deaths_count;
+
+            if ($dataset->deaths_today == $dataset->deaths_yesterday)
+                $dataset->deaths_pointer = "sty";
+            elseif ($dataset->deaths_today > $dataset->deaths_yesterday)
+                $dataset->deaths_pointer = "asc";
+            elseif ($dataset->deaths_today < $dataset->deaths_yesterday)
+                $dataset->deaths_pointer = "desc";                
                 
-            $dataset->total_deaths = ($dataset->new_deaths - $dataset->deaths);
-
-            if ($population > 0)
-                $dataset->total_deaths_per_million = ($dataset->total_deaths / $population * $mil);
-
+            $dataset->deaths_count = ($dataset->deaths_delta - $dataset->deaths_new);
+            
             if (($data->recovered_new == 0) || ($data->recovered_new == 1))
-                $dataset->recovered += $data->recovered_count;
+                $dataset->recovered_new += $data->recovered_count;
             if (($data->recovered_new == -1) || ($data->recovered_new == 1))
-                $dataset->new_recovered += $data->recovered_count;
+                $dataset->recovered_delta += $data->recovered_count;
             if ($data->recovered_new == 0)
-                $dataset->new_recovered_smoothed += $data->recovered_count;
+                $dataset->recovered_today += $data->recovered_count;
+            if ($data->recovered_new == -1)
+                $dataset->recovered_yesterday += $data->recovered_count;
                 
-            $dataset->total_recovered = ($dataset->new_recovered - $dataset->recovered);
+            if ($dataset->recovered_today == $dataset->recovered_yesterday)
+                $dataset->recovered_pointer = "sty";
+            elseif ($dataset->recovered_today > $dataset->recovered_yesterday)
+                $dataset->recovered_pointer = "asc";
+            elseif ($dataset->recovered_today < $dataset->recovered_yesterday)
+                $dataset->recovered_pointer = "desc";                
+                
+            $dataset->recovered_count = ($dataset->recovered_delta - $dataset->recovered_new);
+            
+            if ((isset($data->age_group)) || (isset($data->age_group2)))
+            {
+                if (is_object($data->age_group2))
+                {
+                    $age_low = $data->age_group2->lower;
+                    $age_high = $data->age_group2->upper;
+                }
+                elseif (is_object($data->age_group))
+                {
+                    $age_low = $data->age_group->lower;
+                    $age_high = $data->age_group->upper;
+                }
+                else
+                {
+                    $age_low = -1;
+                    $age_high = -1;
+                }
+                
+                if (($age_low == -1) && ($age_high == -1))
+                    $age_index = "unknown";
+                elseif ($age_low == 80)
+                    $age_index = "80:plus";
+                else
+                    $age_index = $age_low.":".$age_high;
+                    
+                $set_suffix = null;
+                    
+                if (isset($age_groups[$age_index]))
+                {
+                    $set_suffix = str_replace(":", "_", $age_index);
+                }
+                else
+                {
+                    $set_suffix = "unknown";
+                    
+                    foreach ($age_groups as $age_group)
+                    {
+                        $lowhigh = explode(":", $age_group);
+                        
+                        $alow = $lowhigh[0];
+                        $ahigh = ((isset($lowhigh[1])) ? $lowhigh[1] : -1);
+                        
+                        if ($ahigh == "plus")
+                            $ahigh = 999;
+                            
+                        if ($age_low >= $alow)
+                        {
+                            if ($age_high <= $ahigh)
+                            {
+                                $set_suffix = str_replace(":", "_", $age_group);
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                if ($set_suffix)
+                {
+                    $key_cases_new = "cases_new_agegroup_".$set_suffix;
+                    $key_cases_count = "cases_count_agegroup_".$set_suffix;
+                    $key_cases_delta = "cases_delta_agegroup_".$set_suffix;
+                    $key_cases_today = "cases_today_agegroup_".$set_suffix;
+                    $key_cases_total = "cases_total_agegroup_".$set_suffix;
+                    $key_cases_pointer = "cases_total_agegroup_".$set_suffix;
+                
+                    if (($data->cases_new == 0) || ($data->cases_new == 1))
+                        $dataset->$key_cases_new += $data->cases_count;
+                    if (($data->cases_new == -1) || ($data->cases_new == 1))
+                        $dataset->$key_cases_delta += $data->cases_count;
+                    if ($data->cases_new == 0)
+                        $dataset->$key_cases_today += $data->cases_count;
+                    if ($data->cases_new == -1)
+                        $dataset->$key_cases_yesterday += $data->cases_count;
 
-            if ($population > 0)
-                $dataset->total_recovered_per_million = ($dataset->total_recovered / $population * $mil);
-                                                                
+                    if ($dataset->$key_cases_today == $dataset->$key_cases_yesterday)
+                        $dataset->$key_cases_pointer = "sty";
+                    elseif ($dataset->$key_cases_today > $dataset->$key_cases_yesterday)
+                        $dataset->$key_cases_pointer = "asc";
+                    elseif ($dataset->$key_cases_today < $dataset->$key_cases_yesterday)
+                        $dataset->$key_cases_pointer = "desc";                
+                
+                    $dataset->$key_cases_count = ($dataset->$key_cases_delta - $dataset->$key_cases_new);
+
+                    $key_deaths_new = "deaths_new_agegroup_".$set_suffix;
+                    $key_deaths_count = "deaths_count_agegroup_".$set_suffix;
+                    $key_deaths_delta = "deaths_delta_agegroup_".$set_suffix;
+                    $key_deaths_today = "deaths_today_agegroup_".$set_suffix;
+                    $key_deaths_total = "deaths_total_agegroup_".$set_suffix;
+                    $key_deaths_pointer = "deaths_total_agegroup_".$set_suffix;
+                
+                    if (($data->deaths_new == 0) || ($data->deaths_new == 1))
+                        $dataset->$key_deaths_new += $data->deaths_count;
+                    if (($data->deaths_new == -1) || ($data->deaths_new == 1))
+                        $dataset->$key_deaths_delta += $data->deaths_count;
+                    if ($data->deaths_new == 0)
+                        $dataset->$key_deaths_today += $data->deaths_count;
+                    if ($data->deaths_new == -1)
+                        $dataset->$key_deaths_yesterday += $data->deaths_count;
+
+                    if ($dataset->$key_deaths_today == $dataset->$key_deaths_yesterday)
+                        $dataset->$key_deaths_pointer = "sty";
+                    elseif ($dataset->$key_deaths_today > $dataset->$key_deaths_yesterday)
+                        $dataset->$key_deaths_pointer = "asc";
+                    elseif ($dataset->$key_deaths_today < $dataset->$key_deaths_yesterday)
+                        $dataset->$key_deaths_pointer = "desc";                
+                
+                    $dataset->$key_deaths_count = ($dataset->$key_deaths_delta - $dataset->$key_deaths_new);
+
+                    $key_recovered_new = "recovered_new_agegroup_".$set_suffix;
+                    $key_recovered_count = "recovered_count_agegroup_".$set_suffix;
+                    $key_recovered_delta = "recovered_delta_agegroup_".$set_suffix;
+                    $key_recovered_today = "recovered_today_agegroup_".$set_suffix;
+                    $key_recovered_total = "recovered_total_agegroup_".$set_suffix;
+                    $key_recovered_pointer = "recovered_total_agegroup_".$set_suffix;
+                
+                    if (($data->deaths_new == 0) || ($data->deaths_new == 1))
+                        $dataset->$key_recovered_new += $data->deaths_count;
+                    if (($data->deaths_new == -1) || ($data->deaths_new == 1))
+                        $dataset->$key_recovered_delta += $data->deaths_count;
+                    if ($data->deaths_new == 0)
+                        $dataset->$key_recovered_today += $data->deaths_count;
+                    if ($data->deaths_new == -1)
+                        $dataset->$key_recovered_yesterday += $data->deaths_count;
+
+                    if ($dataset->$key_recovered_today == $dataset->$key_recovered_yesterday)
+                        $dataset->$key_recovered_pointer = "sty";
+                    elseif ($dataset->$key_recovered_today > $dataset->$key_recovered_yesterday)
+                        $dataset->$key_recovered_pointer = "asc";
+                    elseif ($dataset->$key_recovered_today < $dataset->$key_recovered_yesterday)
+                        $dataset->$key_recovered_pointer = "desc";                
+                
+                    $dataset->$key_recovered_count = ($dataset->$key_recovered_delta - $dataset->$key_recovered_new);
+                }
+            }
+            
             if (!isset($datasets[$index]))
                 $datasets[$index] = array();
                                 
@@ -2319,7 +2556,6 @@ class Client
                     case "district_id":
                     case "district_type":
                     case "district_name":
-                    case "district_fullname":
                     case "state":
                     case "state_id":
                         continue(2);

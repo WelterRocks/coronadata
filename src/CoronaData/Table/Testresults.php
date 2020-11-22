@@ -95,6 +95,7 @@ class Testresults extends Base
         `deaths_new` INT NOT NULL DEFAULT '0',
         `recovered_count` INT NOT NULL DEFAULT '0',
         `recovered_new` INT NOT NULL DEFAULT '0',
+        `data_checksum` VARCHAR(40) NULL DEFAULT NULL,
         `update_count` int UNSIGNED NOT NULL DEFAULT '0',
         `flag_updated` tinyint(1) NOT NULL DEFAULT '0',
         `flag_disabled` tinyint(1) NOT NULL DEFAULT '0',
@@ -109,7 +110,8 @@ class Testresults extends Base
         KEY `district_hash` (`district_hash`),
         KEY `state_hash` (`state_hash`),
         KEY `country_hash` (`country_hash`),
-        KEY `continent_hash` (`continent_hash`)
+        KEY `continent_hash` (`continent_hash`),
+        KEY `data_checksum` (`data_checksum`)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
       ALTER TABLE `testresults` ADD CONSTRAINT `testresult_location` FOREIGN KEY (`locations_uid`) REFERENCES `locations`(`uid`) ON DELETE CASCADE ON UPDATE CASCADE;

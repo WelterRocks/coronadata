@@ -47,11 +47,44 @@ abstract class Base
     protected $timestamp_undeleted = null;
     protected $timestamp_disabled = null;
     protected $timestamp_enabled = null;
+    protected $data_checksum = null;
     protected $update_count = null;
     protected $flag_updated = null;
     protected $flag_disabled = null;
     protected $flag_deleted = null;
     
+    public static function calculate_checksum()
+    {
+        $buffer = array();
+
+        foreach ($this as $key => $val)
+        {
+            if (substr($key, 0, 2) == "__")
+                continue;
+                
+            switch ($key)
+            {
+              case "uid":
+              case "timestamp_last_update":
+              case "timestamp_registration":
+              case "timestamp_deleted":
+              case "timestamp_undeleted":
+              case "timestamp_disabled":
+              case "timestamp_enabled":
+              case "data_checksum":
+              case "update_count":
+              case "flag_updated":
+              case "flag_disabled":
+              case "flag_deleted":
+                continue(2);
+            }
+                
+            array_push($buffer, $key.":".$val);
+        }
+
+        return sha1(implode("\n", $buffer));
+    }
+
     private function view_exception($code = 0, $ex = null)
     {
         throw new Exception("You cannot do any write action on a view", $code, $ex);
@@ -394,7 +427,7 @@ abstract class Base
 
         if (!$this->is_view())
         {
-          if (!$this->__db->multi_query("CREATE TRIGGER IF NOT EXISTS `update_set_".$this->__tablename."` BEFORE UPDATE ON `".$this->__tablename."` FOR EACH ROW BEGIN SET NEW.update_count = OLD.update_count + 1; SET NEW.flag_updated = 1; END;"))
+          if (!$this->__db->multi_query("DROP TRIGGER IF EXISTS `update_set_".$this->__tablename."`; CREATE TRIGGER IF NOT EXISTS `update_set_".$this->__tablename."` BEFORE UPDATE ON `".$this->__tablename."` FOR EACH ROW BEGIN IF OLD.data_checksum != NEW.data_checksum THEN BEGIN SET NEW.update_count = OLD.update_count + 1; SET NEW.flag_updated = 1; END; END IF; END"))
           {
             $error = $this->__db->error;
             return false;
@@ -698,8 +731,6 @@ abstract class Base
             $sql .= ", `".$key."` = '".$this->esc($val)."'";
           }
         }
-        
-        $sql .= ", `flag_updated` = 1, update_count = update_count + 1";
         
         $sql = "UPDATE `".$this->__tablename."'` SET ".$update." WHERE `uid` = '".$this->uid."' LIMIT 1";
         
@@ -1006,6 +1037,7 @@ abstract class Base
           "timestamp_undeleted" => true,
           "timestamp_disabled" => true,
           "timestamp_enabled" => true,
+          "data_checksum" => true,
           "update_count" => true,
           "flag_updated" => true,
           "flag_disabled" => true,

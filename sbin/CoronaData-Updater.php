@@ -176,10 +176,10 @@ function worker_loop(Client $client, $oneshot = false)
                 
                 $cli->log("Extracting and mastering datasets.", LOG_INFO);                
                 $client->master_datasets();
-                
+/*                
                 $cli->log("Extracting and mastering testresults.", LOG_INFO);                
                 $client->master_testresults();
-                
+*/                
                 $count = 0;
                 $any = 0;
                 $errors = array();
@@ -187,7 +187,7 @@ function worker_loop(Client $client, $oneshot = false)
                 $cli->log("Storing location records.", LOG_INFO);
                 $client->save_locations($count, $any, $errors);
                 $cli->log("Stored ".$count." from ".$any." location records.", LOG_INFO);
-                
+/*                
                 $cli->log("Storing divi records.", LOG_INFO);
                 $client->save_divis($count, $any, $errors);
                 $cli->log("Stored ".$count." from ".$any." divi records.", LOG_INFO);
@@ -203,7 +203,7 @@ function worker_loop(Client $client, $oneshot = false)
                 $cli->log("Storing testresult records.", LOG_INFO);
                 $client->save_testresults($count, $any, $errors);
                 $cli->log("Stored ".$count." from ".$any." testresult records.", LOG_INFO);
-                
+*/                
                 $cli->log("Database updated.", LOG_INFO);
             }
             else
