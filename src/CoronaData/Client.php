@@ -483,9 +483,6 @@ class Client
             if ($country->population_year > $record->population_year)
                 $country->population_year = $record->population_year;
                 
-            $country->data_checksum = self::object_checksum($country);
-            $continent->data_checksum = self::object_checksum($continent);
-            
             $countries[$country_hash] = $country;
             $continents[$continent_hash] = $continent;
         }
@@ -541,8 +538,6 @@ class Client
                     $germany->area = 0;
                                 
                 $germany->area += $area;
-                
-                $state->data_checksum = self::object_checksum($state);
                 
                 $states[$state_hash] = $state;
             }
@@ -605,8 +600,6 @@ class Client
                 $germany->population_males += $data->males;
                 
                 $state->population_year = $data->date->format("Y");
-                
-                $state->data_checksum = self::object_checksum($state);
                 
                 $states[$state_hash] = $state;
             }            
@@ -675,15 +668,10 @@ class Client
                     }
                 }
                 
-                $district->data_checksum = self::object_checksum($district);
-                                
                 $districts[$district_hash] = $district;
             }
         }
         
-        // Recalculate the checksums for the germany and europe object
-        $germany->data_checksum = self::object_checksum($germany);
-        $europe->data_checksum = self::object_checksum($europe);
         
         // Fifth, merge the district informations into divi data
         // DEPRECATED! We will merge the data later into datasets
@@ -1405,49 +1393,6 @@ class Client
         return $result;
     }
 
-    public function calculate_case_and_death_ascension($cases, $deaths, $dates)
-    {
-        if (!is_array($cases))
-            return null;
-            
-        if (!is_array($deaths))
-            return null;
-            
-        $cases_now = $cases[0];
-        $deaths_now = $deaths[0];
-
-        $result = new \stdClass;
-        $result->cases_ascension = 0;
-        $result->deaths_ascension = 0;
-
-        if (isset($cases[1]))
-            $result->cases_ascension = (int)($cases_now - $cases[1]) ?: 0;
-
-        if (isset($deaths[1]))
-            $result->deaths_ascension = (int)($deaths_now - $deaths[1]) ?: 0;
-
-        $yesterday = ($cases_now - $result->cases_ascension);
-
-        if ($yesterday != 0)
-            $result->exponence_yesterday = ($cases_now / $yesterday);
-
-        if ($result->cases_ascension > 0)
-            $result->cases_pointer = "asc";
-        elseif ($result->cases_ascension < 0)
-            $result->cases_pointer = "desc";
-        else
-            $result->cases_pointer = "sty";
-
-        if ($result->deaths_ascension > 0)
-            $result->deaths_pointer = "asc";
-        elseif ($result->deaths_ascension < 0)
-            $result->deaths_pointer = "desc";
-        else
-            $result->deaths_pointer = "sty";
-
-        return $result;
-    }
-
     public function calculate_case_and_death_rates($cases, $deaths, $population, $dates)
     {
         if ($population == 0)
@@ -1485,7 +1430,6 @@ class Client
         self::result_object_merge($result, $this->calculate_14day_fields($cases, $deaths, $population, $area, $dates, $incidence_factor));
         
         self::result_object_merge($result, $this->calculate_case_and_death_rates($cases, $deaths, $population, $dates));
-        self::result_object_merge($result, $this->calculate_case_and_death_ascension($cases, $deaths, $dates));
         
         self::result_object_merge($result, $this->calculate_4day_r_value($cases, $deaths, $dates));
         self::result_object_merge($result, $this->calculate_7day_r_value($cases, $deaths, $dates));
@@ -1525,6 +1469,101 @@ class Client
         self::result_object_merge($result, $this->calculate_alert_condition2($alert_condition2_4day, $alert_condition2_7day, $alert_condition2_14day));
         
         return $result;        
+    }
+    
+    public function finalize_datasets($dataset_index, $location_type, &$datasets)
+    {
+        if ($location_type == "auto")
+            $auto_location = true;
+        else
+            $auto_location = false;
+            
+        foreach ($dataset_index as $index => $data)
+        {
+            krsort($data);
+            
+            foreach ($data as $date => $hash)
+            {                
+                $cases = array();
+                $deaths = array();
+                $dates = array();
+            
+                foreach ($data as $date2 => $hash2)
+                {
+                    if ($date2 > $date)
+                        continue;
+                        
+                    array_push($cases, $datasets[$hash2]->cases_count);
+                    array_push($deaths, $datasets[$hash2]->deaths_count);
+                    array_push($dates, $date2);
+                
+                    if (count($cases) > 32)
+                        break;
+                }
+                
+                for ($i = (count($cases) - 1); $i < 32; $i++)
+                {
+                    $cases[$i] = (int)0;
+                    $deaths[$i] = (int)0;
+                    $dates[$i] = (int)0;
+                }
+                
+                $population_count = 0;
+                $area = 0;
+                
+                if ($auto_location)
+                {
+                    switch (substr($index, 0, 1))
+                    {
+                        case "N":
+                            $location_type = "continent";
+                            break;
+                        case "C":
+                            $location_type = "country";
+                            break;
+                        case "S":
+                            $location_type = "state";
+                            break;
+                        case "D":
+                            $location_type = "district";
+                            break;
+                        case "L":
+                            $location_type = "location";
+                            break;
+                        default:
+                            $location_type = null;
+                            break;
+                    }
+                }
+                
+                switch ($location_type)
+                {
+                    case "continent":
+                    case "country":
+                    case "state":
+                    case "district":
+                    case "location":
+                        $loc_key = $location_type."_hash";
+                        $loc_obj = $location_type."s";
+
+                        $loc_hash = $datasets[$hash]->$loc_key;
+                        
+                        if (isset($this->$loc_obj[$loc_hash]))
+                        {
+                            if (isset($this->$loc_obj[$loc_hash]->population_count))
+                                $population_count = $this->$loc_obj[$loc_hash]->population_count;
+                            
+                            if (isset($this->$loc_obj[$loc_hash]->area))
+                                $area = $this->$loc_obj[$loc_hash]->area;
+                        }
+                        break;
+                }
+                    
+                self::result_object_merge($datasets[$hash], $this->calculate_dataset_fields($cases, $deaths, $population_count, $area, $dates));
+            }
+        }
+        
+        return true;
     }
     
     public function master_datasets($hold_data = false)
@@ -1574,7 +1613,7 @@ class Client
             $dataset_hash = self::hash_name("dataset-country", $country_hash, $record->date_rep);
 
             if (!isset($datasets[$dataset_hash]))
-                $dataset = $this->get_dataset_template();
+                $dataset = $this->create_dataset_template();
             else
                 $dataset = $datasets[$dataset_hash];
                 
@@ -1590,7 +1629,7 @@ class Client
             $dataset->timestamp_represent = $record->timestamp_represent;
             $dataset->location_type = "country";
             
-            $index = "C".$dataset->continent_hash.$dataset->country_hash;
+            $index = "C".$dataset->country_hash;
             
             if (!isset($dataset_index[$index]))
                 $dataset_index[$index] = array();
@@ -1602,42 +1641,9 @@ class Client
             $datasets[$dataset_hash] = $dataset;
         }
         
-        foreach ($dataset_index as $index => $data)
-        {
-            krsort($data);
-            
-            foreach ($data as $date => $hash)
-            {                
-                $cases = array();
-                $deaths = array();
-                $dates = array();
-            
-                foreach ($data as $date2 => $hash2)
-                {
-                    if ($date2 > $date)
-                        continue;
-                        
-                    array_push($cases, $datasets[$hash2]->cases_count);
-                    array_push($deaths, $datasets[$hash2]->deaths_count);
-                    array_push($dates, $date2);
-                
-                    if (count($cases) > 32)
-                        break;
-                }
-                
-                for ($i = (count($cases) - 1); $i < 32; $i++)
-                {
-                    $cases[$i] = (int)0;
-                    $deaths[$i] = (int)0;
-                    $dates[$i] = (int)0;
-                }
-                
-                $country_hash = $datasets[$hash]->country_hash;
-                
-                self::result_object_merge($datasets[$hash], $this->calculate_dataset_fields($cases, $deaths, $this->countries[$country_hash]->population_count, $this->countries[$country_hash]->area, $dates));
-            }
-        }
-                            
+        // Finalize dataset calculation
+        $this->finalize_datasets($dataset_index, "auto", $datasets);
+        
         // Free the memory, which is no longer need (if hold data is not requested)
         if (!$hold_data)
         {
@@ -1762,11 +1768,11 @@ class Client
                     $tmpl->$key = (int)0;
             }
             
-            foreach (array("new", "count", "delta", "today", "total", "pointer") as $suffix)
+            foreach (array("new", "count", "delta", "today", "yesterday", "total", "pointer") as $suffix)
             {
                 foreach ($age_groups as $agegroup)
                 {
-                    $ag = str_replace(":", "_", $age_group);
+                    $ag = str_replace(":", "_", $agegroup);
                     
                     $key = $prefix."_".$suffix."_agegroup_".$ag;
                     
@@ -1800,6 +1806,8 @@ class Client
         
         $unknown_districts = array();
         $unknown_states = array();
+        
+        $dataset_index = array();
                         
         // No need for templates here, just clone data and add the hashes
         foreach($this->rki_positive->handler->get_data() as $data)
@@ -1839,16 +1847,19 @@ class Client
             // The location type for a testresult is always 'district' (for now), no need to use resources on hash type validations
             $testresult->location_type = 'district';
             
-            $index = $testresult->district_hash;
+            $index = "D".$testresult->district_hash;
             $ts = strtotime($testresult->timestamp_represent);
             $date = date("Ymd", $ts);
+            
+            $dataset_hash = self::hash_name("dataset-district", $district_hash, $data->date_rep);
+            $dataset_index[$index][$date] = $dataset_hash;            
 
             // Create or update district dateset
-            if (!isset($datasets[$index][$date]))
+            if (!isset($datasets[$dataset_hash]))
             {
                 $dataset = $this->create_dataset_template();
                 
-                $dataset->dataset_hash = self::hash_name("dataset-district", $district_hash, $data->date_rep);
+                $dataset->dataset_hash = $dataset_hash;
                 $dataset->district_hash = $district_hash;
                 $dataset->state_hash = $state_hash;
                 $dataset->country_hash = $germany_hash;
@@ -1863,7 +1874,7 @@ class Client
             }
             else
             {
-                $dataset = $datasets[$index][$date];
+                $dataset = $datasets[$dataset_hash];
             }
             
             /* METADATA by 2020-11-21
@@ -2022,6 +2033,7 @@ class Client
                     $key_cases_count = "cases_count_agegroup_".$set_suffix;
                     $key_cases_delta = "cases_delta_agegroup_".$set_suffix;
                     $key_cases_today = "cases_today_agegroup_".$set_suffix;
+                    $key_cases_yesterday = "cases_yesterday_agegroup_".$set_suffix;
                     $key_cases_total = "cases_total_agegroup_".$set_suffix;
                     $key_cases_pointer = "cases_total_agegroup_".$set_suffix;
                 
@@ -2047,6 +2059,7 @@ class Client
                     $key_deaths_count = "deaths_count_agegroup_".$set_suffix;
                     $key_deaths_delta = "deaths_delta_agegroup_".$set_suffix;
                     $key_deaths_today = "deaths_today_agegroup_".$set_suffix;
+                    $key_deaths_yesterday = "deaths_yesterday_agegroup_".$set_suffix;
                     $key_deaths_total = "deaths_total_agegroup_".$set_suffix;
                     $key_deaths_pointer = "deaths_total_agegroup_".$set_suffix;
                 
@@ -2072,6 +2085,7 @@ class Client
                     $key_recovered_count = "recovered_count_agegroup_".$set_suffix;
                     $key_recovered_delta = "recovered_delta_agegroup_".$set_suffix;
                     $key_recovered_today = "recovered_today_agegroup_".$set_suffix;
+                    $key_recovered_yesterday = "recovered_yesterday_agegroup_".$set_suffix;
                     $key_recovered_total = "recovered_total_agegroup_".$set_suffix;
                     $key_recovered_pointer = "recovered_total_agegroup_".$set_suffix;
                 
@@ -2095,424 +2109,24 @@ class Client
                 }
             }
             
-            if (!isset($datasets[$index]))
-                $datasets[$index] = array();
-                                
-            $datasets[$index][$date] = $dataset;
+            $datasets[$dataset_hash] = $dataset;
             $testresults[$result_hash] = $testresult;
             
-            krsort($datasets[$index]);
+            krsort($dataset_index[$index]);
         }
 
-        // Global counters        
-        $states_cases = array();
-        $states_deaths = array();
-        $states_recovered = array();
-            
-        $germany_cases = 0;
-        $germany_deaths = 0;
-        $germany_recovered = 0;
-            
-        // Merge district datasets and main datasets
-        foreach ($datasets as $index => $data)
+        // Finalize dataset calculation
+        $this->finalize_datasets($dataset_index, "district", $datasets);
+        
+        // We must create / update the dataset hierarchy and save our new results to objects local store
+        foreach ($dataset_index as $index => $date)
         {
-            $cases = 0;
-            $deaths = 0;
-            $recovered = 0;
-            
-            $cases_last = array();
-            $deaths_last = array();
-            $dates_last = array();
-            
-            // Zero fill cases and deaths array
-            for ($i = 0; $i < 32; $i++)
+            foreach ($date as $hash)
             {
-                $cases_last[$i] = 0;
-                $deaths_last[$i] = 0;
-                $dates_last[$i] = 0;
+                $this->datasets[$hash] = $datasets[$hash];
             }
-            
-            // We need the population from the corresponding location object
-            if (isset($this->districts[$index]))
-            {
-                $district = $this->districts[$index];
-    
-                // And also its parent
-                if (isset($this->states[$district->state_hash]))
-                    $state = $this->states[$district->state_hash];
-                else
-                    $state = null;
-            }
-            else
-            {
-                // Spooky, the corresponding district wasnt found.
-                // Seems, that the district is not yet existing...
-                                
-                $district = null;
-                $state = null;
-            }
-                
-            if (is_object($district))
-            {
-                if (isset($district->population_count))
-                    $population = $district->population_count;
-                else
-                    $population = 0;
-                    
-                if (isset($district->area))
-                    $area = $district->area;
-                else
-                    $area = 0;
-            }
-            else
-            {
-                $population = 0;
-                $area = 0;
-            }
-                        
-            if (is_object($district))
-            {
-                if (!isset($state_cases[$district->state_hash]))
-                {
-                    $state_cases[$district->state_hash] = 0;
-                    $state_deaths[$district->state_hash] = 0;
-                    $state_recovered[$district->state_hash] = 0;
-                }
-            }
-            
-            foreach ($data as $date => $dataset)
-            {
-                $cases += $dataset->cases;
-                $deaths += $dataset->deaths;
-                $recovered += $dataset->recovered;
-
-                if (is_object($district))
-                {                
-                    $state_cases[$district->state_hash] += $dataset->cases;
-                    $state_deaths[$district->state_hash] += $dataset->deaths;
-                    $state_recovered[$district->state_hash] += $dataset->recovered;
-                }
-                
-                $germany_cases += $dataset->cases;
-                $germany_deaths += $dataset->deaths;
-                $germany_recovered += $dataset->recovered;
-                
-                $dataset->total_cases = $cases;
-                $dataset->total_deaths = $deaths;
-                $dataset->total_recovered = $recovered;
-                
-                $dataset->total_cases_per_million = ($dataset->total_cases / $mil * $population);
-                $dataset->total_deaths_per_million = ($dataset->total_deaths / $mil * $population);
-                $dataset->total_recovered_per_million = ($dataset->total_recovered / $mil * $population);
-                
-                $dataset->new_cases_per_million = ($dataset->new_cases / $mil * $population);
-                $dataset->new_deaths_per_million = ($dataset->new_deaths / $mil * $population);
-                $dataset->new_recovered_per_million = ($dataset->new_recovered / $mil * $population);
-                
-                $dataset->new_cases_smoothed_per_million = ($dataset->new_cases_smoothed / $mil * $population);
-                $dataset->new_deaths_smoothed_per_million = ($dataset->new_deaths_smoothed / $mil * $population);
-                $dataset->new_recovered_smoothed_per_million = ($dataset->new_recovered_smoothed / $mil * $population);
-                
-                // Before shifting and adding new values to array, check the date linearity and zero fill missing days
-                $last_date = $dates_last[count($dates_last)-1];
-                
-                $last_ts = mktime(0, 0, 0, (double)substr($last_date, 4, 2), (double)substr($last_date, 6, 2), (double)substr($last_date, 0, 4));
-                $this_ts = mktime(0, 0, 0, (double)substr($date, 4, 2), (double)substr($date, 6, 2), (double)substr($date, 0, 4));
-
-                $date_before = date("Ymd", ($this_ts - 86400));
-                
-                if ($last_ts != $date_before)
-                {
-                    $steps = ceil((($last_ts - $this_ts) / 86400));
-                    
-                    for ($i = 0; $i < $steps; $i++)
-                    {
-                        $next_ts = ($last_ts - (86400 * ($i+1)));
-                        $date_next = date("Ymd", $next_ts);
-                        
-                        if ($date_next == $date)
-                            break;
-                            
-                        array_shift($cases_last);
-                        array_shift($deaths_last);
-                        array_shift($dates_last);
-                            
-                        array_push($cases_last, 0);
-                        array_push($deaths_last, 0);
-                        array_push($dates_last, $date_next);
-                    }
-                }                
-                
-                array_shift($cases_last);
-                array_shift($deaths_last);
-                array_shift($dates_last);
-                
-                array_push($cases_last, $dataset->cases);
-                array_push($deaths_last, $dataset->deaths);
-                array_push($dates_last, $date);
-                
-                self::result_object_merge($dataset, $this->calculate_dataset_fields($cases_last, $deaths_last, $population, $area, $dates_last));
-
-                $dataset_hash = self::hash_name("dataset-district", $dataset->district_hash, $dataset->date_rep);
-                                
-                if (isset($this->datasets[$dataset_hash]))
-                {
-                    // Override existing dataset with all non-null values
-                    foreach ($dataset as $key => $val)
-                    {
-                        if ($val !== null)
-                        {
-                            $this->datasets[$dataset_hash]->$key = $val;
-                        }                        
-                    }
-                    
-                    continue;
-                }
-                
-                $timestamp = strtotime($dataset->timestamp_represent);
-
-                $this->datasets[$dataset_hash] = $dataset;
-                
-                if (is_object($district))
-                {
-                    // Now, push the results to corresponding district and its parent locations                
-                    $district->cases_count = $dataset->cases;
-                    $district->deaths_count = $dataset->deaths;
-                    $district->recovered_count = $dataset->recovered;                   
-            
-                    if ($district->timestamp_min > $timestamp)
-                        $district->timestamp_min = $timestamp;
-                
-                    if ($district->timestamp_max < $timestamp)
-                        $district->timestamp_max = $timestamp;
-                        
-                    $district->day_of_week = date("w", $district->timestamp_max);
-                    $district->day = date("j", $district->timestamp_max);
-                    $district->month = date("n", $district->timestamp_max);
-                    $district->year = date("Y", $district->timestamp_max);
-                
-                    if ((isset($district->total_cases)) && ($district->total_cases > 0))
-                    {
-                        if ($district->population_count)
-                            $district->contamination_total = (100 / $district->population_count * $district->total_cases);
-                            
-                        $district->contamination_rundays = ((time() - $district->timestamp_min) / 60 / 60 / 24);
-                        
-                        if ($district->contamination_rundays > 0)
-                            $district->contamination_per_day = ($district->total_cases / $district->contamination_rundays); 
-                        else
-                            $district->contamination_per_day = 0;
-   
-                        if ($district->contamination_per_day > 0)
-                            $district->contamination_target = (($district->population_count - $district->total_cases) / $district->contamination_per_day);
-                    }
-                    
-                    if ($district->area > 0)
-                    {
-                        $district->infection_density = ($district->cases_count / $district->area);
-                        
-                        if ($district->infection_density > 0)
-                            $district->infection_area = (1 / $district->infection_density);
-                        else
-                            $district->infection_area = 0;
-                        
-                        if ($district->infection_area > 0)
-                            $district->infection_probability = (100 / ($district->infection_area * $district->population_density));
-                        else
-                            $district->infection_probability = 0;
-                    }
-                    
-                    // Due to missing data in retrieved files, it could be that some fields are missing right now
-                    $fix_missing = array(
-                        "recovered_min",
-                        "recovered_max",
-                        "total_cases",
-                        "total_deaths",
-                        "total_recovered",
-                        "new_cases",
-                        "new_deaths",
-                        "new_recovered",
-                        "new_cases_smoothed",
-                        "new_deaths_smoothed",
-                        "new_recovered_smoothed"
-                    );
-                    
-                    foreach ($fix_missing as $fix)
-                    {
-                        if (!isset($district->$fix))
-                            $district->$fix = 0;
-                            
-                        if (!isset($state->$fix))
-                            $state->$fix = 0;
-                    }
-                    
-                    if ($district->cases_min > $cases)
-                        $district->cases_min = $cases;
-                    if ($district->cases_max < $cases)
-                        $district->cases_max = $cases;
-                    if ($district->deaths_min > $deaths)
-                        $district->deaths_min = $deaths;
-                    if ($district->deaths_max < $deaths)
-                        $district->deaths_max = $deaths;
-                    if ($district->recovered_min > $recovered)
-                        $district->recovered_min = $recovered;
-                    if ($district->recovered_max < $recovered)
-                        $district->recovered_max = $recovered;
-                        
-                    $district->total_cases = $cases;
-                    $district->total_deaths = $deaths;
-                    $district->total_recovered = $recovered;
-                    
-                    $district->total_cases_per_million = ($district->total_cases / $mil * $population);
-                    $district->total_deaths_per_million = ($district->total_deaths / $mil * $population);
-                    $district->total_recovered_per_million = ($district->total_recovered / $mil * $population);
-                    
-                    $district->new_cases_per_million = ($district->new_cases / $mil * $population);
-                    $district->new_deaths_per_million = ($district->new_deaths / $mil * $population);
-                    $district->new_recovered_per_million = ($district->new_recovered / $mil * $population);
-                    
-                    $district->new_cases_smoothed_per_million = ($district->new_cases_smoothed / $mil * $population);
-                    $district->new_deaths_smoothed_per_million = ($district->new_deaths_smoothed / $mil * $population);
-                    $district->new_recovered_smoothed_per_million = ($district->new_recovered_smoothed / $mil * $population);
-                    
-                    if (is_object($state))
-                    {
-                        $state->cases_count = $state_cases[$district->state_hash];
-                        $state->deaths_count = $state_deaths[$district->state_hash];
-                        $state->recovered_count = $state_recovered[$district->state_hash];
-                        
-                        if ($state->timestamp_min > $timestamp)
-                            $state->timestamp_min = $timestamp;
-                    
-                        if ($state->timestamp_max < $timestamp)
-                            $state->timestamp_max = $timestamp;
-                
-                        $state->day_of_week = date("w", $state->timestamp_max);
-                        $state->day = date("j", $state->timestamp_max);
-                        $state->month = date("n", $state->timestamp_max);
-                        $state->year = date("Y", $state->timestamp_max);
-                
-                        if ((isset($state->total_cases)) && ($state->total_cases > 0))
-                        {
-                            if ($state->population_count)
-                                $state->contamination_total = (100 / $state->population_count * $state->total_cases);
-                                
-                            $state->contamination_rundays = ((time() - $state->timestamp_min) / 60 / 60 / 24);
-                            
-                            if ($state->contamination_rundays > 0)
-                                $state->contamination_per_day = ($state->total_cases / $state->contamination_rundays); 
-                            else
-                                $state->contamination_per_day = 0;
-       
-                            if ($state->contamination_per_day > 0)
-                                $state->contamination_target = (($state->population_count - $state->total_cases) / $state->contamination_per_day);
-                        }
-                    
-                        if ($state->area > 0)
-                        {
-                            $state->infection_density = ($state->cases_count / $state->area);
-                            
-                            if ($state->infection_density > 0)
-                                $state->infection_area = (1 / $state->infection_density);
-                            else
-                                $state->infection_area = 0;
-                            
-                            if ($state->infection_area > 0)
-                                $state->infection_probability = (100 / ($state->infection_area * $state->population_density));
-                            else
-                                $state->infection_probability = 0;
-                        }
-                    
-                        if ($state->cases_min > $cases)
-                            $state->cases_min = $cases;
-                        if ($state->cases_max < $cases)
-                            $state->cases_max = $cases;
-                        if ($state->deaths_min > $deaths)
-                            $state->deaths_min = $deaths;
-                        if ($state->deaths_max < $deaths)
-                            $state->deaths_max = $deaths;
-                        if ($state->recovered_min > $recovered)
-                            $state->recovered_min = $recovered;
-                        if ($state->recovered_max < $recovered)
-                            $state->recovered_max = $recovered;
-                            
-                        $state->total_cases = $cases;
-                        $state->total_deaths = $deaths;
-                        $state->total_recovered = $recovered;
-                        
-                        $state->total_cases_per_million = ($district->total_cases / $mil * $state->population_count);
-                        $state->total_deaths_per_million = ($district->total_deaths / $mil * $state->population_count);
-                        $state->total_recovered_per_million = ($district->total_recovered / $mil * $state->population_count);
-                        
-                        $state->new_cases_per_million = ($district->new_cases / $mil * $state->population_count);
-                        $state->new_deaths_per_million = ($district->new_deaths / $mil * $state->population_count);
-                        $state->new_recovered_per_million = ($district->new_recovered / $mil * $state->population_count);
-                    
-                        $state->new_cases_smoothed_per_million = ($district->new_cases_smoothed / $mil * $state->population_count);
-                        $state->new_deaths_smoothed_per_million = ($district->new_deaths_smoothed / $mil * $state->population_count);
-                        $state->new_recovered_smoothed_per_million = ($district->new_recovered_smoothed / $mil * $state->population_count);
-                        
-                        if (is_object($germany))
-                        {
-                            $germany->cases_count = $germany_cases;
-                            $germany->deaths_count = $germany_deaths;
-                            $germany->recovered_count = $germany_recovered;
-                            
-                            if ((isset($germany->total_cases)) && ($germany->total_cases > 0))
-                            {
-                                if ($germany->population_count)
-                                    $germany->contamination_total = (100 / $germany->population_count * $germany->total_cases);
-                                    
-                                $germany->contamination_rundays = ((time() - $germany->timestamp_min) / 60 / 60 / 24);
-                                
-                                if ($germany->contamination_rundays > 0)
-                                    $germany->contamination_per_day = ($germany->total_cases / $germany->contamination_rundays); 
-                                else
-                                    $germany->contamination_per_day = 0;
-           
-                                if ($germany->contamination_per_day > 0)
-                                    $germany->contamination_target = (($germany->population_count - $germany->total_cases) / $germany->contamination_per_day);
-                            }
-                            
-                            if ($germany->area > 0)
-                            {
-                                $germany->infection_density = ($germany->cases_count / $germany->area);
-                                
-                                if ($germany->infection_density > 0)
-                                    $germany->infection_area = (1 / $germany->infection_density);
-                                else
-                                    $germany->infection_area = 0;
-                                
-                                if ($germany->infection_area > 0)    
-                                    $germany->infection_probability = (100 / ($germany->infection_area * $germany->population_density));
-                                else
-                                    $germany->infection_probability = 0;
-                            }
-                    
-                            if ($germany->cases_min > $cases)
-                                $germany->cases_min = $cases;
-                            if ($germany->cases_max < $cases)
-                                $germany->cases_max = $cases;
-                            if ($germany->deaths_min > $deaths)
-                                $germany->deaths_min = $deaths;
-                            if ($germany->deaths_max < $deaths)
-                                $germany->deaths_max = $deaths;
-                            if ($germany->recovered_min > $recovered)
-                                $germany->recovered_min = $recovered;
-                            if ($germany->recovered_max < $recovered)
-                                $germany->recovered_max = $recovered;        
-                        }
-                    }
-                }
-            }            
-            
-            if (is_object($state))
-                $this->states[$district->state_hash] = $state;
-            
-            if (is_object($district))
-                $this->districts[$index] = $district;
         }
-                        
+        
         // Free the memory, which is no longer need (if hold data is not requested)
         if (!$hold_data)
             $this->rki_positive->handler->free();
@@ -2590,6 +2204,8 @@ class Client
                     
             $error = null;
                     
+            $db_obj->data_checksum = $db_obj->calculate_checksum();
+                    
             if ($db_obj->save(null, null, false, false, $error))
                 $count++;
             else
@@ -2628,6 +2244,8 @@ class Client
             
             $error = null;
             
+            $db_obj->data_checksum = $db_obj->calculate_checksum();
+                    
             if ($db_obj->save(null, null, false, false, $error))
                 $count++;
             else
@@ -2686,6 +2304,8 @@ class Client
                     
             $error = null;
             
+            $db_obj->data_checksum = $db_obj->calculate_checksum();
+                    
             if ($db_obj->save(null, null, false, false, $error))
                 $count++;
             else
@@ -2760,6 +2380,8 @@ class Client
             }
             
             $error = null;
+            
+            $db_obj->data_checksum = $db_obj->calculate_checksum();
                     
             if ($db_obj->save(null, null, false, false, $error))
                 $count++;
@@ -2834,6 +2456,8 @@ class Client
                 
                 $error = null;
 
+                $db_obj->data_checksum = $db_obj->calculate_checksum();
+                    
                 if ($this->location_index[$x_hash] = $db_obj->save(null, null, false, false, $error))
                     $count++;
                 else

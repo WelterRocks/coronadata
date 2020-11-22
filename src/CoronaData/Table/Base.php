@@ -53,7 +53,7 @@ abstract class Base
     protected $flag_disabled = null;
     protected $flag_deleted = null;
     
-    public static function calculate_checksum()
+    public function calculate_checksum()
     {
         $buffer = array();
 

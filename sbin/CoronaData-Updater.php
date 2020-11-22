@@ -176,10 +176,10 @@ function worker_loop(Client $client, $oneshot = false)
                 
                 $cli->log("Extracting and mastering datasets.", LOG_INFO);                
                 $client->master_datasets();
-/*                
+                
                 $cli->log("Extracting and mastering testresults.", LOG_INFO);                
                 $client->master_testresults();
-*/                
+
                 $count = 0;
                 $any = 0;
                 $errors = array();
@@ -191,7 +191,7 @@ function worker_loop(Client $client, $oneshot = false)
                 $cli->log("Storing divi records.", LOG_INFO);
                 $client->save_divis($count, $any, $errors);
                 $cli->log("Stored ".$count." from ".$any." divi records.", LOG_INFO);
-                
+*/                
                 $cli->log("Storing nowcast records.", LOG_INFO);
                 $client->save_nowcasts($count, $any, $errors);
                 $cli->log("Stored ".$count." from ".$any." nowcast records.", LOG_INFO);
@@ -199,7 +199,7 @@ function worker_loop(Client $client, $oneshot = false)
                 $cli->log("Storing dataset records.", LOG_INFO);
                 $client->save_datasets($count, $any, $errors);
                 $cli->log("Stored ".$count." from ".$any." dataset records.", LOG_INFO);
-                
+/*                
                 $cli->log("Storing testresult records.", LOG_INFO);
                 $client->save_testresults($count, $any, $errors);
                 $cli->log("Stored ".$count." from ".$any." testresult records.", LOG_INFO);

@@ -42,6 +42,7 @@ class Datasets extends Base
     protected $month = null;
     protected $year = null;
 
+    protected $cases_rate = null;
     protected $cases_new = null;
     protected $cases_count = null;
     protected $cases_delta = null;
@@ -110,6 +111,7 @@ class Datasets extends Base
     protected $cases_pointer_agegroup_80_plus = null;
     protected $cases_pointer_agegroup_unknown = null;
     
+    protected $deaths_rate = null;
     protected $deaths_new = null;
     protected $deaths_count = null;
     protected $deaths_delta = null;
@@ -339,6 +341,7 @@ class Datasets extends Base
         `state_hash` VARCHAR(32) NULL DEFAULT NULL,
         `district_hash` VARCHAR(32) NULL DEFAULT NULL,
         `location_hash` VARCHAR(32) NULL DEFAULT NULL,
+        `cases_rate` float NOT NULL DEFAULT '0',
         `cases_new` int unsigned NOT NULL DEFAULT '0',
         `cases_count` int unsigned NOT NULL DEFAULT '0',
         `cases_delta` int unsigned NOT NULL DEFAULT '0',
@@ -398,6 +401,7 @@ class Datasets extends Base
         `cases_pointer_agegroup_60_79` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
         `cases_pointer_agegroup_80_plus` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
         `cases_pointer_agegroup_unknown` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
+        `deaths_rate` float NOT NULL DEFAULT '0',
         `deaths_new` int unsigned NOT NULL DEFAULT '0',
         `deaths_count` int unsigned NOT NULL DEFAULT '0',
         `deaths_delta` int unsigned NOT NULL DEFAULT '0',
