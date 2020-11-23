@@ -24,6 +24,7 @@ use WelterRocks\CoronaData\Table\Locations;
 use WelterRocks\CoronaData\Table\Datasets;
 use WelterRocks\CoronaData\Table\Testresults;
 use WelterRocks\CoronaData\Table\Nowcasts;
+use WelterRocks\CoronaData\Table\Oldcasts;
 use WelterRocks\CoronaData\Table\Divis;
 use WelterRocks\CoronaData\Table\Grafana;
 use WelterRocks\CoronaData\Config;
@@ -497,6 +498,7 @@ class Database
           "Datasets" => true,
           "Testresults" => true,
           "Nowcasts" => true,
+          "Oldcasts" => true,
           "Divis" => true,
           "Grafana" => false
         );

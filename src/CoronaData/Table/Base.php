@@ -42,6 +42,7 @@ abstract class Base
 
     protected $uid = null;
     protected $timestamp_last_update = null;
+    protected $timestamp_last_write = null;
     protected $timestamp_registration = null;
     protected $timestamp_deleted = null;
     protected $timestamp_undeleted = null;
@@ -66,6 +67,7 @@ abstract class Base
             {
               case "uid":
               case "timestamp_last_update":
+              case "timestamp_last_write":
               case "timestamp_registration":
               case "timestamp_deleted":
               case "timestamp_undeleted":
@@ -138,6 +140,7 @@ abstract class Base
               case "uid":
               case "timestamp_registration":
               case "timestamp_last_update":
+              case "timestamp_last_write":
               case "flag_deleted":
                 continue(2);
               default:
@@ -179,7 +182,7 @@ abstract class Base
         if ($worker_count == 0)
           return null;
         
-        $update_clause = "UPDATE".substr($update_clause, 1);
+        $update_clause = "UPDATE timestamp_last_write = NOW()".$update_clause;
 
         return $update_clause;    
     }
@@ -190,7 +193,7 @@ abstract class Base
         
         if ($data == "ignore")
         {
-          $on_duplicate_key = " ON DUPLICATE KEY UPDATE timestamp_last_update = timestamp_last_update";
+          $on_duplicate_key = " ON DUPLICATE KEY UPDATE timestamp_last_update = timestamp_last_update, timestamp_last_write = NOW()";
         }
         elseif (((is_array($data)) && (count($data) > 0)) || (is_object($data)) || ($data === "self"))
         {
@@ -590,6 +593,8 @@ abstract class Base
         $vals .= ",'".$this->get_sql_timestamp()."'";
         $keys .= ",`timestamp_last_update`";
         $vals .= ",'".$this->get_sql_timestamp()."'";
+        $keys .= ",`timestamp_last_write`";
+        $vals .= ",'".$this->get_sql_timestamp()."'";
         
         $sql .= "(".substr($keys, 1).") VALUES (".substr($vals, 1).")";
 
@@ -607,7 +612,7 @@ abstract class Base
             else
             {
               $this->uid = $this->__db->insert_id;
-            
+
               $retval = $this->uid;
             }
         }

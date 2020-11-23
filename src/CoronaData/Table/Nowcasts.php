@@ -52,6 +52,7 @@ class Nowcasts extends Base
       return "CREATE TABLE IF NOT EXISTS `nowcasts` (
         `uid` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
         `timestamp_last_update` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        `timestamp_last_write` timestamp NOT NULL,
         `timestamp_registration` timestamp NOT NULL,
         `timestamp_deleted` timestamp NULL DEFAULT NULL,
         `timestamp_undeleted` timestamp NULL DEFAULT NULL,
@@ -102,6 +103,8 @@ class Nowcasts extends Base
         PARTITION nov VALUES LESS THAN (12),
         PARTITION `dec` VALUES LESS THAN MAXVALUE
       );
+      
+      DROP TRIGGER IF EXISTS `update_archive_nowcast`; CREATE TRIGGER IF NOT EXISTS `update_archive_nowcast` BEFORE UPDATE ON `nowcasts` FOR EACH ROW BEGIN IF OLD.data_checksum != NEW.data_checksum THEN BEGIN INSERT INTO `oldcasts` (SELECT * FROM nowcasts WHERE uid = OLD.uid); END; END IF; END;
       ";
     }
 }

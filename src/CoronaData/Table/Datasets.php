@@ -324,6 +324,7 @@ class Datasets extends Base
         `locations_uid` bigint UNSIGNED NULL DEFAULT NULL,
         `location_type` ENUM('continent','country','state','district','location') NOT NULL DEFAULT 'location',
         `timestamp_last_update` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        `timestamp_last_write` timestamp NOT NULL,
         `timestamp_registration` timestamp NOT NULL,
         `timestamp_deleted` timestamp NULL DEFAULT NULL,
         `timestamp_undeleted` timestamp NULL DEFAULT NULL,

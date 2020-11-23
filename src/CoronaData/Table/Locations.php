@@ -57,6 +57,7 @@ class Locations extends Base
       return "CREATE TABLE IF NOT EXISTS `locations` (
         `uid` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
         `timestamp_last_update` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        `timestamp_last_write` timestamp NOT NULL,
         `timestamp_registration` timestamp NOT NULL,
         `timestamp_deleted` timestamp NULL DEFAULT NULL,
         `timestamp_undeleted` timestamp NULL DEFAULT NULL,

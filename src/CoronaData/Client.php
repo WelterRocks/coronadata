@@ -519,9 +519,9 @@ class Client
                 
                 $real_state_name = null;
                     
+                $state->geo_id = DataHandler::german_state_id_by_name($state_name, $real_state_name);
                 $state->location_hash = self::hash_name("location", "state", $state_hash);
                 $state->location_tags = "state, ".$europe->continent_name.", ".$germany->country_name.", ".$real_state_name ?: $state_name;
-                $state->geo_id = DataHandler::german_state_id_by_name($state_name, $real_state_name);
                 $state->continent_id = $europe->continent_id;
                 $state->continent_hash = $europe->continent_hash;
                 $state->continent_name = $europe->continent_name;
@@ -568,9 +568,9 @@ class Client
                 {
                     $real_state_name = null;
                         
+                    $state->geo_id = DataHandler::german_state_id_by_name($state_name, $real_state_name);
                     $state->location_hash = self::hash_name("location", "state", $state_hash);
                     $state->location_tags = "state, ".$europe->continent_name.", ".$germany->country_name.", ".$real_state_name ?: $state_name;
-                    $state->geo_id = DataHandler::german_state_id_by_name($state_name, $real_state_name);
                     $state->continent_id = $europe->continent_id;
                     $state->continent_hash = $europe->continent_hash;
                     $state->continent_name = $europe->continent_name;
@@ -2309,12 +2309,7 @@ class Client
             if ($db_obj->save(null, null, false, false, $error))
                 $count++;
             else
-            {
-                print_r($db_obj);
-                echo "ERROR: ".$error."\n";
-                exit;
                 array_push($errors, $error);
-            }
 
             $any++;
         }
