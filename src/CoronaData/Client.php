@@ -1418,7 +1418,7 @@ class Client
         return $result;
     }
 
-    public function calculate_case_and_death_rates($cases, $deaths, $recovered, $population, $dates)
+    public function calculate_case_death_and_recov_rates($cases, $deaths, $recovered, $population, $dates)
     {
         if ($population == 0)
             return false;
