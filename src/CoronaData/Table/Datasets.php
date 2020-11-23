@@ -29,6 +29,7 @@ class Datasets extends Base
     protected $location_type = null;
 
     protected $dataset_hash = null;
+    protected $dataset_gender = null;
 
     protected $location_hash = null;
     protected $district_hash = null;
@@ -337,6 +338,7 @@ class Datasets extends Base
         `month` smallint UNSIGNED NOT NULL DEFAULT '0',
         `year` YEAR NOT NULL DEFAULT '0',
         `dataset_hash` VARCHAR(32) NULL DEFAULT NULL,
+        `dataset_gender` smallint NOT NULL DEFAULT '0',
         `continent_hash` VARCHAR(32) NULL DEFAULT NULL,
         `country_hash` VARCHAR(32) NULL DEFAULT NULL,
         `state_hash` VARCHAR(32) NULL DEFAULT NULL,
@@ -586,8 +588,8 @@ class Datasets extends Base
         `enforce_household_plus_persons_to` smallint NOT NULL DEFAULT '-1',
         `enforce_public_groups_to` smallint NOT NULL DEFAULT '-1',
         `enforce_public_events_to` smallint NOT NULL DEFAULT '-1',
-        PRIMARY KEY (`uid`,`month`),
-        UNIQUE KEY `dataset_hash` (`dataset_hash`,`month`),
+        PRIMARY KEY (`uid`,`month`,`dataset_gender`),
+        UNIQUE KEY `dataset_hash` (`dataset_hash`,`dataset_gender`,`month`),
         KEY `continent_hash` (`continent_hash`),
         KEY `country_hash` (`country_hash`),
         KEY `state_hash` (`state_hash`),
@@ -596,19 +598,80 @@ class Datasets extends Base
         KEY `location_type` (`location_type`),
         KEY `locations_uid` (`locations_uid`),
         KEY `data_checksum` (`data_checksum`)
-      ) PARTITION BY RANGE ( `month` ) (
-        PARTITION jan VALUES LESS THAN (2),
-        PARTITION feb VALUES LESS THAN (3),
-        PARTITION mar VALUES LESS THAN (4),
-        PARTITION apr VALUES LESS THAN (5),
-        PARTITION may VALUES LESS THAN (6),
-        PARTITION jun VALUES LESS THAN (7),
-        PARTITION jul VALUES LESS THAN (8),
-        PARTITION aug VALUES LESS THAN (9),
-        PARTITION sep VALUES LESS THAN (10),
-        PARTITION oct VALUES LESS THAN (11),
-        PARTITION nov VALUES LESS THAN (12),
-        PARTITION `dec` VALUES LESS THAN MAXVALUE
+      ) PARTITION BY RANGE ( `month` ) 
+        SUBPARTITION BY HASH (`dataset_gender`) (
+          PARTITION jan VALUES LESS THAN (2) (
+            SUBPARTITION jan_all,
+            SUBPARTITION jan_females,
+            SUBPARTITION jan_males,
+            SUBPARTITION jan_asterisks
+          ),
+          PARTITION feb VALUES LESS THAN (3) (
+            SUBPARTITION feb_all,
+            SUBPARTITION feb_females,
+            SUBPARTITION feb_males,
+            SUBPARTITION feb_asterisks
+          ),
+          PARTITION mar VALUES LESS THAN (4) (
+            SUBPARTITION mar_all,
+            SUBPARTITION mar_females,
+            SUBPARTITION mar_males,
+            SUBPARTITION mar_asterisks
+          ),
+          PARTITION apr VALUES LESS THAN (5) (
+            SUBPARTITION apr_all,
+            SUBPARTITION apr_females,
+            SUBPARTITION apr_males,
+            SUBPARTITION apr_asterisks
+          ),
+          PARTITION may VALUES LESS THAN (6) (
+            SUBPARTITION may_all,
+            SUBPARTITION may_females,
+            SUBPARTITION may_males,
+            SUBPARTITION may_asterisks
+          ),
+          PARTITION jun VALUES LESS THAN (7) (
+            SUBPARTITION jun_all,
+            SUBPARTITION jun_females,
+            SUBPARTITION jun_males,
+            SUBPARTITION jun_asterisks
+          ),
+          PARTITION jul VALUES LESS THAN (8) (
+            SUBPARTITION jul_all,
+            SUBPARTITION jul_females,
+            SUBPARTITION jul_males,
+            SUBPARTITION jul_asterisks
+          ),
+          PARTITION aug VALUES LESS THAN (9) (
+            SUBPARTITION aug_all,
+            SUBPARTITION aug_females,
+            SUBPARTITION aug_males,
+            SUBPARTITION aug_asterisks
+          ),
+          PARTITION sep VALUES LESS THAN (10) (
+            SUBPARTITION sep_all,
+            SUBPARTITION sep_females,
+            SUBPARTITION sep_males,
+            SUBPARTITION sep_asterisks
+          ),
+          PARTITION oct VALUES LESS THAN (11) (
+            SUBPARTITION oct_all,
+            SUBPARTITION oct_females,
+            SUBPARTITION oct_males,
+            SUBPARTITION oct_asterisks
+          ),
+          PARTITION nov VALUES LESS THAN (12) (
+            SUBPARTITION nov_all,
+            SUBPARTITION nov_females,
+            SUBPARTITION nov_males,
+            SUBPARTITION nov_asterisks
+          ),
+          PARTITION `dec` VALUES LESS THAN MAXVALUE (
+            SUBPARTITION dec_all,
+            SUBPARTITION dec_females,
+            SUBPARTITION dec_males,
+            SUBPARTITION dec_asterisks          
+          )
       );
       
       ALTER TABLE `datasets` ADD CONSTRAINT `dataset_location` FOREIGN KEY (`locations_uid`) REFERENCES `locations`(`uid`) ON DELETE CASCADE ON UPDATE CASCADE;
