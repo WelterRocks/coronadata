@@ -1976,7 +1976,7 @@ class Client
                 $age_low = -1;
                 $age_high = -1;
                 
-                if ((is_object($data->age_group2)) && (isset($data->age_group2->upper)) && ($data->age_group2->uppper > -1))
+                if ((is_object($data->age_group2)) && (isset($data->age_group2->upper)) && ($data->age_group2->upper > -1))
                 {
                     $age_low = $data->age_group2->lower;
                     $age_high = $data->age_group2->upper;
