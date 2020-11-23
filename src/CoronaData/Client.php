@@ -848,7 +848,7 @@ class Client
         return true;
     }
     
-    public function get_last_x_days($cases, $deaths, $dates, $days = 7, $skip_days = 0, &$reproduction_available = null)
+    public function get_last_x_days($cases, $deaths, $recovered, $dates, $days = 7, $skip_days = 0, &$reproduction_available = null)
     {
         if ($days <= 0)
             return null;
@@ -857,6 +857,9 @@ class Client
             return null;
             
         if (!is_array($deaths))
+            return null;
+            
+        if (!is_array($recovered))
             return null;
             
         if (!is_array($dates))
@@ -884,6 +887,14 @@ class Client
             }
         }
     
+        if (count($recovered) < $xindex)
+        {
+            for ($i = count($recovered); $i < $xindex; $i++)
+            {
+                $recovered[$i] = (int)0;
+            }
+        }
+    
         if (count($dates) < $xindex)
         {
             for ($i = count($dates); $i < $xindex; $i++)
@@ -901,9 +912,11 @@ class Client
             $tmp->date = (int)0;
             $tmp->cases = (int)0;
             $tmp->deaths = (int)0;
+            $tmp->recovered = (int)0;
             $tmp->set_date = false;
             $tmp->set_case = false;
             $tmp->set_deaths = false;
+            $tmp->set_recovered = false;
             
             $result[$i] = $tmp;
         }
@@ -930,23 +943,30 @@ class Client
             $result[$n]->deaths = $deaths[$i];
             $result[$n]->set_deaths = true;
             
+            if (!isset($recovered[$i]))
+                break;
+                
+            $result[$n]->recovered = $recovered[$i];
+            $result[$n]->set_recovered = true;
+            
             $n++;
         }
         
         return $result;
     }
     
-    public function calculate_x_day_fields($cases, $deaths, $population, $area, $dates, $days = 7, $skip_days = 0, $incidence_factor = 100000)
+    public function calculate_x_day_fields($cases, $deaths, $recovered, $population, $area, $dates, $days = 7, $skip_days = 0, $incidence_factor = 100000)
     {
         if ($days <= 0)
             return null;
             
         $reproduction_available = false;
         
-        $last_x = $this->get_last_x_days($cases, $deaths, $dates, $days, $skip_days);
+        $last_x = $this->get_last_x_days($cases, $deaths, $recovered, $dates, $days, $skip_days);
         
         $cases_now = $cases[0];
         $deaths_now = $deaths[0];
+        $recovered_now = $recovered[0];
 
         if (!$last_x)
             return null;
@@ -954,6 +974,7 @@ class Client
         $result = new \stdClass;
         $result->cases = (int)0;
         $result->deaths = (int)0;
+        $result->recovered = (int)0;
 
         $cases1 = (int)0;
         $n = 0;
@@ -962,6 +983,7 @@ class Client
         {
             $result->cases += (int)$obj->cases ?: 0;
             $result->deaths += (int)$obj->deaths ?: 0;
+            $result->recovered += (int)$obj->recovered ?: 0;
             
             if ($n > 0)
             {
@@ -1318,10 +1340,10 @@ class Client
         return $result;    
     }
 
-    public function calculate_14day_fields($cases, $deaths, $population, $area, $dates, $incidence_factor = 100000)
+    public function calculate_14day_fields($cases, $deaths, $recovered, $population, $area, $dates, $incidence_factor = 100000)
     {
-        $obj = $this->calculate_x_day_fields($cases, $deaths, $population, $area, $dates, 14, 0, $incidence_factor);
-        $obj2 = $this->calculate_x_day_fields($cases, $deaths, $population, $area, $dates, 14, 3, $incidence_factor);
+        $obj = $this->calculate_x_day_fields($cases, $deaths, $recovered, $population, $area, $dates, 14, 0, $incidence_factor);
+        $obj2 = $this->calculate_x_day_fields($cases, $deaths, $recovered, $population, $area, $dates, 14, 3, $incidence_factor);
 
         if (!$obj)
             return null;
@@ -1333,6 +1355,7 @@ class Client
         
         $result->cases_14day_average = $obj->cases;
         $result->deaths_14day_average = $obj->deaths;
+        $result->recovered_14day_average = $obj->recovered;
         $result->exponence_14day = $obj->exponence;
         $result->exponence_14day_smoothed = ((!$obj2) ? $obj->exponence : $obj2->exponence);
         $result->incidence_14day = $obj->incidence;
@@ -1345,10 +1368,10 @@ class Client
         return $result;
     }
 
-    public function calculate_7day_fields($cases, $deaths, $population, $area, $dates, $incidence_factor = 100000)
+    public function calculate_7day_fields($cases, $deaths, $recovered, $population, $area, $dates, $incidence_factor = 100000)
     {
-        $obj = $this->calculate_x_day_fields($cases, $deaths, $population, $area, $dates, 7, 0, $incidence_factor);
-        $obj2 = $this->calculate_x_day_fields($cases, $deaths, $population, $area, $dates, 7, 3, $incidence_factor);
+        $obj = $this->calculate_x_day_fields($cases, $deaths, $recovered, $population, $area, $dates, 7, 0, $incidence_factor);
+        $obj2 = $this->calculate_x_day_fields($cases, $deaths, $recovered, $population, $area, $dates, 7, 3, $incidence_factor);
 
         if (!$obj)
             return null;
@@ -1357,6 +1380,7 @@ class Client
 
         $result->cases_7day_average = $obj->cases;
         $result->deaths_7day_average = $obj->deaths;
+        $result->recovered_7day_average = $obj->recovered;
         $result->exponence_7day = $obj->exponence;
         $result->exponence_7day_smoothed = ((!$obj2) ? $obj->exponence : $obj2->exponence);
         $result->incidence_7day = $obj->incidence;
@@ -1369,10 +1393,10 @@ class Client
         return $result;
     }
 
-    public function calculate_4day_fields($cases, $deaths, $population, $area, $dates, $incidence_factor = 100000)
+    public function calculate_4day_fields($cases, $deaths, $recovered, $population, $area, $dates, $incidence_factor = 100000)
     {
-        $obj = $this->calculate_x_day_fields($cases, $deaths, $population, $area, $dates, 4, 0, $incidence_factor);
-        $obj2 = $this->calculate_x_day_fields($cases, $deaths, $population, $area, $dates, 4, 3, $incidence_factor);
+        $obj = $this->calculate_x_day_fields($cases, $deaths, $recovered, $population, $area, $dates, 4, 0, $incidence_factor);
+        $obj2 = $this->calculate_x_day_fields($cases, $deaths, $recovered, $population, $area, $dates, 4, 3, $incidence_factor);
 
         if (!$obj)
             return null;
@@ -1381,6 +1405,7 @@ class Client
 
         $result->cases_4day_average = $obj->cases;
         $result->deaths_4day_average = $obj->deaths;
+        $result->recovered_4day_average = $obj->recovered;
         $result->exponence_4day = $obj->exponence;
         $result->exponence_4day_smoothed = ((!$obj2) ? $obj->exponence : $obj2->exponence);
         $result->incidence_4day = $obj->incidence;
@@ -1393,13 +1418,14 @@ class Client
         return $result;
     }
 
-    public function calculate_case_and_death_rates($cases, $deaths, $population, $dates)
+    public function calculate_case_and_death_rates($cases, $deaths, $recovered, $population, $dates)
     {
         if ($population == 0)
             return false;
             
         $cases_now = $cases[0];
         $deaths_now = $deaths[0];
+        $recovered_now = $recovered[0];
             
         $result = new \stdClass;
 
@@ -1409,10 +1435,13 @@ class Client
         // The rate of deaths for the current day
         $result->deaths_rate = (100 / $population * $deaths_now);
 
+        // The rate of recovered for the current day
+        $result->recovered_rate = (100 / $population * $recovered_now);
+
         return $result;
     }
     
-    public function calculate_dataset_fields($cases, $deaths, $population, $area, $dates, $incidence_factor = 100000)
+    public function calculate_dataset_fields($cases, $deaths, $recovered, $population, $area, $dates, $incidence_factor = 100000)
     {
         if (!is_array($cases))
             return null;
@@ -1425,11 +1454,11 @@ class Client
         
         $result = new \stdClass;
         
-        self::result_object_merge($result, $this->calculate_4day_fields($cases, $deaths, $population, $area, $dates, $incidence_factor));
-        self::result_object_merge($result, $this->calculate_7day_fields($cases, $deaths, $population, $area, $dates, $incidence_factor));
-        self::result_object_merge($result, $this->calculate_14day_fields($cases, $deaths, $population, $area, $dates, $incidence_factor));
+        self::result_object_merge($result, $this->calculate_4day_fields($cases, $deaths, $recovered, $population, $area, $dates, $incidence_factor));
+        self::result_object_merge($result, $this->calculate_7day_fields($cases, $deaths, $recovered, $population, $area, $dates, $incidence_factor));
+        self::result_object_merge($result, $this->calculate_14day_fields($cases, $deaths, $recovered, $population, $area, $dates, $incidence_factor));
         
-        self::result_object_merge($result, $this->calculate_case_and_death_rates($cases, $deaths, $population, $dates));
+        self::result_object_merge($result, $this->calculate_case_death_and_recov_rates($cases, $deaths, $recovered, $population, $dates));
         
         self::result_object_merge($result, $this->calculate_4day_r_value($cases, $deaths, $dates));
         self::result_object_merge($result, $this->calculate_7day_r_value($cases, $deaths, $dates));
@@ -1486,6 +1515,7 @@ class Client
             {                
                 $cases = array();
                 $deaths = array();
+                $recovs = array();
                 $dates = array();
             
                 foreach ($data as $date2 => $hash2)
@@ -1493,8 +1523,9 @@ class Client
                     if ($date2 > $date)
                         continue;
                         
-                    array_push($cases, $datasets[$hash2]->cases_count);
-                    array_push($deaths, $datasets[$hash2]->deaths_count);
+                    array_push($cases, $datasets[$hash2]->cases_today);
+                    array_push($deaths, $datasets[$hash2]->deaths_today);
+                    array_push($recovs, $datasets[$hash2]->recovered_today);
                     array_push($dates, $date2);
                 
                     if (count($cases) > 32)
@@ -1505,6 +1536,7 @@ class Client
                 {
                     $cases[$i] = (int)0;
                     $deaths[$i] = (int)0;
+                    $recovs[$i] = (int)0;
                     $dates[$i] = (int)0;
                 }
                 
@@ -1559,7 +1591,7 @@ class Client
                         break;
                 }
                     
-                self::result_object_merge($datasets[$hash], $this->calculate_dataset_fields($cases, $deaths, $population_count, $area, $dates));
+                self::result_object_merge($datasets[$hash], $this->calculate_dataset_fields($cases, $deaths, $recovs, $population_count, $area, $dates));
             }
         }
         
