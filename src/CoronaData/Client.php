@@ -1973,20 +1973,19 @@ class Client
             
             if ((isset($data->age_group)) || (isset($data->age_group2)))
             {
-                if (is_object($data->age_group2))
+                $age_low = -1;
+                $age_high = -1;
+                
+                if ((is_object($data->age_group2)) && (isset($data->age_group2->upper)) && ($data->age_group2->uppper > -1))
                 {
                     $age_low = $data->age_group2->lower;
                     $age_high = $data->age_group2->upper;
                 }
-                elseif (is_object($data->age_group))
+                
+                if ((is_object($data->age_group)) && (isset($data->age_group->upper)) && ($data->age_group->upper > -1) && ($age_high == -1))
                 {
                     $age_low = $data->age_group->lower;
                     $age_high = $data->age_group->upper;
-                }
-                else
-                {
-                    $age_low = -1;
-                    $age_high = -1;
                 }
                 
                 if (($age_low == -1) && ($age_high == -1))
@@ -1995,7 +1994,7 @@ class Client
                     $age_index = "80:plus";
                 else
                     $age_index = $age_low.":".$age_high;
-                    
+
                 $set_suffix = null;
                     
                 if (isset($age_groups[$age_index]))
@@ -2026,7 +2025,7 @@ class Client
                         }
                     }
                 }
-                
+
                 if ($set_suffix)
                 {
                     $key_cases_new = "cases_new_agegroup_".$set_suffix;
