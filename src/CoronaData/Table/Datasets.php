@@ -181,6 +181,7 @@ class Datasets extends Base
     protected $deaths_pointer_agegroup_80_plus = null;
     protected $deaths_pointer_agegroup_unknown = null;
     
+    protected $recovered_rate = null;
     protected $recovered_new = null;
     protected $recovered_count = null;
     protected $recovered_delta = null;
@@ -464,6 +465,7 @@ class Datasets extends Base
         `deaths_pointer_agegroup_60_79` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
         `deaths_pointer_agegroup_80_plus` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
         `deaths_pointer_agegroup_unknown` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
+        `recovered_rate` float NOT NULL DEFAULT '0',
         `recovered_new` int NOT NULL DEFAULT '0',
         `recovered_count` int NOT NULL DEFAULT '0',
         `recovered_delta` int NOT NULL DEFAULT '0',
