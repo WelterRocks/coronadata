@@ -2035,7 +2035,7 @@ class Client
                     $key_cases_today = "cases_today_agegroup_".$set_suffix;
                     $key_cases_yesterday = "cases_yesterday_agegroup_".$set_suffix;
                     $key_cases_total = "cases_total_agegroup_".$set_suffix;
-                    $key_cases_pointer = "cases_total_agegroup_".$set_suffix;
+                    $key_cases_pointer = "cases_pointer_agegroup_".$set_suffix;
                 
                     if (($data->cases_new == 0) || ($data->cases_new == 1))
                         $dataset->$key_cases_new += $data->cases_count;
@@ -2061,7 +2061,7 @@ class Client
                     $key_deaths_today = "deaths_today_agegroup_".$set_suffix;
                     $key_deaths_yesterday = "deaths_yesterday_agegroup_".$set_suffix;
                     $key_deaths_total = "deaths_total_agegroup_".$set_suffix;
-                    $key_deaths_pointer = "deaths_total_agegroup_".$set_suffix;
+                    $key_deaths_pointer = "deaths_pointer_agegroup_".$set_suffix;
                 
                     if (($data->deaths_new == 0) || ($data->deaths_new == 1))
                         $dataset->$key_deaths_new += $data->deaths_count;
@@ -2087,7 +2087,7 @@ class Client
                     $key_recovered_today = "recovered_today_agegroup_".$set_suffix;
                     $key_recovered_yesterday = "recovered_yesterday_agegroup_".$set_suffix;
                     $key_recovered_total = "recovered_total_agegroup_".$set_suffix;
-                    $key_recovered_pointer = "recovered_total_agegroup_".$set_suffix;
+                    $key_recovered_pointer = "recovered_pointer_agegroup_".$set_suffix;
                 
                     if (($data->deaths_new == 0) || ($data->deaths_new == 1))
                         $dataset->$key_recovered_new += $data->deaths_count;
@@ -2309,7 +2309,12 @@ class Client
             if ($db_obj->save(null, null, false, false, $error))
                 $count++;
             else
+            {
+                print_r($db_obj);
+                echo "ERROR: ".$error."\n";
+                exit;
                 array_push($errors, $error);
+            }
 
             $any++;
         }

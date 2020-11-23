@@ -92,8 +92,8 @@ class Locations extends Base
         `flag_updated` tinyint(1) NOT NULL DEFAULT '0',
         `flag_disabled` tinyint(1) NOT NULL DEFAULT '0',
         `flag_deleted` tinyint(1) NOT NULL DEFAULT '0',
-        PRIMARY KEY (`uid`),
-        UNIQUE KEY `location_hash` (`location_hash`),
+        PRIMARY KEY (`uid`,`continent_name`),
+        UNIQUE KEY `location_hash` (`location_hash`,`continent_name`),
         KEY `location_type` (`location_type`),
         KEY `geo_id` (`geo_id`),
         KEY `data_checksum` (`data_checksum`),
@@ -107,7 +107,17 @@ class Locations extends Base
         KEY `state_hash` (`state_hash`),
         KEY `country_hash` (`country_hash`),
         KEY `continent_hash` (`continent_hash`)        
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      ) PARTITION BY LIST COLUMNS ( `continent_name` ) (
+        PARTITION asia VALUES IN ('Asia'),
+        PARTITION africa VALUES IN ('Africa'),
+        PARTITION america VALUES IN ('America'),
+        PARTITION antarctica VALUES IN ('Antarctica'),
+        PARTITION europe VALUES IN ('Europe'),
+        PARTITION australia VALUES IN ('Australia'),
+        PARTITION oceania VALUES IN ('Oceania'),
+        PARTITION other VALUES IN ('Other')
+      );
+
       ";
     }
 }

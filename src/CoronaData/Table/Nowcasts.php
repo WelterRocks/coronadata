@@ -83,12 +83,25 @@ class Nowcasts extends Base
         `flag_disabled` tinyint(1) NOT NULL DEFAULT '0',
         `flag_deleted` tinyint(1) NOT NULL DEFAULT '0',
         `flag_casted_r_values` tinyint(1) NOT NULL DEFAULT '0',
-        PRIMARY KEY (`uid`),
-        UNIQUE KEY `location_date_rep` (`continent_hash`,`country_hash`,`date_rep`),
+        PRIMARY KEY (`uid`,`month`),
+        UNIQUE KEY `location_date_rep` (`continent_hash`,`country_hash`,`date_rep`,`month`),
         KEY `country_hash` (`country_hash`),
         KEY `continent_hash` (`continent_hash`),
         KEY `data_checksum` (`data_checksum`)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+      ) PARTITION BY RANGE ( `month` ) (
+        PARTITION jan VALUES LESS THAN (2),
+        PARTITION feb VALUES LESS THAN (3),
+        PARTITION mar VALUES LESS THAN (4),
+        PARTITION apr VALUES LESS THAN (5),
+        PARTITION may VALUES LESS THAN (6),
+        PARTITION jun VALUES LESS THAN (7),
+        PARTITION jul VALUES LESS THAN (8),
+        PARTITION aug VALUES LESS THAN (9),
+        PARTITION sep VALUES LESS THAN (10),
+        PARTITION oct VALUES LESS THAN (11),
+        PARTITION nov VALUES LESS THAN (12),
+        PARTITION `dec` VALUES LESS THAN MAXVALUE
+      );
       ";
     }
 }
