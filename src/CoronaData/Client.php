@@ -2373,7 +2373,7 @@ class Client
         $count = 0;
         $any = 0;
         
-        if (!is_array($this->rki_nowcast->handler->get_data()))
+        if (!is_array($this->nowcasts))
             return null;
             
         $this->database_transaction_begin("save_nowcast");
@@ -2384,6 +2384,9 @@ class Client
         {            
             $db_obj = $this->database->new_nowcast();
             
+            foreach ($obj as $key => $val)
+                $db_obj->$key = $val;
+                
             switch($obj->location_type)
             {
                 case "continent":
