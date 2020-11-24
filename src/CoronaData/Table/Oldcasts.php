@@ -99,7 +99,7 @@ class Oldcasts extends Base
         KEY `locations_uid` (`locations_uid`),
         KEY `location_type` (`location_type`),
         KEY `country_hash` (`country_hash`),
-        KEY `continent_hash` (`continent_hash`),
+        KEY `continent_hash` (`continent_hash`)
       ) PARTITION BY RANGE ( `month` ) (
         PARTITION jan VALUES LESS THAN (2),
         PARTITION feb VALUES LESS THAN (3),
