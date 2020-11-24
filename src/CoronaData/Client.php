@@ -1061,7 +1061,7 @@ class Client
         return $result;
     }
 
-    public function calculate_x_day_r_value($cases, $deaths, $dates, $days = 7, $skip_days = 0, &$reproduction_available = null)
+    public function calculate_x_day_r_value($cases, $deaths, $recovered, $dates, $days = 7, $skip_days = 0, &$reproduction_available = null)
     {
         if ($days <= 0)
             return null;
@@ -1070,8 +1070,8 @@ class Client
         
         $result = new \stdClass;
 
-        $result->prefix = $this->get_last_x_days($cases, $deaths, $dates, $days, $skip_days);
-        $result->suffix = $this->get_last_x_days($cases, $deaths, $dates, $days, ($skip_days + $days), $reproduction_available);
+        $result->prefix = $this->get_last_x_days($cases, $deaths, $recovered, $dates, $days, $skip_days);
+        $result->suffix = $this->get_last_x_days($cases, $deaths, $recovered, $dates, $days, ($skip_days + $days), $reproduction_available);
         
         if (!$reproduction_available)
             return false;        
@@ -1106,11 +1106,11 @@ class Client
         return $result;
     }
     
-    public function calculate_14day_r_value($cases, $deaths, $dates, $skip_days = 0)
+    public function calculate_14day_r_value($cases, $deaths, $recovered, $dates, $skip_days = 0)
     {
         $reproduction_available = false;
         
-        $obj = $this->calculate_x_day_r_value($cases, $deaths, $dates, 14, $skip_days, $reproduction_available);
+        $obj = $this->calculate_x_day_r_value($cases, $deaths, $recovered, $dates, 14, $skip_days, $reproduction_available);
         
         if (!$reproduction_available)
             return null;
@@ -1124,11 +1124,11 @@ class Client
         return $result;
     }
 
-    public function calculate_7day_r_value($cases, $deaths, $dates, $skip_days = 0)
+    public function calculate_7day_r_value($cases, $deaths, $recovered, $dates, $skip_days = 0)
     {
         $reproduction_available = false;
         
-        $obj = $this->calculate_x_day_r_value($cases, $deaths, $dates, 7, $skip_days, $reproduction_available);
+        $obj = $this->calculate_x_day_r_value($cases, $deaths, $recovered, $dates, 7, $skip_days, $reproduction_available);
         
         if (!$reproduction_available)
             return null;
@@ -1142,11 +1142,11 @@ class Client
         return $result;
     }
 
-    public function calculate_4day_r_value($cases, $deaths, $dates, $skip_days = 0)
+    public function calculate_4day_r_value($cases, $deaths, $recovered, $dates, $skip_days = 0)
     {
         $reproduction_available = false;
         
-        $obj = $this->calculate_x_day_r_value($cases, $deaths, $dates, 4, $skip_days, $reproduction_available);
+        $obj = $this->calculate_x_day_r_value($cases, $deaths, $recovered, $dates, 4, $skip_days, $reproduction_available);
         
         if (!$reproduction_available)
             return null;
@@ -1460,9 +1460,9 @@ class Client
         
         self::result_object_merge($result, $this->calculate_case_death_and_recov_rates($cases, $deaths, $recovered, $population, $dates));
         
-        self::result_object_merge($result, $this->calculate_4day_r_value($cases, $deaths, $dates));
-        self::result_object_merge($result, $this->calculate_7day_r_value($cases, $deaths, $dates));
-        self::result_object_merge($result, $this->calculate_14day_r_value($cases, $deaths, $dates));
+        self::result_object_merge($result, $this->calculate_4day_r_value($cases, $deaths, $recovered, $dates));
+        self::result_object_merge($result, $this->calculate_7day_r_value($cases, $deaths, $recovered, $dates));
+        self::result_object_merge($result, $this->calculate_14day_r_value($cases, $deaths, $recovered, $dates));
 
         if (isset($result->alert_condition_4day))
             $alert_condition_4day = $result->alert_condition_4day;
@@ -1613,7 +1613,7 @@ class Client
             $continent_hash = self::hash_name("continent", $record->continent);
             $country_hash = self::hash_name("country", $record->country, $continent_hash);
 
-            $dataset_hash = self::hash_name("dataset-continent", $continent_hash, $record->date_rep);
+            $dataset_hash = self::hash_name("dataset-continent", $continent_hash, $record->date_rep."0");
             
             if (!isset($datasets[$dataset_hash]))
                 $dataset = $this->create_dataset_template();
@@ -1642,7 +1642,7 @@ class Client
             
             $datasets[$dataset_hash] = $dataset;
 
-            $dataset_hash = self::hash_name("dataset-country", $country_hash, $record->date_rep);
+            $dataset_hash = self::hash_name("dataset-country", $country_hash, $record->date_rep."0");
 
             if (!isset($datasets[$dataset_hash]))
                 $dataset = $this->create_dataset_template();
@@ -1656,8 +1656,14 @@ class Client
             $dataset->day = $record->day;
             $dataset->month = $record->month;
             $dataset->year = $record->year;
-            $dataset->cases_count += $record->cases;
-            $dataset->deaths_count += $record->deaths;
+            
+            // Only count, if country is not germany. The german counters are set by testresults, later.
+            if ($record->country != "Germany")
+            {
+                $dataset->cases_count += $record->cases;
+                $dataset->deaths_count += $record->deaths;
+            }
+            
             $dataset->timestamp_represent = $record->timestamp_represent;
             $dataset->location_type = "country";
             
@@ -1897,230 +1903,250 @@ class Client
             
             // We need to store datasets twice! One as summary and another for the given gender. So we do a loop here!
             foreach (array(0, $gender_id) as $selected_gender)
-            {            
-                $index = "D".$selected_gender.$testresult->district_hash;
-                $dataset_hash = self::hash_name("dataset-district", $district_hash, $data->date_rep.$selected_gender);
-                $dataset_index[$index][$date] = $dataset_hash;
-                
-                // Create or update district dateset
-                if (!isset($datasets[$dataset_hash]))
-                {
-                    $dataset = $this->create_dataset_template();
-                    
-                    $dataset->dataset_hash = $dataset_hash;
-                    $dataset->dataset_gender = $selected_gender;
-                    $dataset->district_hash = $district_hash;
-                    $dataset->state_hash = $state_hash;
-                    $dataset->country_hash = $germany_hash;
-                    $dataset->continent_hash = $europe_hash;
-                    $dataset->day_of_week = $data->day_of_week;
-                    $dataset->day = $data->day;
-                    $dataset->month = $data->month;
-                    $dataset->year = $data->year;
-                    $dataset->timestamp_represent = $data->timestamp_represent;
-                    $dataset->date_rep = $data->date_rep;
-                    $dataset->location_type = "district";
-                }
-                else
-                {
-                    $dataset = $datasets[$dataset_hash];
-                }
-                
-                if (($data->cases_new == 0) || ($data->cases_new == 1))
-                    $dataset->cases_new += $data->cases_count;
-                if (($data->cases_new == -1) || ($data->cases_new == 1))
-                    $dataset->cases_delta += $data->cases_count;
-                if ($data->cases_new == 0)
-                    $dataset->cases_today += $data->cases_count;
-                if ($data->cases_new == -1)
-                    $dataset->cases_yesterday += $data->cases_count;
-                    
-                if ($dataset->cases_today == $dataset->cases_yesterday)
-                    $dataset->cases_pointer = "sty";
-                elseif ($dataset->cases_today > $dataset->cases_yesterday)
-                    $dataset->cases_pointer = "asc";
-                elseif ($dataset->cases_today < $dataset->cases_yesterday)
-                    $dataset->cases_pointer = "desc";                
-                    
-                $dataset->cases_count = ($dataset->cases_delta - $dataset->cases_new);
-                
-                if (($data->deaths_new == 0) || ($data->deaths_new == 1))
-                    $dataset->deaths_new += $data->deaths_count;
-                if (($data->deaths_new == -1) || ($data->deaths_new == 1))
-                    $dataset->deaths_delta += $data->deaths_count;
-                if ($data->deaths_new == 0)
-                    $dataset->deaths_today += $data->deaths_count;
-                if ($data->deaths_new == -1)
-                    $dataset->deaths_yesterday += $data->deaths_count;
-                    
-                if ($dataset->deaths_today == $dataset->deaths_yesterday)
-                    $dataset->deaths_pointer = "sty";
-                elseif ($dataset->deaths_today > $dataset->deaths_yesterday)
-                    $dataset->deaths_pointer = "asc";
-                elseif ($dataset->deaths_today < $dataset->deaths_yesterday)
-                    $dataset->deaths_pointer = "desc";                
-                    
-                $dataset->deaths_count = ($dataset->deaths_delta - $dataset->deaths_new);
-                
-                if (($data->recovered_new == 0) || ($data->recovered_new == 1))
-                    $dataset->recovered_new += $data->recovered_count;
-                if (($data->recovered_new == -1) || ($data->recovered_new == 1))
-                    $dataset->recovered_delta += $data->recovered_count;
-                if ($data->recovered_new == 0)
-                    $dataset->recovered_today += $data->recovered_count;
-                if ($data->recovered_new == -1)
-                    $dataset->recovered_yesterday += $data->recovered_count;
-                    
-                if ($dataset->recovered_today == $dataset->recovered_yesterday)
-                    $dataset->recovered_pointer = "sty";
-                elseif ($dataset->recovered_today > $dataset->recovered_yesterday)
-                    $dataset->recovered_pointer = "asc";
-                elseif ($dataset->recovered_today < $dataset->recovered_yesterday)
-                    $dataset->recovered_pointer = "desc";                
-                    
-                $dataset->recovered_count = ($dataset->recovered_delta - $dataset->recovered_new);
-                
-                if ((isset($data->age_group)) || (isset($data->age_group2)))
-                {
-                    $age_low = -1;
-                    $age_high = -1;
-                    
-                    if ((is_object($data->age_group2)) && (isset($data->age_group2->upper)) && ($data->age_group2->upper > -1))
+            {   
+                // Also set the upstream hierarchie
+                foreach (array("district", "state", "country") as $location_type)
+                {                
+                    switch ($location_type)
                     {
-                        $age_low = $data->age_group2->lower;
-                        $age_high = $data->age_group2->upper;
+                        case "district":
+                            $index = "D".$selected_gender.$testresult->district_hash;
+                            $dataset_hash = self::hash_name("dataset-district", $testresult->district_hash, $data->date_rep.$selected_gender);
+                            break;
+                        case "state":
+                            $index = "S".$selected_gender.$testresult->state_hash;
+                            $dataset_hash = self::hash_name("dataset-state", $testresult->state_hash, $data->date_rep.$selected_gender);
+                            break;
+                        case "country":
+                            $index = "C".$selected_gender.$testresult->country_hash;
+                            $dataset_hash = self::hash_name("dataset-country", $testresult->country_hash, $data->date_rep.$selected_gender);
+                            break;
+                        default:
+                            continue(2);
                     }
-                    
-                    if ((is_object($data->age_group)) && (isset($data->age_group->upper)) && ($data->age_group->upper > -1) && ($age_high == -1))
+                
+                    $dataset_index[$index][$date] = $dataset_hash;
+                
+                    // Create or update district dateset
+                    if (!isset($datasets[$dataset_hash]))
                     {
-                        $age_low = $data->age_group->lower;
-                        $age_high = $data->age_group->upper;
-                    }
-                    
-                    if (($age_low == -1) && ($age_high == -1))
-                        $age_index = "unknown";
-                    elseif ($age_low == 80)
-                        $age_index = "80:plus";
-                    else
-                        $age_index = $age_low.":".$age_high;
+                        $dataset = $this->create_dataset_template();
                         
-                    $set_suffix = null;
-                        
-                    if (isset($age_groups[$age_index]))
-                    {
-                        $set_suffix = str_replace(":", "_", $age_index);
+                        $dataset->dataset_hash = $dataset_hash;
+                        $dataset->dataset_gender = $selected_gender;
+                        $dataset->district_hash = $district_hash;
+                        $dataset->state_hash = $state_hash;
+                        $dataset->country_hash = $germany_hash;
+                        $dataset->continent_hash = $europe_hash;
+                        $dataset->day_of_week = $data->day_of_week;
+                        $dataset->day = $data->day;
+                        $dataset->month = $data->month;
+                        $dataset->year = $data->year;
+                        $dataset->timestamp_represent = $data->timestamp_represent;
+                        $dataset->date_rep = $data->date_rep;
+                        $dataset->location_type = $location_type;
                     }
                     else
                     {
-                        $set_suffix = "unknown";
+                        $dataset = $datasets[$dataset_hash];
+                    }
+                    
+                    if (($data->cases_new == 0) || ($data->cases_new == 1))
+                        $dataset->cases_new += $data->cases_count;
+                    if (($data->cases_new == -1) || ($data->cases_new == 1))
+                        $dataset->cases_delta += $data->cases_count;
+                    if ($data->cases_new == 0)
+                        $dataset->cases_today += $data->cases_count;
+                    if ($data->cases_new == -1)
+                        $dataset->cases_yesterday += $data->cases_count;
                         
-                        foreach ($age_groups as $age_group)
+                    if ($dataset->cases_today == $dataset->cases_yesterday)
+                        $dataset->cases_pointer = "sty";
+                    elseif ($dataset->cases_today > $dataset->cases_yesterday)
+                        $dataset->cases_pointer = "asc";
+                    elseif ($dataset->cases_today < $dataset->cases_yesterday)
+                        $dataset->cases_pointer = "desc";                
+                        
+                    $dataset->cases_count = ($dataset->cases_delta - $dataset->cases_new);
+                    
+                    if (($data->deaths_new == 0) || ($data->deaths_new == 1))
+                        $dataset->deaths_new += $data->deaths_count;
+                    if (($data->deaths_new == -1) || ($data->deaths_new == 1))
+                        $dataset->deaths_delta += $data->deaths_count;
+                    if ($data->deaths_new == 0)
+                        $dataset->deaths_today += $data->deaths_count;
+                    if ($data->deaths_new == -1)
+                        $dataset->deaths_yesterday += $data->deaths_count;
+                        
+                    if ($dataset->deaths_today == $dataset->deaths_yesterday)
+                        $dataset->deaths_pointer = "sty";
+                    elseif ($dataset->deaths_today > $dataset->deaths_yesterday)
+                        $dataset->deaths_pointer = "asc";
+                    elseif ($dataset->deaths_today < $dataset->deaths_yesterday)
+                        $dataset->deaths_pointer = "desc";                
+                        
+                    $dataset->deaths_count = ($dataset->deaths_delta - $dataset->deaths_new);
+                    
+                    if (($data->recovered_new == 0) || ($data->recovered_new == 1))
+                        $dataset->recovered_new += $data->recovered_count;
+                    if (($data->recovered_new == -1) || ($data->recovered_new == 1))
+                        $dataset->recovered_delta += $data->recovered_count;
+                    if ($data->recovered_new == 0)
+                        $dataset->recovered_today += $data->recovered_count;
+                    if ($data->recovered_new == -1)
+                        $dataset->recovered_yesterday += $data->recovered_count;
+                        
+                    if ($dataset->recovered_today == $dataset->recovered_yesterday)
+                        $dataset->recovered_pointer = "sty";
+                    elseif ($dataset->recovered_today > $dataset->recovered_yesterday)
+                        $dataset->recovered_pointer = "asc";
+                    elseif ($dataset->recovered_today < $dataset->recovered_yesterday)
+                        $dataset->recovered_pointer = "desc";                
+                        
+                    $dataset->recovered_count = ($dataset->recovered_delta - $dataset->recovered_new);
+                    
+                    if ((isset($data->age_group)) || (isset($data->age_group2)))
+                    {
+                        $age_low = -1;
+                        $age_high = -1;
+                        
+                        if ((is_object($data->age_group2)) && (isset($data->age_group2->upper)) && ($data->age_group2->upper > -1))
                         {
-                            $lowhigh = explode(":", $age_group);
+                            $age_low = $data->age_group2->lower;
+                            $age_high = $data->age_group2->upper;
+                        }
+                        
+                        if ((is_object($data->age_group)) && (isset($data->age_group->upper)) && ($data->age_group->upper > -1) && ($age_high == -1))
+                        {
+                            $age_low = $data->age_group->lower;
+                            $age_high = $data->age_group->upper;
+                        }
+                        
+                        if (($age_low == -1) && ($age_high == -1))
+                            $age_index = "unknown";
+                        elseif ($age_low == 80)
+                            $age_index = "80:plus";
+                        else
+                            $age_index = $age_low.":".$age_high;
                             
-                            $alow = $lowhigh[0];
-                            $ahigh = ((isset($lowhigh[1])) ? $lowhigh[1] : -1);
+                        $set_suffix = null;
                             
-                            if ($ahigh == "plus")
-                                $ahigh = 999;
-                                
-                            if ($age_low >= $alow)
+                        if (isset($age_groups[$age_index]))
+                        {
+                            $set_suffix = str_replace(":", "_", $age_index);
+                        }
+                        else
+                        {
+                            $set_suffix = "unknown";
+                            
+                            foreach ($age_groups as $age_group)
                             {
-                                if ($age_high <= $ahigh)
+                                $lowhigh = explode(":", $age_group);
+                                
+                                $alow = $lowhigh[0];
+                                $ahigh = ((isset($lowhigh[1])) ? $lowhigh[1] : -1);
+                                
+                                if ($ahigh == "plus")
+                                    $ahigh = 999;
+                                    
+                                if ($age_low >= $alow)
                                 {
-                                    $set_suffix = str_replace(":", "_", $age_group);
-                                    break;
+                                    if ($age_high <= $ahigh)
+                                    {
+                                        $set_suffix = str_replace(":", "_", $age_group);
+                                        break;
+                                    }
                                 }
                             }
                         }
-                    }
+                        
+                        if ($set_suffix)
+                        {
+                            $key_cases_new = "cases_new_agegroup_".$set_suffix;
+                            $key_cases_count = "cases_count_agegroup_".$set_suffix;
+                            $key_cases_delta = "cases_delta_agegroup_".$set_suffix;
+                            $key_cases_today = "cases_today_agegroup_".$set_suffix;
+                            $key_cases_yesterday = "cases_yesterday_agegroup_".$set_suffix;
+                            $key_cases_total = "cases_total_agegroup_".$set_suffix;
+                            $key_cases_pointer = "cases_pointer_agegroup_".$set_suffix;
                     
-                    if ($set_suffix)
-                    {
-                        $key_cases_new = "cases_new_agegroup_".$set_suffix;
-                        $key_cases_count = "cases_count_agegroup_".$set_suffix;
-                        $key_cases_delta = "cases_delta_agegroup_".$set_suffix;
-                        $key_cases_today = "cases_today_agegroup_".$set_suffix;
-                        $key_cases_yesterday = "cases_yesterday_agegroup_".$set_suffix;
-                        $key_cases_total = "cases_total_agegroup_".$set_suffix;
-                        $key_cases_pointer = "cases_pointer_agegroup_".$set_suffix;
+                            if (($data->cases_new == 0) || ($data->cases_new == 1))
+                                $dataset->$key_cases_new += $data->cases_count;
+                            if (($data->cases_new == -1) || ($data->cases_new == 1))
+                                $dataset->$key_cases_delta += $data->cases_count;
+                            if ($data->cases_new == 0)
+                                $dataset->$key_cases_today += $data->cases_count;
+                            if ($data->cases_new == -1)
+                                $dataset->$key_cases_yesterday += $data->cases_count;
+                                
+                            if ($dataset->$key_cases_today == $dataset->$key_cases_yesterday)
+                                $dataset->$key_cases_pointer = "sty";
+                            elseif ($dataset->$key_cases_today > $dataset->$key_cases_yesterday)
+                                $dataset->$key_cases_pointer = "asc";
+                            elseif ($dataset->$key_cases_today < $dataset->$key_cases_yesterday)
+                                $dataset->$key_cases_pointer = "desc";                
+                        
+                            $dataset->$key_cases_count = ($dataset->$key_cases_delta - $dataset->$key_cases_new);
+                            
+                            $key_deaths_new = "deaths_new_agegroup_".$set_suffix;
+                            $key_deaths_count = "deaths_count_agegroup_".$set_suffix;
+                            $key_deaths_delta = "deaths_delta_agegroup_".$set_suffix;
+                            $key_deaths_today = "deaths_today_agegroup_".$set_suffix;
+                            $key_deaths_yesterday = "deaths_yesterday_agegroup_".$set_suffix;
+                            $key_deaths_total = "deaths_total_agegroup_".$set_suffix;
+                            $key_deaths_pointer = "deaths_pointer_agegroup_".$set_suffix;
+                        
+                            if (($data->deaths_new == 0) || ($data->deaths_new == 1))
+                                $dataset->$key_deaths_new += $data->deaths_count;
+                            if (($data->deaths_new == -1) || ($data->deaths_new == 1))
+                                $dataset->$key_deaths_delta += $data->deaths_count;
+                            if ($data->deaths_new == 0)
+                                $dataset->$key_deaths_today += $data->deaths_count;
+                            if ($data->deaths_new == -1)
+                                $dataset->$key_deaths_yesterday += $data->deaths_count;
+                                
+                            if ($dataset->$key_deaths_today == $dataset->$key_deaths_yesterday)
+                                $dataset->$key_deaths_pointer = "sty";
+                            elseif ($dataset->$key_deaths_today > $dataset->$key_deaths_yesterday)
+                                $dataset->$key_deaths_pointer = "asc";
+                            elseif ($dataset->$key_deaths_today < $dataset->$key_deaths_yesterday)
+                                $dataset->$key_deaths_pointer = "desc";                
+                        
+                            $dataset->$key_deaths_count = ($dataset->$key_deaths_delta - $dataset->$key_deaths_new);
+                            
+                            $key_recovered_new = "recovered_new_agegroup_".$set_suffix;
+                            $key_recovered_count = "recovered_count_agegroup_".$set_suffix;
+                            $key_recovered_delta = "recovered_delta_agegroup_".$set_suffix;
+                            $key_recovered_today = "recovered_today_agegroup_".$set_suffix;
+                            $key_recovered_yesterday = "recovered_yesterday_agegroup_".$set_suffix;
+                            $key_recovered_total = "recovered_total_agegroup_".$set_suffix;
+                            $key_recovered_pointer = "recovered_pointer_agegroup_".$set_suffix;
+                        
+                            if (($data->deaths_new == 0) || ($data->deaths_new == 1))
+                                $dataset->$key_recovered_new += $data->deaths_count;
+                            if (($data->deaths_new == -1) || ($data->deaths_new == 1))
+                                $dataset->$key_recovered_delta += $data->deaths_count;
+                            if ($data->deaths_new == 0)
+                                $dataset->$key_recovered_today += $data->deaths_count;
+                            if ($data->deaths_new == -1)
+                                $dataset->$key_recovered_yesterday += $data->deaths_count;
+                                
+                            if ($dataset->$key_recovered_today == $dataset->$key_recovered_yesterday)
+                                $dataset->$key_recovered_pointer = "sty";
+                            elseif ($dataset->$key_recovered_today > $dataset->$key_recovered_yesterday)
+                                $dataset->$key_recovered_pointer = "asc";
+                            elseif ($dataset->$key_recovered_today < $dataset->$key_recovered_yesterday)
+                                $dataset->$key_recovered_pointer = "desc";                
+                        
+                            $dataset->$key_recovered_count = ($dataset->$key_recovered_delta - $dataset->$key_recovered_new);
+                        }
+                    }
                 
-                        if (($data->cases_new == 0) || ($data->cases_new == 1))
-                            $dataset->$key_cases_new += $data->cases_count;
-                        if (($data->cases_new == -1) || ($data->cases_new == 1))
-                            $dataset->$key_cases_delta += $data->cases_count;
-                        if ($data->cases_new == 0)
-                            $dataset->$key_cases_today += $data->cases_count;
-                        if ($data->cases_new == -1)
-                            $dataset->$key_cases_yesterday += $data->cases_count;
-                            
-                        if ($dataset->$key_cases_today == $dataset->$key_cases_yesterday)
-                            $dataset->$key_cases_pointer = "sty";
-                        elseif ($dataset->$key_cases_today > $dataset->$key_cases_yesterday)
-                            $dataset->$key_cases_pointer = "asc";
-                        elseif ($dataset->$key_cases_today < $dataset->$key_cases_yesterday)
-                            $dataset->$key_cases_pointer = "desc";                
-                    
-                        $dataset->$key_cases_count = ($dataset->$key_cases_delta - $dataset->$key_cases_new);
-                        
-                        $key_deaths_new = "deaths_new_agegroup_".$set_suffix;
-                        $key_deaths_count = "deaths_count_agegroup_".$set_suffix;
-                        $key_deaths_delta = "deaths_delta_agegroup_".$set_suffix;
-                        $key_deaths_today = "deaths_today_agegroup_".$set_suffix;
-                        $key_deaths_yesterday = "deaths_yesterday_agegroup_".$set_suffix;
-                        $key_deaths_total = "deaths_total_agegroup_".$set_suffix;
-                        $key_deaths_pointer = "deaths_pointer_agegroup_".$set_suffix;
-                    
-                        if (($data->deaths_new == 0) || ($data->deaths_new == 1))
-                            $dataset->$key_deaths_new += $data->deaths_count;
-                        if (($data->deaths_new == -1) || ($data->deaths_new == 1))
-                            $dataset->$key_deaths_delta += $data->deaths_count;
-                        if ($data->deaths_new == 0)
-                            $dataset->$key_deaths_today += $data->deaths_count;
-                        if ($data->deaths_new == -1)
-                            $dataset->$key_deaths_yesterday += $data->deaths_count;
-                            
-                        if ($dataset->$key_deaths_today == $dataset->$key_deaths_yesterday)
-                            $dataset->$key_deaths_pointer = "sty";
-                        elseif ($dataset->$key_deaths_today > $dataset->$key_deaths_yesterday)
-                            $dataset->$key_deaths_pointer = "asc";
-                        elseif ($dataset->$key_deaths_today < $dataset->$key_deaths_yesterday)
-                            $dataset->$key_deaths_pointer = "desc";                
-                    
-                        $dataset->$key_deaths_count = ($dataset->$key_deaths_delta - $dataset->$key_deaths_new);
-                        
-                        $key_recovered_new = "recovered_new_agegroup_".$set_suffix;
-                        $key_recovered_count = "recovered_count_agegroup_".$set_suffix;
-                        $key_recovered_delta = "recovered_delta_agegroup_".$set_suffix;
-                        $key_recovered_today = "recovered_today_agegroup_".$set_suffix;
-                        $key_recovered_yesterday = "recovered_yesterday_agegroup_".$set_suffix;
-                        $key_recovered_total = "recovered_total_agegroup_".$set_suffix;
-                        $key_recovered_pointer = "recovered_pointer_agegroup_".$set_suffix;
-                    
-                        if (($data->deaths_new == 0) || ($data->deaths_new == 1))
-                            $dataset->$key_recovered_new += $data->deaths_count;
-                        if (($data->deaths_new == -1) || ($data->deaths_new == 1))
-                            $dataset->$key_recovered_delta += $data->deaths_count;
-                        if ($data->deaths_new == 0)
-                            $dataset->$key_recovered_today += $data->deaths_count;
-                        if ($data->deaths_new == -1)
-                            $dataset->$key_recovered_yesterday += $data->deaths_count;
-                            
-                        if ($dataset->$key_recovered_today == $dataset->$key_recovered_yesterday)
-                            $dataset->$key_recovered_pointer = "sty";
-                        elseif ($dataset->$key_recovered_today > $dataset->$key_recovered_yesterday)
-                            $dataset->$key_recovered_pointer = "asc";
-                        elseif ($dataset->$key_recovered_today < $dataset->$key_recovered_yesterday)
-                            $dataset->$key_recovered_pointer = "desc";                
-                    
-                        $dataset->$key_recovered_count = ($dataset->$key_recovered_delta - $dataset->$key_recovered_new);
-                    }
+                    $datasets[$dataset_hash] = $dataset;            
+                    krsort($dataset_index[$index]);            
                 }
-            
-                $datasets[$dataset_hash] = $dataset;            
-                krsort($dataset_index[$index]);            
             }
-            
+                        
             $testresults[$result_hash] = $testresult;            
         }
 
@@ -2388,6 +2414,30 @@ class Client
                 $db_obj->$key = $val;
             }
             
+            switch($obj->location_type)
+            {
+                case "continent":
+                    $x_hash = "N".$obj->continent_hash;
+                    break;
+                case "country":
+                    $x_hash = "C".$obj->country_hash;
+                    break;
+                case "state":
+                    $x_hash = "S".$obj->state_hash;
+                    break;
+                case "district":
+                    $x_hash = "D".$obj->district_hash;
+                    break;
+                case "location":
+                    $x_hash = "L".$obj->location_hash;
+                    break;
+                default:
+                    $x_hash = $hash;
+                    break;
+            }
+                    
+            $db_obj->locations_uid = $this->location_index[$x_hash];
+                    
             $error = null;
             
             $db_obj->data_checksum = $db_obj->calculate_checksum();

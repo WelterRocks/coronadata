@@ -265,7 +265,6 @@ class Datasets extends Base
     protected $incidence2_7day_smoothed = null;
     protected $incidence2_14day_smoothed = null;
 
-    protected $exponence_yesterday = null;
     protected $exponence_4day = null;
     protected $exponence_7day = null;
     protected $exponence_14day = null;
@@ -537,7 +536,6 @@ class Datasets extends Base
         `incidence2_4day_smoothed` FLOAT NOT NULL DEFAULT '0',
         `incidence2_7day_smoothed` FLOAT NOT NULL DEFAULT '0',
         `incidence2_14day_smoothed` FLOAT NOT NULL DEFAULT '0',
-        `exponence_yesterday` FLOAT NOT NULL DEFAULT '0',
         `exponence_4day` FLOAT NOT NULL DEFAULT '0',
         `exponence_7day` FLOAT NOT NULL DEFAULT '0',
         `exponence_14day` FLOAT NOT NULL DEFAULT '0',

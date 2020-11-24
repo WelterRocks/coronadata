@@ -25,8 +25,13 @@ use WelterRocks\CoronaData\Table\Base;
 
 class Nowcasts extends Base
 {
+    protected $locations_uid = null;
+    protected $location_type = null;
     protected $continent_hash = null;
     protected $country_hash = null;
+    protected $state_hash = null;
+    protected $district_hash = null;
+    protected $location_hash = null;
     protected $timestamp_represent = null;
     protected $date_rep = null;
     protected $day = null;
@@ -51,6 +56,8 @@ class Nowcasts extends Base
     {
       return "CREATE TABLE IF NOT EXISTS `nowcasts` (
         `uid` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
+        `locations_uid` bigint UNSIGNED NULL DEFAULT '0',
+        `location_type` ENUM('continent','country','state','district','location') NOT NULL DEFAULT 'location',
         `timestamp_last_update` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         `timestamp_last_write` timestamp NOT NULL,
         `timestamp_registration` timestamp NOT NULL,
@@ -66,6 +73,9 @@ class Nowcasts extends Base
         `year` YEAR NOT NULL DEFAULT '0',
         `continent_hash` VARCHAR(32) NOT NULL,
         `country_hash` VARCHAR(32) NOT NULL,
+        `state_hash` VARCHAR(32) NULL DEFAULT NULL,
+        `district_hash` VARCHAR(32) NULL DEFAULT NULL,
+        `location_hash` VARCHAR(32) NULL DEFAULT NULL,
         `esteem_new_diseases` INT NOT NULL DEFAULT '0',
         `lower_new_diseases` INT NOT NULL DEFAULT '0',
         `upper_new_diseases` INT NOT NULL DEFAULT '0',
@@ -86,6 +96,8 @@ class Nowcasts extends Base
         `flag_casted_r_values` tinyint(1) NOT NULL DEFAULT '0',
         PRIMARY KEY (`uid`,`month`),
         UNIQUE KEY `location_date_rep` (`continent_hash`,`country_hash`,`date_rep`,`month`),
+        KEY `locations_uid` (`locations_uid`),
+        KEY `location_type` (`location_type`),
         KEY `country_hash` (`country_hash`),
         KEY `continent_hash` (`continent_hash`),
         KEY `data_checksum` (`data_checksum`)
