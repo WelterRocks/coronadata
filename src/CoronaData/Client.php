@@ -57,6 +57,7 @@ class Client
     
     private $location_index = null;
     private $district_index = null;
+    private $divi_index = null;
     
     private $datasets = null;
     private $testresults = null;
@@ -709,6 +710,12 @@ class Client
 
         $german_divi = $this->divi_intens->handler->get_data();
         
+        $this->divi_index = array(
+            "district" => array(), 
+            "state" => array(), 
+            "country" => array()
+        );
+        
         $divis = array();
 
         if (is_array($german_divi))
@@ -751,6 +758,18 @@ class Client
                     // Remove no longer needed things
                     unset($divi->district_id);
                     unset($divi->state_id);
+                    
+                    $this->divi_index["district"][$district->district_hash] = $divi->divi_hash;
+                    
+                    if (!isset($this->divi_index["state"][$district->state_hash]))
+                        $this->divi_index["state"][$district->state_hash] = array();
+                        
+                    $this->divi_index["state"][$district->state_hash][$district->district_hash] = $divi->divi_hash;
+                    
+                    if (!isset($this->divi_index["country"][$district->country_hash]))
+                        $this->divi_index["country"][$district->country_hash] = array();
+                        
+                    $this->divi_index["country"][$district->country_hash][$district->district_hash] = $divi->divi_hash;
                     
                     $divis[$divi->divi_hash] = $divi;
 		}
@@ -1780,6 +1799,14 @@ class Client
         $tmpl->year = null;
         $tmpl->timestamp_represent = null;
         
+        $tmpl->divi_cases_covid = (int)0;
+        $tmpl->divi_cases_covid_ventilated = (int)0;
+        $tmpl->divi_reporting_areas = (int)0;
+        $tmpl->divi_locations_count = (int)0;
+        $tmpl->divi_beds_free = (int)0;
+        $tmpl->divi_beds_occupied = (int)0;
+        $tmpl->divi_beds_total = (int)0;
+        
         $age_groups = $this->get_age_groups();
         
         foreach (array("cases", "deaths", "recovered") as $prefix)
@@ -1930,15 +1957,20 @@ class Client
                 
                     $dataset_index[$index][$date] = $dataset_hash;
                 
-                    // Create or update district dateset
+                    // Create or update dateset
                     if (!isset($datasets[$dataset_hash]))
                     {
                         $dataset = $this->create_dataset_template();
                         
                         $dataset->dataset_hash = $dataset_hash;
                         $dataset->dataset_gender = $selected_gender;
-                        $dataset->district_hash = $district_hash;
-                        $dataset->state_hash = $state_hash;
+                        
+                        if ($location_type == "district")
+                            $dataset->district_hash = $district_hash;
+    
+                        if (($location_type == "state") || ($location_type == "district"))
+                            $dataset->state_hash = $state_hash;
+                        
                         $dataset->country_hash = $germany_hash;
                         $dataset->continent_hash = $europe_hash;
                         $dataset->day_of_week = $data->day_of_week;
@@ -1952,6 +1984,58 @@ class Client
                     else
                     {
                         $dataset = $datasets[$dataset_hash];
+                    }
+                    
+                    // Write corresponding divi registrations to dataset
+                    $divis = array();
+                    
+                    switch ($location_type)
+                    {
+                        case "district":
+                            if (isset($this->divi_index["district"][$dataset->district_hash]))
+                            {
+                                $divi_hash = $this->divi_index["district"][$dataset->district_hash];
+                                
+                                if (isset($this->divis[$divi_hash]))
+                                    array_push($divis, $divi_hash);
+                            }
+                            break;
+                        case "state":
+                            if (isset($this->divi_index["state"][$dataset->state_hash]))
+                            {
+                                foreach ($this->divi_index["state"][$dataset->state_hash] as $divi_hash)
+                                {                                
+                                    if (isset($this->divis[$divi_hash]))
+                                        array_push($divis, $divi_hash);
+                                }
+                            }
+                            break;
+                        case "country":
+                            if (isset($this->divi_index["country"][$dataset->country_hash]))
+                            {
+                                foreach ($this->divi_index["country"][$dataset->country_hash] as $divi_hash)
+                                {                                
+                                    if (isset($this->divis[$divi_hash]))
+                                        array_push($divis, $divi_hash);
+                                }
+                            }
+                            break;
+                    }
+                    
+                    foreach ($divis as $divi_hash)
+                    {
+                        if (!isset($this->divis[$divi_hash]))
+                            continue;
+                            
+                        $divi = $this->divis[$divi_hash];
+                        
+                        $dataset->divi_cases_covid += $divi->cases_covid;
+                        $dataset->divi_cases_covid_ventilated += $divi->cases_covid_ventilated;
+                        $dataset->divi_reporting_areas += $divi->reporting_areas;
+                        $dataset->divi_locations_count += $divi->locations_count;
+                        $dataset->divi_beds_free += $divi->beds_free;
+                        $dataset->divi_beds_occupied += $divi->beds_occupied;
+                        $dataset->divi_beds_total += $divi->beds_total;
                     }
                     
                     if (($data->cases_new == 0) || ($data->cases_new == 1))

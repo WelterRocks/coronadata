@@ -288,6 +288,15 @@ class Datasets extends Base
     protected $alert_condition2_pointer = null;
     protected $alert_condition2 = null;
 
+    protected $divi_cases_covid = null;
+    protected $divi_cases_covid_ventilated = null;
+    protected $divi_reporting_areas = null;
+    protected $divi_locations_count = null;
+    protected $divi_beds_free = null;
+    protected $divi_beds_occupied = null;
+    protected $divi_beds_total = null;
+
+    protected $flag_has_divi = null;
     protected $flag_case_free = null;
     protected $flag_enforce_daily_need_deliveries = null;
     protected $flag_enforce_treatment_priorization = null;
@@ -555,11 +564,19 @@ class Datasets extends Base
         `alert_condition2_14day` smallint NOT NULL DEFAULT '-1',
         `alert_condition2` smallint NOT NULL DEFAULT '-1',
         `alert_condition2_pointer` ENUM('asc','desc','sty') NOT NULL DEFAULT 'sty',
+        `divi_cases_covid` INT NOT NULL DEFAULT '0',
+        `divi_cases_covid_ventilated` INT NOT NULL DEFAULT '0',
+        `divi_reporting_areas` INT NOT NULL DEFAULT '0',
+        `divi_locations_count` INT NOT NULL DEFAULT '0',
+        `divi_beds_free` INT NOT NULL DEFAULT '0',
+        `divi_beds_occupied` INT NOT NULL DEFAULT '0',
+        `divi_beds_total` INT NOT NULL DEFAULT '0',
         `data_checksum` VARCHAR(40) NULL DEFAULT NULL,
         `update_count` int UNSIGNED NOT NULL DEFAULT '0',
         `flag_updated` tinyint(1) NOT NULL DEFAULT '0',
         `flag_disabled` tinyint(1) NOT NULL DEFAULT '0',
         `flag_deleted` tinyint(1) NOT NULL DEFAULT '0',
+        `flag_has_divi` tinyint(1) NOT NULL DEFAULT '0',
         `flag_case_free` tinyint(1) NOT NULL DEFAULT '0',
         `flag_enforce_daily_need_deliveries` tinyint(1) NOT NULL DEFAULT '0',
         `flag_enforce_treatment_priorization` tinyint(1) NOT NULL DEFAULT '0',
