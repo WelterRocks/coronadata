@@ -1046,7 +1046,6 @@ abstract class Base
           "timestamp_undeleted" => true,
           "timestamp_disabled" => true,
           "timestamp_enabled" => true,
-          "data_checksum" => true,
           "update_count" => true,
           "flag_updated" => true,
           "flag_disabled" => true,
