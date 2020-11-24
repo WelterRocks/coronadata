@@ -59,6 +59,7 @@ class Client
     
     private $datasets = null;
     private $testresults = null;
+    private $nowcasts = null;
     private $divis = null;
     
     public static function object_checksum($obj, $prefix = null)
@@ -755,76 +756,6 @@ class Client
         unset($german_districts_area);
         unset($german_districts_population);        
 
-        // Sixth, get the RKI nowcasting data and push the latest entry to the germany object
-        // DEPRECATED: This will be moved to datasets
-        /*
-        $max_timestamp = -1;
-        $max_data = null;
-
-        $esteem_reproduction_r = 0;
-        $lower_reproduction_r = 0;
-        $upper_reproduction_r = 0;
-
-        $esteem_7day_r_value = 0;
-        $lower_7day_r_value = 0;
-        $upper_7day_r_value = 0;
-        
-        $nowcast = $this->rki_nowcast->handler->get_data();
-        
-        foreach ($nowcast as $id => $data)
-        {
-            $ts = strtotime($data->timestamp_represent);
-            
-            foreach ($data as $key => $val)
-            {
-                switch ($key)
-                {
-                    case "esteem_reproduction_r":
-                        if ($val > 0) $esteem_reproduction_r = $val; elseif ($val == 0) $val = $esteem_reproduction_r;
-                        break;
-                    case "lower_reproduction_r":
-                        if ($val > 0) $lower_reproduction_r = $val; elseif ($val == 0) $val = $lower_reproduction_r;
-                        break;
-                    case "upper_reproduction_r":
-                        if ($val > 0) $upper_reproduction_r = $val; elseif ($val == 0) $val = $upper_reproduction_r;
-                        break;
-                    case "esteem_7day_r_value":
-                        if ($val > 0) $esteem_7day_r_value = $val; elseif ($val == 0) $val = $esteem_7day_r_value;
-                        break;
-                    case "lower_7day_r_value":
-                        if ($val > 0) $lower_7day_r_value = $val; elseif ($val == 0) $val = $lower_7day_r_value;
-                        break;
-                    case "upper_7day_r_value":
-                        if ($val > 0) $upper_7day_r_value = $val; elseif ($val == 0) $val = $upper_7day_r_value;
-                        break;
-                }
-                
-                $nowcast[$id]->$key = $val;
-            }
-                
-            if ($ts > $max_timestamp)
-            {
-                $max_timestamp = $ts;
-                $max_data = clone $data;
-            }
-        }
-        
-        unset($nowcast);
-        
-        foreach ($max_data as $key => $val)
-        {
-            if ($key == "timestamp_represent")
-                continue;
-                
-            if ($key == "date_rep")
-                $key = "date_nowcast";
-                
-            $germany->$key = $val;
-        }
-        
-        unset($max_data);
-        */
-        
         // Force update of the "germany" and "europe" objects
         $countries[$germany_hash] = $germany;
         $continents[$europe_hash] = $europe;
@@ -846,6 +777,89 @@ class Client
         }
     
         return true;
+    }
+    
+    public function master_nowcasts($hold_data = false)
+    {       
+        $europe_hash = self::hash_name("continent", "Europe");
+        $germany_hash = self::hash_name("country", "Germany", $europe_hash);
+                
+        $europe = $this->continents[$europe_hash];
+        $germany = $this->countries[$germany_hash];
+
+        $max_timestamp = -1;
+        $max_data = null;
+
+        $esteem_reproduction_r = 0;
+        $lower_reproduction_r = 0;
+        $upper_reproduction_r = 0;
+
+        $esteem_7day_r_value = 0;
+        $lower_7day_r_value = 0;
+        $upper_7day_r_value = 0;
+        
+        $nowcast = $this->rki_nowcast->handler->get_data();
+        
+        foreach ($nowcast as $id => $data)
+        {
+            $ts = strtotime($data->timestamp_represent);
+            $nowcast_hash = self::hash_name("nowcast", $germany_hash, $data->date_rep);
+            
+            $nowcast[$id]->flag_casted_r_values = 0;
+            
+            foreach ($data as $key => $val)
+            {
+                switch ($key)
+                {
+                    case "esteem_reproduction_r":
+                        if ($val > 0) $esteem_reproduction_r = $val; elseif ($val == 0) { $nowcast[$id]->flag_casted_r_values = 1; $val = $esteem_reproduction_r; }
+                        break;
+                    case "lower_reproduction_r":
+                        if ($val > 0) $lower_reproduction_r = $val; elseif ($val == 0) { $nowcast[$id]->flag_casted_r_values = 1; $val = $lower_reproduction_r; }
+                        break;
+                    case "upper_reproduction_r":
+                        if ($val > 0) $upper_reproduction_r = $val; elseif ($val == 0) { $nowcast[$id]->flag_casted_r_values = 1; $val = $upper_reproduction_r; }
+                        break;
+                    case "esteem_7day_r_value":
+                        if ($val > 0) $esteem_7day_r_value = $val; elseif ($val == 0) { $nowcast[$id]->flag_casted_r_values = 1; $val = $esteem_7day_r_value; }
+                        break;
+                    case "lower_7day_r_value":
+                        if ($val > 0) $lower_7day_r_value = $val; elseif ($val == 0) { $nowcast[$id]->flag_casted_r_values = 1; $val = $lower_7day_r_value; }
+                        break;
+                    case "upper_7day_r_value":
+                        if ($val > 0) $upper_7day_r_value = $val; elseif ($val == 0) { $nowcast[$id]->flag_casted_r_values = 1; $val = $upper_7day_r_value; }
+                        break;
+                }
+                
+                $nowcast[$id]->$key = $val;
+            }
+            
+            $nowcast[$id]->continent_hash = $europe_hash;
+            $nowcast[$id]->country_hash = $germany_hash;
+            $nowcast[$id]->nowcast_hash = $nowcast_hash;
+            $nowcast[$id]->location_type = "country";
+            
+            $nowcasts[$nowcast_hash] = $nowcast[$id];
+                
+            if ($ts > $max_timestamp)
+            {
+                $max_timestamp = $ts;
+                $max_data = clone $data;
+            }
+        }
+        
+        // The max_data variable holds the latest nowcast. This is for future use.
+        
+        unset($nowcast);
+        unset($max_data);
+        
+        $this->nowcasts = $nowcasts;
+        
+        // Free the memory, which is no longer need (if hold data is not requested)
+        if (!$hold_data)
+            $this->rki_nowcast->handler->free();
+    
+        return true;    
     }
     
     public function get_last_x_days($cases, $deaths, $recovered, $dates, $days = 7, $skip_days = 0, &$reproduction_available = null)
@@ -2364,55 +2378,11 @@ class Client
             
         $this->database_transaction_begin("save_nowcast");
         
-        $esteem_reproduction_r = 0;
-        $lower_reproduction_r = 0;
-        $upper_reproduction_r = 0;
-        
-        $esteem_7day_r_value = 0;
-        $lower_7day_r_value = 0;
-        $upper_7day_r_value = 0;
-        
-        $europe_hash = self::hash_name("continent", "Europe");
-        $germany_hash = self::hash_name("country", "Germany", $europe_hash);
-        
         $errors = array();
         
-        foreach ($this->rki_nowcast->handler->get_data() as $obj)
+        foreach ($this->nowcasts as $hash => $obj)
         {            
             $db_obj = $this->database->new_nowcast();
-            
-            $db_obj->continent_hash = $europe_hash;
-            $db_obj->country_hash = $germany_hash;
-            
-            // Set casted r values flag to 0
-            $obj->flag_casted_r_values = 0;
-
-            foreach ($obj as $key => $val)
-            {
-                switch ($key)
-                {
-                    case "esteem_reproduction_r":
-                        if ($val > 0) $esteem_reproduction_r = $val; elseif ($val == 0) { $obj->flag_casted_r_values = 1; $val = $esteem_reproduction_r; }
-                        break;
-                    case "lower_reproduction_r":
-                        if ($val > 0) $lower_reproduction_r = $val; elseif ($val == 0) { $obj->flag_casted_r_values = 1; $val = $lower_reproduction_r; }
-                        break;
-                    case "upper_reproduction_r":
-                        if ($val > 0) $upper_reproduction_r = $val; elseif ($val == 0) { $obj->flag_casted_r_values = 1; $val = $upper_reproduction_r; }
-                        break;
-                    case "esteem_7day_r_value":
-                        if ($val > 0) $esteem_7day_r_value = $val; elseif ($val == 0) { $obj->flag_casted_r_values = 1; $val = $esteem_7day_r_value; }
-                        break;
-                    case "lower_7day_r_value":
-                        if ($val > 0) $lower_7day_r_value = $val; elseif ($val == 0) { $obj->flag_casted_r_values = 1; $val = $lower_7day_r_value; }
-                        break;
-                    case "upper_7day_r_value":
-                        if ($val > 0) $upper_7day_r_value = $val; elseif ($val == 0) { $obj->flag_casted_r_values = 1; $val = $upper_7day_r_value; }
-                        break;
-                }
-                
-                $db_obj->$key = $val;
-            }
             
             switch($obj->location_type)
             {

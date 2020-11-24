@@ -174,6 +174,9 @@ function worker_loop(Client $client, $oneshot = false)
                 $cli->log("Extracting and mastering locations.", LOG_INFO);                
                 $client->master_locations();
                 
+                $cli->log("Extracting and mastering nowcasts.", LOG_INFO);                
+                $client->master_nowcasts();
+                
                 $cli->log("Extracting and mastering datasets.", LOG_INFO);                
                 $client->master_datasets();
                 

@@ -32,6 +32,7 @@ class Oldcasts extends Base
     protected $state_hash = null;
     protected $district_hash = null;
     protected $location_hash = null;
+    protected $nowcast_hash = null;
     protected $timestamp_represent = null;
     protected $date_rep = null;
     protected $day = null;
@@ -76,6 +77,7 @@ class Oldcasts extends Base
         `state_hash` VARCHAR(32) NULL DEFAULT NULL,
         `district_hash` VARCHAR(32) NULL DEFAULT NULL,
         `location_hash` VARCHAR(32) NULL DEFAULT NULL,
+        `nowcast_hash` VARCHAR(32) NULL DEFAULT NULL,
         `esteem_new_diseases` INT NOT NULL DEFAULT '0',
         `lower_new_diseases` INT NOT NULL DEFAULT '0',
         `upper_new_diseases` INT NOT NULL DEFAULT '0',
@@ -96,6 +98,7 @@ class Oldcasts extends Base
         `flag_casted_r_values` tinyint(1) NOT NULL DEFAULT '0',
         PRIMARY KEY (`uid`,`month`),
         UNIQUE KEY `data_checksum` (`data_checksum`,`month`),
+        KEY `nowcast_hash` (`nowcast_hash`),
         KEY `locations_uid` (`locations_uid`),
         KEY `location_type` (`location_type`),
         KEY `country_hash` (`country_hash`),
