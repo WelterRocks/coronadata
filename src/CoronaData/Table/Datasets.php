@@ -295,7 +295,21 @@ class Datasets extends Base
     protected $divi_beds_free = null;
     protected $divi_beds_occupied = null;
     protected $divi_beds_total = null;
+    
+    protected $nowcast_esteem_new_diseases = null;
+    protected $nowcast_lower_new_diseases = null;
+    protected $nowcast_upper_new_diseases = null;
+    protected $nowcast_esteem_new_diseases_ma4 = null;
+    protected $nowcast_lower_new_diseases_ma4 = null;
+    protected $nowcast_upper_new_diseases_ma4 = null;
+    protected $nowcast_esteem_reproduction_r = null;
+    protected $nowcast_lower_reproduction_r = null;
+    protected $nowcast_upper_reproduction_r = null;
+    protected $nowcast_esteem_7day_r_value = null;
+    protected $nowcast_lower_7day_r_value = null;
+    protected $nowcast_upper_7day_r_value = null;
 
+    protected $flag_casted_r_values = null;
     protected $flag_has_divi = null;
     protected $flag_case_free = null;
     protected $flag_enforce_daily_need_deliveries = null;
@@ -571,11 +585,24 @@ class Datasets extends Base
         `divi_beds_free` INT NOT NULL DEFAULT '0',
         `divi_beds_occupied` INT NOT NULL DEFAULT '0',
         `divi_beds_total` INT NOT NULL DEFAULT '0',
+        `nowcast_esteem_new_diseases` INT NOT NULL DEFAULT '0',
+        `nowcast_lower_new_diseases` INT NOT NULL DEFAULT '0',
+        `nowcast_upper_new_diseases` INT NOT NULL DEFAULT '0',
+        `nowcast_esteem_new_diseases_ma4` INT NOT NULL DEFAULT '0',
+        `nowcast_lower_new_diseases_ma4` INT NOT NULL DEFAULT '0',
+        `nowcast_upper_new_diseases_ma4` INT NOT NULL DEFAULT '0',
+        `nowcast_esteem_reproduction_r` FLOAT NOT NULL DEFAULT '0',
+        `nowcast_lower_reproduction_r` FLOAT NOT NULL DEFAULT '0',
+        `nowcast_upper_reproduction_r` FLOAT NOT NULL DEFAULT '0',
+        `nowcast_esteem_7day_r_value` FLOAT NOT NULL DEFAULT '0',
+        `nowcast_lower_7day_r_value` FLOAT NOT NULL DEFAULT '0',
+        `nowcast_upper_7day_r_value` FLOAT NOT NULL DEFAULT '0',
         `data_checksum` VARCHAR(40) NULL DEFAULT NULL,
         `update_count` int UNSIGNED NOT NULL DEFAULT '0',
         `flag_updated` tinyint(1) NOT NULL DEFAULT '0',
         `flag_disabled` tinyint(1) NOT NULL DEFAULT '0',
         `flag_deleted` tinyint(1) NOT NULL DEFAULT '0',
+        `flag_casted_r_values` tinyint(1) NOT NULL DEFAULT '0',
         `flag_has_divi` tinyint(1) NOT NULL DEFAULT '0',
         `flag_case_free` tinyint(1) NOT NULL DEFAULT '0',
         `flag_enforce_daily_need_deliveries` tinyint(1) NOT NULL DEFAULT '0',

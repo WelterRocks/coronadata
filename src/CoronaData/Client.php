@@ -439,7 +439,6 @@ class Client
         $tmpl->population_females = 0;
         $tmpl->population_males = 0;
         $tmpl->area = 0;
-        $tmpl->data_checksum = null;
 
         // First, we use the EU coviddata, but skip any kind of cases data.
         // This will be a static table in future versions, to speed things up massivly.
@@ -806,7 +805,8 @@ class Client
         $lower_7day_r_value = 0;
         $upper_7day_r_value = 0;
         
-        $nowcast = $this->rki_nowcast->handler->get_data();
+        $nowcast = $this->rki_nowcast->handler->get_data();        
+        $nowcasts = array();
         
         foreach ($nowcast as $id => $data)
         {
@@ -2029,6 +2029,9 @@ class Client
                             
                         $divi = $this->divis[$divi_hash];
                         
+                        if ($divi->date_rep != $dataset->date_rep)
+                            continue;
+                        
                         $dataset->divi_cases_covid += $divi->cases_covid;
                         $dataset->divi_cases_covid_ventilated += $divi->cases_covid_ventilated;
                         $dataset->divi_reporting_areas += $divi->reporting_areas;
@@ -2036,6 +2039,26 @@ class Client
                         $dataset->divi_beds_free += $divi->beds_free;
                         $dataset->divi_beds_occupied += $divi->beds_occupied;
                         $dataset->divi_beds_total += $divi->beds_total;
+                    }
+                    
+                    // Merge the nowcasts
+                    foreach ($this->nowcasts as $nowcast_hash => $nowcast)
+                    {
+                        if ($nowcast->date_rep != $dataset->date_rep)
+                            continue;
+                            
+                        $dataset->nowcast_esteem_new_diseases = $nowcast->esteem_new_diseases;
+                        $dataset->nowcast_lower_new_diseases = $nowcast->lower_new_diseases;
+                        $dataset->nowcast_upper_new_diseases = $nowcast->upper_new_diseases;
+                        $dataset->nowcast_esteem_new_diseases_ma4 = $nowcast->esteem_new_diseases_ma4;
+                        $dataset->nowcast_lower_new_diseases_ma4 = $nowcast->lower_new_diseases_ma4;
+                        $dataset->nowcast_upper_new_diseases_ma4 = $nowcast->upper_new_diseases_ma4;
+                        $dataset->nowcast_esteem_reproduction_r = $nowcast->esteem_reproduction_r;
+                        $dataset->nowcast_lower_reproduction_r = $nowcast->lower_reproduction_r;
+                        $dataset->nowcast_upper_reproduction_r = $nowcast->upper_reproduction_r;
+                        $dataset->nowcast_esteem_7day_r_value = $nowcast->esteem_7day_r_value;
+                        $dataset->nowcast_lower_7day_r_value = $nowcast->lower_7day_r_value;
+                        $dataset->nowcast_upper_7day_r_value = $nowcast->upper_7day_r_value;
                     }
                     
                     if (($data->cases_new == 0) || ($data->cases_new == 1))
@@ -2326,8 +2349,6 @@ class Client
                     
             $error = null;
                     
-            $db_obj->data_checksum = $db_obj->calculate_checksum();
-                    
             if ($db_obj->save(null, null, false, false, $error))
                 $count++;
             else
@@ -2366,8 +2387,6 @@ class Client
             
             $error = null;
             
-            $db_obj->data_checksum = $db_obj->calculate_checksum();
-                    
             if ($db_obj->save(null, null, false, false, $error))
                 $count++;
             else
@@ -2426,8 +2445,6 @@ class Client
                     
             $error = null;
             
-            $db_obj->data_checksum = $db_obj->calculate_checksum();
-                    
             if ($db_obj->save(null, null, false, false, $error))
                 $count++;
             else
@@ -2486,8 +2503,6 @@ class Client
                     
             $error = null;
             
-            $db_obj->data_checksum = $db_obj->calculate_checksum();
-                    
             if ($db_obj->save(null, null, false, false, $error))
                 $count++;
             else
@@ -2561,8 +2576,6 @@ class Client
                 
                 $error = null;
 
-                $db_obj->data_checksum = $db_obj->calculate_checksum();
-                    
                 if ($this->location_index[$x_hash] = $db_obj->save(null, null, false, false, $error))
                     $count++;
                 else

@@ -54,7 +54,7 @@ abstract class Base
     protected $flag_disabled = null;
     protected $flag_deleted = null;
     
-    public function calculate_checksum()
+    public function get_checksum_val()
     {
         $buffer = array();
 
@@ -81,10 +81,10 @@ abstract class Base
                 continue(2);
             }
                 
-            array_push($buffer, $key.":".$val);
+            array_push($buffer, $val);
         }
 
-        return sha1(implode("\n", $buffer));
+        return $buffer;
     }
 
     private function view_exception($code = 0, $ex = null)
@@ -166,7 +166,9 @@ abstract class Base
             }
             elseif (($val !== null) && ($val != ""))
             {
-              if (($val == 0) && ($zero_as_null))
+              if ($key == "data_checksum")
+                $update_clause .= ", `".$key."` = SHA1('".$this->esc((($val === true) ? $this->get_checksum_val() : $val))."')";
+              elseif (($val == 0) && ($zero_as_null))
                 $update_clause .= ", `".$key."` = NULL";
               elseif ((($val === 0) || ($val === false)) && ($val !== null))
                 $update_clause .= ", `".$key."` = ".$val;
@@ -580,7 +582,9 @@ abstract class Base
           {
             $keys .= ",`".$key."`";
             
-            if ((($val === 0) || ($val === false)) && ($val !== null) && ($val !== ""))
+            if ($key == "data_checksum")
+              $vals .= ",SHA1('".$this->esc((($val === true) ? $this->get_checksum_val() : $val))."')";
+            elseif ((($val === 0) || ($val === false)) && ($val !== null) && ($val !== ""))
               $vals .= ",".$val;
             elseif ((is_numeric($val)) || ($this->isint($val)))
               $vals .= ",".$val;
