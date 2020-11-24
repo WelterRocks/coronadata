@@ -84,7 +84,7 @@ abstract class Base
             array_push($buffer, $val);
         }
 
-        return $buffer;
+        return implode("", $buffer);
     }
 
     private function view_exception($code = 0, $ex = null)
