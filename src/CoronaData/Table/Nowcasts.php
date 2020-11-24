@@ -55,6 +55,16 @@ class Nowcasts extends Base
     
     protected function get_install_sql()
     {
+      $fields = array();
+      
+      foreach ($this as $key => $val)
+      {
+        if ((substr($key, 0, 2) == "__") || ($key == "uid"))
+          continue;
+                    
+        array_push($fields, "`".$key."`");
+      }
+      
       return "CREATE TABLE IF NOT EXISTS `nowcasts` (
         `uid` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
         `locations_uid` bigint UNSIGNED NULL DEFAULT '0',
@@ -118,8 +128,9 @@ class Nowcasts extends Base
         PARTITION nov VALUES LESS THAN (12),
         PARTITION `dec` VALUES LESS THAN MAXVALUE
       );
-      
-      DROP TRIGGER IF EXISTS `update_archive_nowcast`; CREATE TRIGGER IF NOT EXISTS `update_archive_nowcast` BEFORE UPDATE ON `nowcasts` FOR EACH ROW BEGIN IF OLD.data_checksum != NEW.data_checksum THEN BEGIN INSERT INTO `oldcasts` (SELECT * FROM nowcasts WHERE uid = OLD.uid); END; END IF; END;
+
+      ALTER TABLE `nowcasts` ADD CONSTRAINT `nowcast_location` FOREIGN KEY (`locations_uid`) REFERENCES `locations`(`uid`) ON DELETE CASCADE ON UPDATE CASCADE;      
+      DROP TRIGGER IF EXISTS `update_archive_nowcast`; CREATE TRIGGER IF NOT EXISTS `update_archive_nowcast` BEFORE UPDATE ON `nowcasts` FOR EACH ROW BEGIN IF OLD.data_checksum != NEW.data_checksum THEN BEGIN INSERT INTO `oldcasts` (`nowcasts_uid`,".implode(",", $fields).") VALUES (SELECT `uid`,".implode(",", $fields)." FROM nowcasts WHERE uid = OLD.uid); END; END IF; END;
       ";
     }
 }

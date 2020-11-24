@@ -57,6 +57,7 @@ class Oldcasts extends Base
     {
       return "CREATE TABLE IF NOT EXISTS `oldcasts` (
         `uid` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
+        `nowcasts_uid` bigint UNSIGNED NOT NULL,
         `locations_uid` bigint UNSIGNED NULL DEFAULT '0',
         `location_type` ENUM('continent','country','state','district','location') NOT NULL DEFAULT 'location',
         `timestamp_last_update` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -117,6 +118,9 @@ class Oldcasts extends Base
         PARTITION nov VALUES LESS THAN (12),
         PARTITION `dec` VALUES LESS THAN MAXVALUE
       );      
+
+      ALTER TABLE `oldcasts` ADD CONSTRAINT `oldcast_location` FOREIGN KEY (`locations_uid`) REFERENCES `locations`(`uid`) ON DELETE CASCADE ON UPDATE CASCADE;
+      ALTER TABLE `oldcasts` ADD CONSTRAINT `oldcast_nowcast` FOREIGN KEY (`nowcasts_uid`) REFERENCES `nowcasts`(`uid`) ON DELETE CASCADE ON UPDATE CASCADE;
       ";
     }
 }
