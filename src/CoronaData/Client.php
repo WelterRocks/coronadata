@@ -630,7 +630,7 @@ class Client
                 else
                     $district = $districts[$district_hash];
                     
-                $this->district_index[$district_id] = $district_hash;
+                $this->district_index[(double)$district_id] = $district_hash;
                     
                 $district->location_hash = self::hash_name("location", "district", $district_hash);
                 $district->location_tags = "district, ".$europe->continent_name.", ".$germany->country_name.", ".$state->state_name.", ".$data->type.", ".$data->name;
@@ -722,10 +722,10 @@ class Client
                     if (!$district_hash)
                         continue;
                         
-                    if (!isset($districts[$district_hash]))
+                    if (!isset($this->districts[$district_hash]))
                         continue;
                         
-                    $district = $districts[$district_hash];
+                    $district = $this->districts[$district_hash];
                     
                     $merge = array(
                         "district_hash",
