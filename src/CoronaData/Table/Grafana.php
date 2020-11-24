@@ -26,10 +26,8 @@ use WelterRocks\CoronaData\Table\Base;
 class Grafana extends Base
 {
     protected $__is_view = true;
-    
-    // Fields from locations
-    protected $timestamp_min = null;
-    protected $timestamp_max = null;      
+
+    // Location table
     protected $continent_id = null;
     protected $continent_hash = null;
     protected $continent_name = null;
@@ -43,129 +41,238 @@ class Grafana extends Base
     protected $district_hash = null;
     protected $district_name = null;
     protected $district_type = null;
-    protected $district_fullname = null;
     protected $location_id = null;
     protected $location_hash = null;
     protected $location_name = null;
     protected $location_type = null;
+    protected $location_tags = null;
     protected $geo_id = null;
     protected $population_year = null;
     protected $population_count = null;
     protected $population_females = null;
     protected $population_males = null;
-    protected $area = null;
-    protected $deaths_count = null;
-    protected $deaths_min = null;
-    protected $deaths_max = null;
-    protected $cases_count = null;
-    protected $cases_min = null;
-    protected $cases_max = null;
-    protected $recovered_count = null;
-    protected $recovered_min = null;
-    protected $recovered_max = null;
-    protected $divi_reporting_areas = null;
-    protected $divi_locations_count = null;
-    protected $divi_cases_covid = null;
-    protected $divi_cases_covid_ventilated = null;
-    protected $divi_beds_free = null;
-    protected $divi_beds_occupied = null;
-    protected $divi_beds_total = null;
-    protected $aged_65_older = null;
-    protected $aged_70_older = null;
-    protected $cardiovasc_death_rate = null;
-    protected $diabetes_prevalence = null;
-    protected $gdp_per_capita = null;
-    protected $handwashing_facilities = null;
-    protected $hospital_beds_per_thousand = null;
-    protected $human_development_index = null;
-    protected $life_expectancy = null;
-    protected $median_age = null;
-    protected $contamination_total = null;
-    protected $contamination_rundays = null;
-    protected $contamination_per_day = null;
-    protected $contamination_target = null;
     protected $population_density = null;
-    protected $infection_density = null;
-    protected $infection_probability = null;
-    protected $infection_area = null;
-    protected $female_smokers = null;
-    protected $male_smokers = null;
-    protected $extreme_poverty = null;
-    protected $esteem_new_diseases = null;
-    protected $lower_new_diseases = null;
-    protected $upper_new_diseases = null;
-    protected $esteem_new_diseases_ma4 = null;
-    protected $lower_new_diseases_ma4 = null;
-    protected $upper_new_diseases_ma4 = null;
-    protected $esteem_reproduction_r = null;
-    protected $lower_reproduction_r = null;
-    protected $upper_reproduction_r = null;
-    protected $esteem_7day_r_value = null;
-    protected $lower_7day_r_value = null;
-    protected $upper_7day_r_value = null;
-    protected $date_nowcast = null;
+    protected $area = null;
 
-    // Fields from dataset        
+    // Dataset table
     protected $dataset_hash = null;
-    protected $locations_uid = null;
+    protected $dataset_gender = null;
+
     protected $date_rep = null;
     protected $day_of_week = null;
     protected $day = null;
     protected $month = null;
     protected $year = null;
-    protected $cases = null;
-    protected $cases_4day = null;
-    protected $cases_7day = null;
-    protected $cases_14day = null;
+
     protected $cases_rate = null;
-    protected $cases_ascension = null;
+    protected $cases_new = null;
+    protected $cases_count = null;
+    protected $cases_delta = null;
+    protected $cases_today = null;
+    protected $cases_yesterday = null;
+    protected $cases_total = null;
     protected $cases_pointer = null;
-    protected $deaths = null;
-    protected $deaths_4day = null;
-    protected $deaths_7day = null;
-    protected $deaths_14day = null;
+
+    protected $cases_4day_average = null;
+    protected $cases_7day_average = null;
+    protected $cases_14day_average = null;
+
+    protected $cases_new_agegroup_0_4 = null;
+    protected $cases_new_agegroup_5_14 = null;
+    protected $cases_new_agegroup_15_34 = null;
+    protected $cases_new_agegroup_35_59 = null;
+    protected $cases_new_agegroup_60_79 = null;
+    protected $cases_new_agegroup_80_plus = null;
+    protected $cases_new_agegroup_unknown = null;
+
+    protected $cases_count_agegroup_0_4 = null;
+    protected $cases_count_agegroup_5_14 = null;
+    protected $cases_count_agegroup_15_34 = null;
+    protected $cases_count_agegroup_35_59 = null;
+    protected $cases_count_agegroup_60_79 = null;
+    protected $cases_count_agegroup_80_plus = null;
+    protected $cases_count_agegroup_unknown = null;
+
+    protected $cases_delta_agegroup_0_4 = null;
+    protected $cases_delta_agegroup_5_14 = null;
+    protected $cases_delta_agegroup_15_34 = null;
+    protected $cases_delta_agegroup_35_59 = null;
+    protected $cases_delta_agegroup_60_79 = null;
+    protected $cases_delta_agegroup_80_plus = null;
+    protected $cases_delta_agegroup_unknown = null;
+
+    protected $cases_today_agegroup_0_4 = null;
+    protected $cases_today_agegroup_5_14 = null;
+    protected $cases_today_agegroup_15_34 = null;
+    protected $cases_today_agegroup_35_59 = null;
+    protected $cases_today_agegroup_60_79 = null;
+    protected $cases_today_agegroup_80_plus = null;
+    protected $cases_today_agegroup_unknown = null;
+
+    protected $cases_yesterday_agegroup_0_4 = null;
+    protected $cases_yesterday_agegroup_5_14 = null;
+    protected $cases_yesterday_agegroup_15_34 = null;
+    protected $cases_yesterday_agegroup_35_59 = null;
+    protected $cases_yesterday_agegroup_60_79 = null;
+    protected $cases_yesterday_agegroup_80_plus = null;
+    protected $cases_yesterday_agegroup_unknown = null;
+
+    protected $cases_total_agegroup_0_4 = null;
+    protected $cases_total_agegroup_5_14 = null;
+    protected $cases_total_agegroup_15_34 = null;
+    protected $cases_total_agegroup_35_59 = null;
+    protected $cases_total_agegroup_60_79 = null;
+    protected $cases_total_agegroup_80_plus = null;
+    protected $cases_total_agegroup_unknown = null;
+
+    protected $cases_pointer_agegroup_0_4 = null;
+    protected $cases_pointer_agegroup_5_14 = null;
+    protected $cases_pointer_agegroup_15_34 = null;
+    protected $cases_pointer_agegroup_35_59 = null;
+    protected $cases_pointer_agegroup_60_79 = null;
+    protected $cases_pointer_agegroup_80_plus = null;
+    protected $cases_pointer_agegroup_unknown = null;
+
     protected $deaths_rate = null;
-    protected $deaths_ascension = null;
+    protected $deaths_new = null;
+    protected $deaths_count = null;
+    protected $deaths_delta = null;
+    protected $deaths_today = null;
+    protected $deaths_yesterday = null;
+    protected $deaths_total = null;
     protected $deaths_pointer = null;
-    protected $recovered = null;
+
+    protected $deaths_4day_average = null;
+    protected $deaths_7day_average = null;
+    protected $deaths_14day_average = null;
+
+    protected $deaths_new_agegroup_0_4 = null;
+    protected $deaths_new_agegroup_5_14 = null;
+    protected $deaths_new_agegroup_15_34 = null;
+    protected $deaths_new_agegroup_35_59 = null;
+    protected $deaths_new_agegroup_60_79 = null;
+    protected $deaths_new_agegroup_80_plus = null;
+    protected $deaths_new_agegroup_unknown = null;
+
+    protected $deaths_count_agegroup_0_4 = null;
+    protected $deaths_count_agegroup_5_14 = null;
+    protected $deaths_count_agegroup_15_34 = null;
+    protected $deaths_count_agegroup_35_59 = null;
+    protected $deaths_count_agegroup_60_79 = null;
+    protected $deaths_count_agegroup_80_plus = null;
+    protected $deaths_count_agegroup_unknown = null;
+
+    protected $deaths_delta_agegroup_0_4 = null;
+    protected $deaths_delta_agegroup_5_14 = null;
+    protected $deaths_delta_agegroup_15_34 = null;
+    protected $deaths_delta_agegroup_35_59 = null;
+    protected $deaths_delta_agegroup_60_79 = null;
+    protected $deaths_delta_agegroup_80_plus = null;
+    protected $deaths_delta_agegroup_unknown = null;
+
+    protected $deaths_today_agegroup_0_4 = null;
+    protected $deaths_today_agegroup_5_14 = null;
+    protected $deaths_today_agegroup_15_34 = null;
+    protected $deaths_today_agegroup_35_59 = null;
+    protected $deaths_today_agegroup_60_79 = null;
+    protected $deaths_today_agegroup_80_plus = null;
+    protected $deaths_today_agegroup_unknown = null;
+
+    protected $deaths_yesterday_agegroup_0_4 = null;
+    protected $deaths_yesterday_agegroup_5_14 = null;
+    protected $deaths_yesterday_agegroup_15_34 = null;
+    protected $deaths_yesterday_agegroup_35_59 = null;
+    protected $deaths_yesterday_agegroup_60_79 = null;
+    protected $deaths_yesterday_agegroup_80_plus = null;
+    protected $deaths_yesterday_agegroup_unknown = null;
+
+    protected $deaths_total_agegroup_0_4 = null;
+    protected $deaths_total_agegroup_5_14 = null;
+    protected $deaths_total_agegroup_15_34 = null;
+    protected $deaths_total_agegroup_35_59 = null;
+    protected $deaths_total_agegroup_60_79 = null;
+    protected $deaths_total_agegroup_80_plus = null;
+    protected $deaths_total_agegroup_unknown = null;
+
+    protected $deaths_pointer_agegroup_0_4 = null;
+    protected $deaths_pointer_agegroup_5_14 = null;
+    protected $deaths_pointer_agegroup_15_34 = null;
+    protected $deaths_pointer_agegroup_35_59 = null;
+    protected $deaths_pointer_agegroup_60_79 = null;
+    protected $deaths_pointer_agegroup_80_plus = null;
+    protected $deaths_pointer_agegroup_unknown = null;
+
+    protected $recovered_rate = null;
+    protected $recovered_new = null;
+    protected $recovered_count = null;
+    protected $recovered_delta = null;
+    protected $recovered_today = null;
+    protected $recovered_yesterday = null;
+    protected $recovered_total = null;
+    protected $recovered_pointer = null;
+
+    protected $recovered_4day_average = null;
+    protected $recovered_7day_average = null;
+    protected $recovered_14day_average = null;
+
+    protected $recovered_new_agegroup_0_4 = null;
+    protected $recovered_new_agegroup_5_14 = null;
+    protected $recovered_new_agegroup_15_34 = null;
+    protected $recovered_new_agegroup_35_59 = null;
+    protected $recovered_new_agegroup_60_79 = null;
+    protected $recovered_new_agegroup_80_plus = null;
+    protected $recovered_new_agegroup_unknown = null;
+
+    protected $recovered_count_agegroup_0_4 = null;
+    protected $recovered_count_agegroup_5_14 = null;
+    protected $recovered_count_agegroup_15_34 = null;
+    protected $recovered_count_agegroup_35_59 = null;
+    protected $recovered_count_agegroup_60_79 = null;
+    protected $recovered_count_agegroup_80_plus = null;
+    protected $recovered_count_agegroup_unknown = null;
+
+    protected $recovered_delta_agegroup_0_4 = null;
+    protected $recovered_delta_agegroup_5_14 = null;
+    protected $recovered_delta_agegroup_15_34 = null;
+    protected $recovered_delta_agegroup_35_59 = null;
+    protected $recovered_delta_agegroup_60_79 = null;
+    protected $recovered_delta_agegroup_80_plus = null;
+    protected $recovered_delta_agegroup_unknown = null;
+
+    protected $recovered_today_agegroup_0_4 = null;
+    protected $recovered_today_agegroup_5_14 = null;
+    protected $recovered_today_agegroup_15_34 = null;
+    protected $recovered_today_agegroup_35_59 = null;
+    protected $recovered_today_agegroup_60_79 = null;
+    protected $recovered_today_agegroup_80_plus = null;
+    protected $recovered_today_agegroup_unknown = null;
+
+    protected $recovered_yesterday_agegroup_0_4 = null;
+    protected $recovered_yesterday_agegroup_5_14 = null;
+    protected $recovered_yesterday_agegroup_15_34 = null;
+    protected $recovered_yesterday_agegroup_35_59 = null;
+    protected $recovered_yesterday_agegroup_60_79 = null;
+    protected $recovered_yesterday_agegroup_80_plus = null;
+    protected $recovered_yesterday_agegroup_unknown = null;
+
+    protected $recovered_total_agegroup_0_4 = null;
+    protected $recovered_total_agegroup_5_14 = null;
+    protected $recovered_total_agegroup_15_34 = null;
+    protected $recovered_total_agegroup_35_59 = null;
+    protected $recovered_total_agegroup_60_79 = null;
+    protected $recovered_total_agegroup_80_plus = null;
+    protected $recovered_total_agegroup_unknown = null;
+
+    protected $recovered_pointer_agegroup_0_4 = null;
+    protected $recovered_pointer_agegroup_5_14 = null;
+    protected $recovered_pointer_agegroup_15_34 = null;
+    protected $recovered_pointer_agegroup_35_59 = null;
+    protected $recovered_pointer_agegroup_60_79 = null;
+    protected $recovered_pointer_agegroup_80_plus = null;
+    protected $recovered_pointer_agegroup_unknown = null;
+
     protected $timestamp_represent = null;
-    protected $hosp_patients = null;
-    protected $hosp_patients_per_million = null;
-    protected $icu_patients = null;
-    protected $icu_patients_per_million = null;
-    protected $new_cases = null;
-    protected $new_cases_per_million = null;
-    protected $new_cases_smoothed = null;
-    protected $new_cases_smoothed_per_million = null;
-    protected $new_deaths = null;
-    protected $new_deaths_per_million = null;
-    protected $new_deaths_smoothed = null;
-    protected $new_deaths_smoothed_per_million = null;
-    protected $new_recovered = null;
-    protected $new_recovered_per_million = null;
-    protected $new_recovered_smoothed = null;
-    protected $new_recovered_smoothed_per_million = null;
-    protected $new_tests = null;
-    protected $new_tests_per_thousand = null;
-    protected $new_tests_smoothed = null;
-    protected $new_tests_smoothed_per_thousand = null;
-    protected $positive_rate = null;
-    protected $reproduction_rate = null;
-    protected $stringency_index = null;
-    protected $tests_per_case = null;
-    protected $tests_units = null;
-    protected $total_cases = null;
-    protected $total_cases_per_million = null;
-    protected $total_deaths = null;
-    protected $total_deaths_per_million = null;
-    protected $total_recovered = null;
-    protected $total_recovered_per_million = null;
-    protected $total_tests = null;
-    protected $total_tests_per_thousand = null;
-    protected $weekly_hosp_admissions = null;
-    protected $weekly_hosp_admissions_per_million = null;
-    protected $weekly_icu_admissions = null;
-    protected $weekly_icu_admissions_per_million = null;
+
     protected $incidence_4day = null;
     protected $incidence_7day = null;
     protected $incidence_14day = null;
@@ -178,26 +285,53 @@ class Grafana extends Base
     protected $incidence2_4day_smoothed = null;
     protected $incidence2_7day_smoothed = null;
     protected $incidence2_14day_smoothed = null;
-    protected $exponence_yesterday = null;
+
     protected $exponence_4day = null;
     protected $exponence_7day = null;
     protected $exponence_14day = null;
     protected $exponence_4day_smoothed = null;
     protected $exponence_7day_smoothed = null;
     protected $exponence_14day_smoothed = null;
+
     protected $reproduction_4day = null;
     protected $reproduction_7day = null;
     protected $reproduction_14day = null;
+
     protected $alert_condition_4day = null;
     protected $alert_condition_7day = null;
     protected $alert_condition_14day = null;
     protected $alert_condition_pointer = null;
     protected $alert_condition = null;
+
     protected $alert_condition2_4day = null;
     protected $alert_condition2_7day = null;
     protected $alert_condition2_14day = null;
     protected $alert_condition2_pointer = null;
     protected $alert_condition2 = null;
+
+    protected $divi_cases_covid = null;
+    protected $divi_cases_covid_ventilated = null;
+    protected $divi_reporting_areas = null;
+    protected $divi_locations_count = null;
+    protected $divi_beds_free = null;
+    protected $divi_beds_occupied = null;
+    protected $divi_beds_total = null;
+
+    protected $nowcast_esteem_new_diseases = null;
+    protected $nowcast_lower_new_diseases = null;
+    protected $nowcast_upper_new_diseases = null;
+    protected $nowcast_esteem_new_diseases_ma4 = null;
+    protected $nowcast_lower_new_diseases_ma4 = null;
+    protected $nowcast_upper_new_diseases_ma4 = null;
+    protected $nowcast_esteem_reproduction_r = null;
+    protected $nowcast_lower_reproduction_r = null;
+    protected $nowcast_upper_reproduction_r = null;
+    protected $nowcast_esteem_7day_r_value = null;
+    protected $nowcast_lower_7day_r_value = null;
+    protected $nowcast_upper_7day_r_value = null;
+
+    protected $flag_casted_r_values = null;
+    protected $flag_has_divi = null;
     protected $flag_case_free = null;
     protected $flag_enforce_daily_need_deliveries = null;
     protected $flag_enforce_treatment_priorization = null;
@@ -222,12 +356,13 @@ class Grafana extends Base
     protected $flag_enforce_critical_mask_wearing = null;
     protected $flag_enforce_public_mask_wearing = null;
     protected $flag_isolate_low_risk_group = null;
+
     protected $enforce_distance_meters = null;
     protected $enforce_household_plus_persons_to = null;
     protected $enforce_public_groups_to = null;
     protected $enforce_public_events_to = null;
     
-    // Generic fields
+    // Generic fields from locations
     protected $location_update_count = null;
     protected $location_timestamp_last_update = null;
     protected $location_timestamp_registration = null;
