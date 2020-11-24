@@ -77,7 +77,7 @@ class Divis extends Base
         `beds_free` INT NOT NULL DEFAULT '0',
         `beds_occupied` INT NOT NULL DEFAULT '0',
         `beds_total` INT NOT NULL DEFAULT '0',
-        `data_checksum` VARCHAR(40) NOT NULL,
+        `data_checksum` VARCHAR(40) NOT NULL DEFAULT NULL,
         `update_count` int UNSIGNED NOT NULL DEFAULT '0',
         `flag_updated` tinyint(1) NOT NULL DEFAULT '0',
         `flag_disabled` tinyint(1) NOT NULL DEFAULT '0',

@@ -182,7 +182,7 @@ function worker_loop(Client $client, $oneshot = false)
                 
                 $cli->log("Extracting and mastering case datasets.", LOG_INFO);
                 $client->master_datasets();
-                
+
                 $cli->log("Extracting and mastering RKI testresults.", LOG_INFO);
                 $client->master_testresults();
 

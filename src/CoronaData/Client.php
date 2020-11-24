@@ -2346,6 +2346,7 @@ class Client
             }
                     
             $db_obj->locations_uid = $this->location_index[$x_hash];
+            $db_obj->data_checksum = true;
                     
             $error = null;
                     
@@ -2384,6 +2385,7 @@ class Client
             $x_hash = "D".$obj->district_hash;
             
             $db_obj->locations_uid = $this->location_index[$x_hash];
+            $db_obj->data_checksum = true;
             
             $error = null;
             
@@ -2396,7 +2398,7 @@ class Client
         }
         
         $this->database_transaction_commit("save_divi");
-        
+
         return $count;
     }
     
@@ -2442,6 +2444,7 @@ class Client
             }
                     
             $db_obj->locations_uid = $this->location_index[$x_hash];
+            $db_obj->data_checksum = true;
                     
             $error = null;
             
@@ -2500,6 +2503,7 @@ class Client
             }
                     
             $db_obj->locations_uid = $this->location_index[$x_hash];
+            $db_obj->data_checksum = true;
                     
             $error = null;
             
@@ -2574,6 +2578,8 @@ class Client
                         break;
                 }
                 
+                $db_obj->data_checksum = true;
+
                 $error = null;
 
                 if ($this->location_index[$x_hash] = $db_obj->save(null, null, false, false, $error))
