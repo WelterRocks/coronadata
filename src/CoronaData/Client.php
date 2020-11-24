@@ -1806,6 +1806,21 @@ class Client
         $tmpl->divi_beds_free = (int)0;
         $tmpl->divi_beds_occupied = (int)0;
         $tmpl->divi_beds_total = (int)0;
+
+        $tmpl->nowcast_esteem_new_diseases = (int)0;
+        $tmpl->nowcast_lower_new_diseases = (int)0;
+        $tmpl->nowcast_upper_new_diseases = (int)0;
+        $tmpl->nowcast_esteem_new_diseases_ma4 = (int)0;
+        $tmpl->nowcast_lower_new_diseases_ma4 = (int)0;
+        $tmpl->nowcast_upper_new_diseases_ma4 = (int)0;
+        $tmpl->nowcast_esteem_reproduction_r = (float)0;
+        $tmpl->nowcast_lower_reproduction_r = (float)0;
+        $tmpl->nowcast_upper_reproduction_r = (float)0;
+        $tmpl->nowcast_esteem_7day_r_value = (float)0;
+        $tmpl->nowcast_lower_7day_r_value = (float)0;
+        $tmpl->nowcast_upper_7day_r_value = (float)0;
+        
+        $tmpl->flag_casted_r_values = 0;
         
         $age_groups = $this->get_age_groups();
         
@@ -2455,7 +2470,7 @@ class Client
 
             $any++;
         }
-        
+
         $this->database_transaction_commit("save_dataset");
         
         return $count;
