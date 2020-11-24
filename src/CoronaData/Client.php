@@ -407,7 +407,6 @@ class Client
         $districts = array();
         $states = array();
         $locations = array();
-        $divis = array();
         
         // Create an index for districts, so that RKI positives can be assigned faster
         $district_index = array();
@@ -672,12 +671,44 @@ class Client
                 $districts[$district_hash] = $district;
             }
         }
+               
+        unset($german_districts_area);
+        unset($german_districts_population);        
+
+        // Force update of the "germany" and "europe" objects
+        $countries[$germany_hash] = $germany;
+        $continents[$europe_hash] = $europe;
         
+        $this->continents = $continents;
+        $this->countries = $countries;
+        $this->states = $states;
+        $this->districts = $districts;
+        $this->locations = $locations;
         
-        // Fifth, merge the district informations into divi data
-        // DEPRECATED! We will merge the data later into datasets
-        /*
+        // Free the memory, which is no longer need (if hold data is not requested)
+        if (!$hold_data)
+        {
+            $this->gen_territory_area->handler->free();
+            $this->gen_territory_district_area->handler->free();
+            $this->gen_population->handler->free();
+            $this->gen_population_by_state->handler->free();
+            $this->gen_population_by_district->handler->free();
+        }
+    
+        return true;
+    }
+    
+    public function master_divis($hold_data = false)
+    {
+        $europe_hash = self::hash_name("continent", "Europe");
+        $germany_hash = self::hash_name("country", "Germany", $europe_hash);
+                
+        $europe = $this->continents[$europe_hash];
+        $germany = $this->countries[$germany_hash];
+
         $german_divi = $this->divi_intens->handler->get_data();
+        
+        $divis = array();
 
         if (is_array($german_divi))
         {
@@ -720,63 +751,20 @@ class Client
                     unset($divi->district_id);
                     unset($divi->state_id);
                     
-                    // Write divi data to upstream locations
-                    $district->divi_beds_free += $divi->beds_free;
-                    $district->divi_beds_occupied += $divi->beds_occupied;
-                    $district->divi_beds_total += $divi->beds_total;
-                    $district->divi_cases_covid += $divi->cases_covid;
-                    $district->divi_cases_covid_ventilated += $divi->cases_covid_ventilated;
-                    $district->divi_reporting_areas += $divi->reporting_areas;
-                    $district->divi_locations_count += $divi->locations_count;
-                    
-                    $states[$district->state_hash]->divi_beds_free += $divi->beds_free;
-                    $states[$district->state_hash]->divi_beds_occupied += $divi->beds_occupied;
-                    $states[$district->state_hash]->divi_beds_total += $divi->beds_total;
-                    $states[$district->state_hash]->divi_cases_covid += $divi->cases_covid;
-                    $states[$district->state_hash]->divi_cases_covid_ventilated += $divi->cases_covid_ventilated;
-                    $states[$district->state_hash]->divi_reporting_areas += $divi->reporting_areas;
-                    $states[$district->state_hash]->divi_locations_count += $divi->locations_count;
-
-                    $countries[$district->country_hash]->divi_beds_free += $divi->beds_free;
-                    $countries[$district->country_hash]->divi_beds_occupied += $divi->beds_occupied;
-                    $countries[$district->country_hash]->divi_beds_total += $divi->beds_total;
-                    $countries[$district->country_hash]->divi_cases_covid += $divi->cases_covid;
-                    $countries[$district->country_hash]->divi_cases_covid_ventilated += $divi->cases_covid_ventilated;
-                    $countries[$district->country_hash]->divi_reporting_areas += $divi->reporting_areas;
-                    $countries[$district->country_hash]->divi_locations_count += $divi->locations_count;                    
-                    
                     $divis[$divi->divi_hash] = $divi;
 		}
             }
         }
                 
         unset($german_divi);
-        */
         
-        unset($german_districts_area);
-        unset($german_districts_population);        
-
-        // Force update of the "germany" and "europe" objects
-        $countries[$germany_hash] = $germany;
-        $continents[$europe_hash] = $europe;
-        
-        $this->continents = $continents;
-        $this->countries = $countries;
-        $this->states = $states;
-        $this->districts = $districts;
-        $this->locations = $locations;
+        $this->divis = $divis;
         
         // Free the memory, which is no longer need (if hold data is not requested)
         if (!$hold_data)
-        {
-            $this->gen_territory_area->handler->free();
-            $this->gen_territory_district_area->handler->free();
-            $this->gen_population->handler->free();
-            $this->gen_population_by_state->handler->free();
-            $this->gen_population_by_district->handler->free();
-        }
+            $this->divi_intens->handler->free();
     
-        return true;
+        return true;    
     }
     
     public function master_nowcasts($hold_data = false)

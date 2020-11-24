@@ -171,16 +171,19 @@ function worker_loop(Client $client, $oneshot = false)
             {
                 $cli->log("Loading done. Got ".$length." bytes.", LOG_INFO);
                 
-                $cli->log("Extracting and mastering locations.", LOG_INFO);                
+                $cli->log("Extracting and mastering global locations.", LOG_INFO);                
                 $client->master_locations();
                 
-                $cli->log("Extracting and mastering nowcasts.", LOG_INFO);                
+                $cli->log("Extracting and mastering divi register data.", LOG_INFO);
+                $client->master_divis();
+                
+                $cli->log("Extracting and mastering RKI nowcasts.", LOG_INFO);
                 $client->master_nowcasts();
                 
-                $cli->log("Extracting and mastering datasets.", LOG_INFO);                
+                $cli->log("Extracting and mastering case datasets.", LOG_INFO);
                 $client->master_datasets();
                 
-                $cli->log("Extracting and mastering testresults.", LOG_INFO);                
+                $cli->log("Extracting and mastering RKI testresults.", LOG_INFO);
                 $client->master_testresults();
 
                 $count = 0;
@@ -190,11 +193,11 @@ function worker_loop(Client $client, $oneshot = false)
                 $cli->log("Storing location records.", LOG_INFO);
                 $client->save_locations($count, $any, $errors);
                 $cli->log("Stored ".$count." from ".$any." location records.", LOG_INFO);
-/*                
+                
                 $cli->log("Storing divi records.", LOG_INFO);
                 $client->save_divis($count, $any, $errors);
                 $cli->log("Stored ".$count." from ".$any." divi records.", LOG_INFO);
-*/                
+                
                 $cli->log("Storing nowcast records.", LOG_INFO);
                 $client->save_nowcasts($count, $any, $errors);
                 $cli->log("Stored ".$count." from ".$any." nowcast records.", LOG_INFO);
@@ -202,11 +205,11 @@ function worker_loop(Client $client, $oneshot = false)
                 $cli->log("Storing dataset records.", LOG_INFO);
                 $client->save_datasets($count, $any, $errors);
                 $cli->log("Stored ".$count." from ".$any." dataset records.", LOG_INFO);
-/*                
+                
                 $cli->log("Storing testresult records.", LOG_INFO);
                 $client->save_testresults($count, $any, $errors);
                 $cli->log("Stored ".$count." from ".$any." testresult records.", LOG_INFO);
-*/                
+                
                 $cli->log("Database updated.", LOG_INFO);
             }
             else
