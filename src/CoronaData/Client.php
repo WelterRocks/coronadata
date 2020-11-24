@@ -56,6 +56,7 @@ class Client
     private $locations = null;
     
     private $location_index = null;
+    private $district_index = null;
     
     private $datasets = null;
     private $testresults = null;
@@ -409,7 +410,7 @@ class Client
         $locations = array();
         
         // Create an index for districts, so that RKI positives can be assigned faster
-        $district_index = array();
+        $this->district_index = array();
         
         // Create a template
         $tmpl = new \stdClass;
@@ -629,7 +630,7 @@ class Client
                 else
                     $district = $districts[$district_hash];
                     
-                $district_index[$district_id] = $district_hash;
+                $this->district_index[$district_id] = $district_hash;
                     
                 $district->location_hash = self::hash_name("location", "district", $district_hash);
                 $district->location_tags = "district, ".$europe->continent_name.", ".$germany->country_name.", ".$state->state_name.", ".$data->type.", ".$data->name;
@@ -714,9 +715,9 @@ class Client
         {
             foreach ($german_divi as $divi)
             {
-                if (isset($district_index[$divi->district_id]))
+                if (isset($this->district_index[$divi->district_id]))
                 {
-                    $district_hash = $district_index[$divi->district_id];
+                    $district_hash = $this->district_index[$divi->district_id];
                     
                     if (!$district_hash)
                         continue;
