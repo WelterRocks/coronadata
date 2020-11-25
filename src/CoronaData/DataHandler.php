@@ -712,7 +712,8 @@ class DataHandler
                         
                         $obj->district_type = $type;
                         $obj->district_name = $name;
-                        $obj->district_fullname = $val;
+// No longer needed, but leaving it here, if the other method leads to problems                        
+//                        $obj->district_fullname = $val;
                         continue(2);
                     case "gender":
                         $gender = strtolower($val);
