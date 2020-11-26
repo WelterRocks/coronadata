@@ -1653,7 +1653,7 @@ class Client
             $dataset->timestamp_represent = $record->timestamp_represent;
             $dataset->location_type = "continent";
             
-            $index = "N".$dataset->continent_hash;
+            $index = "N0".$dataset->continent_hash;
             
             if (!isset($dataset_index[$index]))
                 $dataset_index[$index] = array();
@@ -1688,8 +1688,8 @@ class Client
             
             $dataset->timestamp_represent = $record->timestamp_represent;
             $dataset->location_type = "country";
-            
-            $index = "C".$dataset->country_hash;
+
+            $index = "C0".$dataset->country_hash;
             
             if (!isset($dataset_index[$index]))
                 $dataset_index[$index] = array();
@@ -1891,7 +1891,148 @@ class Client
         $unknown_states = array();
         
         $dataset_index = array();
-                        
+        
+        // Create a totals array
+        $total = array(
+            "district" => array(
+                "0:4" => array(
+                    "casess" => array(),
+                    "deaths" => array(),
+                    "recovered" => array()
+                ),
+                "5:14" => array(
+                    "casess" => array(),
+                    "deaths" => array(),
+                    "recovered" => array()
+                ),
+                "15:34" => array(
+                    "casess" => array(),
+                    "deaths" => array(),
+                    "recovered" => array()
+                ),
+                "35:59" => array(
+                    "casess" => array(),
+                    "deaths" => array(),
+                    "recovered" => array()
+                ),
+                "60:79" => array(
+                    "casess" => array(),
+                    "deaths" => array(),
+                    "recovered" => array()
+                ),
+                "80:plus" => array(
+                    "casess" => array(),
+                    "deaths" => array(),
+                    "recovered" => array()
+                ),
+                "unknown" => array(
+                    "casess" => array(),
+                    "deaths" => array(),
+                    "recovered" => array()
+                ),
+                "any" => array(
+                    "casess" => array(),
+                    "deaths" => array(),
+                    "recovered" => array()
+                )
+            ),
+            "state" => array(
+                "0:4" => array(
+                    "casess" => array(),
+                    "deaths" => array(),
+                    "recovered" => array()
+                ),
+                "5:14" => array(
+                    "casess" => array(),
+                    "deaths" => array(),
+                    "recovered" => array()
+                ),
+                "15:34" => array(
+                    "casess" => array(),
+                    "deaths" => array(),
+                    "recovered" => array()
+                ),
+                "35:59" => array(
+                    "casess" => array(),
+                    "deaths" => array(),
+                    "recovered" => array()
+                ),
+                "60:79" => array(
+                    "casess" => array(),
+                    "deaths" => array(),
+                    "recovered" => array()
+                ),
+                "80:plus" => array(
+                    "casess" => array(),
+                    "deaths" => array(),
+                    "recovered" => array()
+                ),
+                "unknown" => array(
+                    "casess" => array(),
+                    "deaths" => array(),
+                    "recovered" => array()
+                ),
+                "any" => array(
+                    "casess" => array(),
+                    "deaths" => array(),
+                    "recovered" => array()
+                )
+            ),            
+            "country" => array(
+                "0:4" => array(
+                    "casess" => 0,
+                    "deaths" => 0,
+                    "recovered" => 0
+                ),
+                "5:14" => array(
+                    "casess" => 0,
+                    "deaths" => 0,
+                    "recovered" => 0
+                ),
+                "15:34" => array(
+                    "casess" => 0,
+                    "deaths" => 0,
+                    "recovered" => 0
+                ),
+                "35:59" => array(
+                    "casess" => 0,
+                    "deaths" => 0,
+                    "recovered" => 0
+                ),
+                "60:79" => array(
+                    "casess" => 0,
+                    "deaths" => 0,
+                    "recovered" => 0
+                ),
+                "80:plus" => array(
+                    "casess" => 0,
+                    "deaths" => 0,
+                    "recovered" => 0
+                ),
+                "unknown" => array(
+                    "casess" => 0,
+                    "deaths" => 0,
+                    "recovered" => 0
+                ),
+                "any" => array(
+                    "casess" => 0,
+                    "deaths" => 0,
+                    "recovered" => 0
+                )
+            ),
+            
+        );
+        
+        // Create gender_id based counter arrays from total
+        $totals = array(
+            "0" => $total,
+            "1" => $total,
+            "2" => $total,
+            "3" => $total
+        );
+        
+        unset($total);
+                                                
         // No need for templates here, just clone data and add the hashes
         foreach($this->rki_positive->handler->get_data() as $data)
         {
@@ -2077,7 +2218,29 @@ class Client
                     }
                     
                     if (($data->cases_new == 0) || ($data->cases_new == 1))
-                        $dataset->cases_new += $data->cases_count;
+                    {
+                        $dataset->cases_new += $data->cases_count;                        
+                        
+                        switch ($location_type)
+                        {
+                            case "state":
+                            case "district":
+                                if ($location_type == "district") $t_hash = $district_hash; else $t_hash = $state_hash;
+                                
+                                if (!isset($totals[$gender_id][$location_type]["any"]["cases"][$t_hash]))
+                                    $totals[$gender_id][$location_type]["any"]["cases"][$t_hash] = 0;
+                                    
+                                $totals[$gender_id][$location_type]["any"]["cases"][$t_hash]++;
+                                
+                                $dataset->cases_total = $totals[$gender_id][$location_type]["any"]["cases"][$t_hash];
+                                break;
+                            case "country":                                    
+                                $totals[$gender_id]["country"]["any"]["cases"]++;
+                                
+                                $dataset->cases_total = $totals[$gender_id]["country"]["any"]["cases"];
+                                break;
+                        }
+                    }
                     if (($data->cases_new == -1) || ($data->cases_new == 1))
                         $dataset->cases_delta += $data->cases_count;
                     if ($data->cases_new == 0)
@@ -2095,7 +2258,29 @@ class Client
                     $dataset->cases_count = ($dataset->cases_delta - $dataset->cases_new);
                     
                     if (($data->deaths_new == 0) || ($data->deaths_new == 1))
+                    {
                         $dataset->deaths_new += $data->deaths_count;
+                        
+                        switch ($location_type)
+                        {
+                            case "state":
+                            case "district":
+                                if ($location_type == "district") $t_hash = $district_hash; else $t_hash = $state_hash;
+                                
+                                if (!isset($totals[$gender_id][$location_type]["any"]["deaths"][$t_hash]))
+                                    $totals[$gender_id][$location_type]["any"]["deaths"][$t_hash] = 0;
+                                    
+                                $totals[$gender_id][$location_type]["any"]["deaths"][$t_hash]++;
+                                
+                                $dataset->cases_total = $totals[$gender_id][$location_type]["any"]["deaths"][$t_hash];
+                                break;
+                            case "country":                                    
+                                $totals[$gender_id]["country"]["any"]["deaths"]++;
+                                
+                                $dataset->cases_total = $totals[$gender_id]["country"]["any"]["deaths"];
+                                break;
+                        }
+                    }
                     if (($data->deaths_new == -1) || ($data->deaths_new == 1))
                         $dataset->deaths_delta += $data->deaths_count;
                     if ($data->deaths_new == 0)
@@ -2113,7 +2298,29 @@ class Client
                     $dataset->deaths_count = ($dataset->deaths_delta - $dataset->deaths_new);
                     
                     if (($data->recovered_new == 0) || ($data->recovered_new == 1))
+                    {
                         $dataset->recovered_new += $data->recovered_count;
+                        
+                        switch ($location_type)
+                        {
+                            case "state":
+                            case "district":
+                                if ($location_type == "district") $t_hash = $district_hash; else $t_hash = $state_hash;
+                                
+                                if (!isset($totals[$gender_id][$location_type]["any"]["recovered"][$t_hash]))
+                                    $totals[$gender_id][$location_type]["any"]["recovered"][$t_hash] = 0;
+                                    
+                                $totals[$gender_id][$location_type]["any"]["recovered"][$t_hash]++;
+                                
+                                $dataset->cases_total = $totals[$gender_id][$location_type]["any"]["recovered"][$t_hash];
+                                break;
+                            case "country":                                    
+                                $totals[$gender_id]["country"]["any"]["recovered"]++;
+                                
+                                $dataset->cases_total = $totals[$gender_id]["country"]["any"]["recovered"];
+                                break;
+                        }
+                    }                    
                     if (($data->recovered_new == -1) || ($data->recovered_new == 1))
                         $dataset->recovered_delta += $data->recovered_count;
                     if ($data->recovered_new == 0)
@@ -2196,7 +2403,29 @@ class Client
                             $key_cases_pointer = "cases_pointer_agegroup_".$set_suffix;
                     
                             if (($data->cases_new == 0) || ($data->cases_new == 1))
+                            {
                                 $dataset->$key_cases_new += $data->cases_count;
+                        
+                                switch ($location_type)
+                                {
+                                    case "state":
+                                    case "district":
+                                        if ($location_type == "district") $t_hash = $district_hash; else $t_hash = $state_hash;
+                                        
+                                        if (!isset($totals[$gender_id][$location_type][$set_suffix]["cases"][$t_hash]))
+                                            $totals[$gender_id][$location_type][$set_suffix]["cases"][$t_hash] = 0;
+                                            
+                                        $totals[$gender_id][$location_type][$set_suffix]["cases"][$t_hash]++;
+                                        
+                                        $dataset->$key_cases_total = $totals[$gender_id][$location_type][$set_suffix]["cases"][$t_hash];
+                                        break;
+                                    case "country":                                    
+                                        $totals[$gender_id]["country"][$set_suffix]["cases"]++;
+                                        
+                                        $dataset->$key_cases_total = $totals[$gender_id]["country"][$set_suffix]["cases"];
+                                        break;
+                                }
+                            }
                             if (($data->cases_new == -1) || ($data->cases_new == 1))
                                 $dataset->$key_cases_delta += $data->cases_count;
                             if ($data->cases_new == 0)
@@ -2222,7 +2451,29 @@ class Client
                             $key_deaths_pointer = "deaths_pointer_agegroup_".$set_suffix;
                         
                             if (($data->deaths_new == 0) || ($data->deaths_new == 1))
+                            {
                                 $dataset->$key_deaths_new += $data->deaths_count;
+                        
+                                switch ($location_type)
+                                {
+                                    case "state":
+                                    case "district":
+                                        if ($location_type == "district") $t_hash = $district_hash; else $t_hash = $state_hash;
+                                        
+                                        if (!isset($totals[$gender_id][$location_type][$set_suffix]["deaths"][$t_hash]))
+                                            $totals[$gender_id][$location_type][$set_suffix]["deaths"][$t_hash] = 0;
+                                            
+                                        $totals[$gender_id][$location_type][$set_suffix]["deaths"][$t_hash]++;
+                                        
+                                        $dataset->$key_cases_total = $totals[$gender_id][$location_type][$set_suffix]["deaths"][$t_hash];
+                                        break;
+                                    case "country":                                    
+                                        $totals[$gender_id]["country"][$set_suffix]["deaths"]++;
+                                        
+                                        $dataset->$key_cases_total = $totals[$gender_id]["country"][$set_suffix]["deaths"];
+                                        break;
+                                }
+                            }
                             if (($data->deaths_new == -1) || ($data->deaths_new == 1))
                                 $dataset->$key_deaths_delta += $data->deaths_count;
                             if ($data->deaths_new == 0)
@@ -2248,7 +2499,29 @@ class Client
                             $key_recovered_pointer = "recovered_pointer_agegroup_".$set_suffix;
                         
                             if (($data->deaths_new == 0) || ($data->deaths_new == 1))
+                            {
                                 $dataset->$key_recovered_new += $data->deaths_count;
+                        
+                                switch ($location_type)
+                                {
+                                    case "state":
+                                    case "district":
+                                        if ($location_type == "district") $t_hash = $district_hash; else $t_hash = $state_hash;
+                                        
+                                        if (!isset($totals[$gender_id][$location_type][$set_suffix]["recovered"][$t_hash]))
+                                            $totals[$gender_id][$location_type][$set_suffix]["recovered"][$t_hash] = 0;
+                                            
+                                        $totals[$gender_id][$location_type][$set_suffix]["recovered"][$t_hash]++;
+                                        
+                                        $dataset->$key_cases_total = $totals[$gender_id][$location_type][$set_suffix]["recovered"][$t_hash];
+                                        break;
+                                    case "country":                                    
+                                        $totals[$gender_id]["country"][$set_suffix]["recovered"]++;
+                                        
+                                        $dataset->$key_cases_total = $totals[$gender_id]["country"][$set_suffix]["recovered"];
+                                        break;
+                                }
+                            }
                             if (($data->deaths_new == -1) || ($data->deaths_new == 1))
                                 $dataset->$key_recovered_delta += $data->deaths_count;
                             if ($data->deaths_new == 0)
@@ -2274,6 +2547,9 @@ class Client
                         
             $testresults[$result_hash] = $testresult;            
         }
+        
+        // Free some space
+        unset($totals);
 
         // Finalize dataset calculation
         $this->finalize_datasets($dataset_index, "district", $datasets);
