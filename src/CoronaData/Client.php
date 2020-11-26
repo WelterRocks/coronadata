@@ -1895,127 +1895,127 @@ class Client
         // Create a totals array
         $total = array(
             "district" => array(
-                "0:4" => array(
-                    "casess" => array(),
+                "0_4" => array(
+                    "cases" => array(),
                     "deaths" => array(),
                     "recovered" => array()
                 ),
-                "5:14" => array(
-                    "casess" => array(),
+                "5_14" => array(
+                    "cases" => array(),
                     "deaths" => array(),
                     "recovered" => array()
                 ),
-                "15:34" => array(
-                    "casess" => array(),
+                "15_34" => array(
+                    "cases" => array(),
                     "deaths" => array(),
                     "recovered" => array()
                 ),
-                "35:59" => array(
-                    "casess" => array(),
+                "35_59" => array(
+                    "cases" => array(),
                     "deaths" => array(),
                     "recovered" => array()
                 ),
-                "60:79" => array(
-                    "casess" => array(),
+                "60_79" => array(
+                    "cases" => array(),
                     "deaths" => array(),
                     "recovered" => array()
                 ),
-                "80:plus" => array(
-                    "casess" => array(),
+                "80_plus" => array(
+                    "cases" => array(),
                     "deaths" => array(),
                     "recovered" => array()
                 ),
                 "unknown" => array(
-                    "casess" => array(),
+                    "cases" => array(),
                     "deaths" => array(),
                     "recovered" => array()
                 ),
                 "any" => array(
-                    "casess" => array(),
+                    "cases" => array(),
                     "deaths" => array(),
                     "recovered" => array()
                 )
             ),
             "state" => array(
-                "0:4" => array(
-                    "casess" => array(),
+                "0_4" => array(
+                    "cases" => array(),
                     "deaths" => array(),
                     "recovered" => array()
                 ),
-                "5:14" => array(
-                    "casess" => array(),
+                "5_14" => array(
+                    "cases" => array(),
                     "deaths" => array(),
                     "recovered" => array()
                 ),
-                "15:34" => array(
-                    "casess" => array(),
+                "15_34" => array(
+                    "cases" => array(),
                     "deaths" => array(),
                     "recovered" => array()
                 ),
-                "35:59" => array(
-                    "casess" => array(),
+                "35_59" => array(
+                    "cases" => array(),
                     "deaths" => array(),
                     "recovered" => array()
                 ),
-                "60:79" => array(
-                    "casess" => array(),
+                "60_79" => array(
+                    "cases" => array(),
                     "deaths" => array(),
                     "recovered" => array()
                 ),
-                "80:plus" => array(
-                    "casess" => array(),
+                "80_plus" => array(
+                    "cases" => array(),
                     "deaths" => array(),
                     "recovered" => array()
                 ),
                 "unknown" => array(
-                    "casess" => array(),
+                    "cases" => array(),
                     "deaths" => array(),
                     "recovered" => array()
                 ),
                 "any" => array(
-                    "casess" => array(),
+                    "cases" => array(),
                     "deaths" => array(),
                     "recovered" => array()
                 )
             ),            
             "country" => array(
-                "0:4" => array(
-                    "casess" => 0,
+                "0_4" => array(
+                    "cases" => 0,
                     "deaths" => 0,
                     "recovered" => 0
                 ),
-                "5:14" => array(
-                    "casess" => 0,
+                "5_14" => array(
+                    "cases" => 0,
                     "deaths" => 0,
                     "recovered" => 0
                 ),
-                "15:34" => array(
-                    "casess" => 0,
+                "15_34" => array(
+                    "cases" => 0,
                     "deaths" => 0,
                     "recovered" => 0
                 ),
-                "35:59" => array(
-                    "casess" => 0,
+                "35_59" => array(
+                    "cases" => 0,
                     "deaths" => 0,
                     "recovered" => 0
                 ),
-                "60:79" => array(
-                    "casess" => 0,
+                "60_79" => array(
+                    "cases" => 0,
                     "deaths" => 0,
                     "recovered" => 0
                 ),
-                "80:plus" => array(
-                    "casess" => 0,
+                "80_plus" => array(
+                    "cases" => 0,
                     "deaths" => 0,
                     "recovered" => 0
                 ),
                 "unknown" => array(
-                    "casess" => 0,
+                    "cases" => 0,
                     "deaths" => 0,
                     "recovered" => 0
                 ),
                 "any" => array(
-                    "casess" => 0,
+                    "cases" => 0,
                     "deaths" => 0,
                     "recovered" => 0
                 )
