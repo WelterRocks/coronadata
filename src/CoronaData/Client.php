@@ -1588,7 +1588,7 @@ class Client
                             $location_type = null;
                             break;
                     }
-                }
+                }                        
                 
                 switch ($location_type)
                 {
@@ -1621,7 +1621,7 @@ class Client
     }
     
     public function master_datasets($hold_data = false)
-    {
+    {                                                                                                                                                                                                                                                                                                                                            
         // After stores are loaded, create the data pool with common fields
         $datasets = array();
         
@@ -2552,7 +2552,7 @@ class Client
         unset($totals);
 
         // Finalize dataset calculation
-        $this->finalize_datasets($dataset_index, "district", $datasets);
+        $this->finalize_datasets($dataset_index, "auto", $datasets);
         
         // We must create / update the dataset hierarchy and save our new results to objects local store
         foreach ($dataset_index as $index => $date)
