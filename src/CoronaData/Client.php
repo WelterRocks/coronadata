@@ -876,16 +876,16 @@ class Client
             return null;
             
         if (!is_array($cases))
-            return null;
+            $cases = array();
             
         if (!is_array($deaths))
-            return null;
+            $deaths = array();
             
         if (!is_array($recovered))
-            return null;
+            $recovered = array();
             
         if (!is_array($dates))
-            return null;
+            $dates = array();
             
         if ($skip_days < 0)
             return null;
@@ -2195,6 +2195,8 @@ class Client
                         $dataset->divi_beds_free += $divi->beds_free;
                         $dataset->divi_beds_occupied += $divi->beds_occupied;
                         $dataset->divi_beds_total += $divi->beds_total;
+                        
+                        $dataset->flag_has_divi = 1;
                     }
                     
                     // Merge the nowcasts
