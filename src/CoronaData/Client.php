@@ -439,6 +439,8 @@ class Client
         $tmpl->population_females = 0;
         $tmpl->population_males = 0;
         $tmpl->area = 0;
+        
+        $populations = array();
 
         // First, we use the EU coviddata, but skip any kind of cases data.
         // This will be a static table in future versions, to speed things up massivly.
@@ -459,7 +461,12 @@ class Client
             $continent->continent_hash = $continent_hash;
             $continent->continent_name = $record->continent;
             $continent->location_type = 'continent';
-            $continent->population_count += $record->population;
+            
+            if (!isset($populations["N".$continent->continent_hash]))
+            {	
+                $populations["N".$continent->continent_hash] = true;
+                $continent->population_count += $record->population;
+            }
             
             if ($continent->population_year > $record->population_year)
                 $continent->population_year = $record->population_year;
@@ -480,7 +487,7 @@ class Client
             $country->location_type = 'country';
             $country->geo_id = $record->geo_id ?: substr($record->country, 0, 2);
             $country->population_count = $record->population;
-            
+                        
             if ($country->population_year > $record->population_year)
                 $country->population_year = $record->population_year;
                 
@@ -1687,15 +1694,6 @@ class Client
             $dataset->day = $record->day;
             $dataset->month = $record->month;
             $dataset->year = $record->year;
-            
-            /* THIS LEADS TO INVALID INCIDENCE CALCULATIONS - DISABLED FOR TESTING
-            // Only count, if country is not germany. The german counters are set by testresults, later.
-            if ($record->country != "Germany")
-            {
-                $dataset->cases_count += $record->cases;
-                $dataset->deaths_count += $record->deaths;
-            }
-            */
             
             $dataset->timestamp_represent = $record->timestamp_represent;
             $dataset->location_type = "country";
