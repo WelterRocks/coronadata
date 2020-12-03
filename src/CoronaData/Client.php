@@ -1522,7 +1522,7 @@ class Client
         return $result;        
     }
     
-    public function finalize_datasets($dataset_index, $location_type, &$datasets)
+    public function finalize_datasets($dataset_index, $location_type, &$datasets, $is_eu_mastering = false)
     {
         if ($location_type == "auto")
             $auto_location = true;
@@ -1544,10 +1544,19 @@ class Client
                 {
                     if ($date2 > $date)
                         continue;
-                        
-                    array_push($cases, $datasets[$hash2]->cases_today);
-                    array_push($deaths, $datasets[$hash2]->deaths_today);
-                    array_push($recovs, $datasets[$hash2]->recovered_today);
+                    
+                    if ($is_eu_mastering)
+                    {
+                        array_push($cases, $datasets[$hash2]->cases_count);
+                        array_push($deaths, $datasets[$hash2]->deaths_count);
+                        array_push($recovs, $datasets[$hash2]->recovered_count);
+                    }
+                    else
+                    {
+                        array_push($cases, $datasets[$hash2]->cases_today);
+                        array_push($deaths, $datasets[$hash2]->deaths_today);
+                        array_push($recovs, $datasets[$hash2]->recovered_today);                    
+                    }
                     array_push($dates, $date2);
                 
                     if (count($cases) > 32)
@@ -1612,7 +1621,7 @@ class Client
                         }
                         break;
                 }
-                    
+                
                 self::result_object_merge($datasets[$hash], $this->calculate_dataset_fields($cases, $deaths, $recovs, $population_count, $area, $dates));
             }
         }
@@ -1679,12 +1688,14 @@ class Client
             $dataset->month = $record->month;
             $dataset->year = $record->year;
             
+            /* THIS LEADS TO INVALID INCIDENCE CALCULATIONS - DISABLED FOR TESTING
             // Only count, if country is not germany. The german counters are set by testresults, later.
             if ($record->country != "Germany")
             {
                 $dataset->cases_count += $record->cases;
                 $dataset->deaths_count += $record->deaths;
             }
+            */
             
             $dataset->timestamp_represent = $record->timestamp_represent;
             $dataset->location_type = "country";
@@ -1702,7 +1713,7 @@ class Client
         }
         
         // Finalize dataset calculation
-        $this->finalize_datasets($dataset_index, "auto", $datasets);
+        $this->finalize_datasets($dataset_index, "auto", $datasets, true);
         
         // Free the memory, which is no longer need (if hold data is not requested)
         if (!$hold_data)
@@ -2256,7 +2267,9 @@ class Client
                         $dataset->cases_pointer = "asc";
                     elseif ($dataset->cases_today < $dataset->cases_yesterday)
                         $dataset->cases_pointer = "desc";                
-                        
+                    
+                    // Is this really correct???
+                    // TODO: Check cases_count, deaths_count and recovs_count twice
                     $dataset->cases_count = ($dataset->cases_delta - $dataset->cases_new);
                     
                     if (($data->deaths_new == 0) || ($data->deaths_new == 1))
