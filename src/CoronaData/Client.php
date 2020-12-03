@@ -1734,7 +1734,11 @@ class Client
                     case "district":
                     case "location":
                         $loc_key = $location_type."_hash";
-                        $loc_obj = $location_type."s";
+                        
+                        if ($location_type == "country")
+                            $loc_obj = "countries";
+                        else
+                            $loc_obj = $location_type."s";
 
                         $loc_hash = $datasets[$hash]->$loc_key;
                         
