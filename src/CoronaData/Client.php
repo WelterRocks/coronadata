@@ -715,6 +715,12 @@ class Client
             return false;
             
         $dataset_index = array();
+        
+        $n_cases_total = array();
+        $n_deaths_total = array();
+        
+        $c_cases_total = array();
+        $c_deaths_total = array();
             
         foreach ($this->eu_coviddata->handler->get_data()->records as $id => $record)
         {
@@ -738,6 +744,19 @@ class Client
             $dataset->deaths_count += $record->deaths;
             $dataset->timestamp_represent = $record->timestamp_represent;
             $dataset->location_type = "continent";
+            
+            if (!isset($n_cases_total[$continent_hash]))
+                $n_cases_total[$continent_hash] = 0;
+
+            $n_cases_total[$continent_hash] += $record->cases;
+            
+            if (!isset($n_deaths_total[$continent_hash]))
+                $n_deaths_total[$continent_hash] = 0;
+                
+            $n_deaths_total[$continent_hash] += $record->deaths;
+            
+            $dataset->cases_total = $n_cases_total[$continent_hash];
+            $dataset->deaths_total = $n_deaths_total[$continent_hash];
             
             $index = "N0".$dataset->continent_hash;
             
@@ -769,6 +788,19 @@ class Client
             $dataset->timestamp_represent = $record->timestamp_represent;
             $dataset->location_type = "country";
 
+            if (!isset($c_cases_total[$country_hash]))
+                $c_cases_total[$country_hash] = 0;
+
+            $c_cases_total[$country_hash] += $record->cases;
+            
+            if (!isset($c_deaths_total[$country_hash]))
+                $c_deaths_total[$country_hash] = 0;
+                
+            $c_deaths_total[$country_hash] += $record->deaths;
+            
+            $dataset->cases_total = $c_cases_total[$country_hash];
+            $dataset->deaths_total = $c_deaths_total[$country_hash];
+            
             $index = "C0".$dataset->country_hash;
             
             if (!isset($dataset_index[$index]))
