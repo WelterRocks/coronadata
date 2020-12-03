@@ -706,6 +706,93 @@ class Client
         return true;
     }
     
+    public function master_datasets($hold_data = false)
+    {                                                                                                                                                                                                                                                                                                                                            
+        // After stores are loaded, create the data pool with common fields
+        $datasets = array();
+        
+        if ($this->stores_loaded_count < 10)
+            return false;
+            
+        $dataset_index = array();
+            
+        foreach ($this->eu_coviddata->handler->get_data()->records as $id => $record)
+        {
+            $continent_hash = self::hash_name("continent", $record->continent);
+            $country_hash = self::hash_name("country", $record->country, $continent_hash);
+
+            $dataset_hash = self::hash_name("dataset-continent", $continent_hash, $record->date_rep."0");
+            
+            if (!isset($datasets[$dataset_hash]))
+                $dataset = $this->create_dataset_template();
+            else
+                $dataset = $datasets[$dataset_hash];
+                
+            $dataset->dataset_hash = $dataset_hash;
+            $dataset->continent_hash = $continent_hash;
+            $dataset->day_of_week = $record->day_of_week;
+            $dataset->day = $record->day;
+            $dataset->month = $record->month;
+            $dataset->year = $record->year;
+            $dataset->cases_count += $record->cases;
+            $dataset->deaths_count += $record->deaths;
+            $dataset->timestamp_represent = $record->timestamp_represent;
+            $dataset->location_type = "continent";
+            
+            $index = "N0".$dataset->continent_hash;
+            
+            if (!isset($dataset_index[$index]))
+                $dataset_index[$index] = array();
+                
+            $date = date("Ymd", strtotime($record->timestamp_represent));
+                
+            $dataset_index[$index][$date] = $dataset_hash;
+            
+            $datasets[$dataset_hash] = $dataset;
+
+            $dataset_hash = self::hash_name("dataset-country", $country_hash, $record->date_rep."0");
+
+            if (!isset($datasets[$dataset_hash]))
+                $dataset = $this->create_dataset_template();
+            else
+                $dataset = $datasets[$dataset_hash];
+                
+            $dataset->dataset_hash = $dataset_hash;
+            $dataset->country_hash = $country_hash;
+            $dataset->continent_hash = $continent_hash;
+            $dataset->day_of_week = $record->day_of_week;
+            $dataset->day = $record->day;
+            $dataset->month = $record->month;
+            $dataset->year = $record->year;
+            $dataset->cases_count += $record->cases;
+            $dataset->deaths_count += $record->deaths;            
+            $dataset->timestamp_represent = $record->timestamp_represent;
+            $dataset->location_type = "country";
+
+            $index = "C0".$dataset->country_hash;
+            
+            if (!isset($dataset_index[$index]))
+                $dataset_index[$index] = array();
+                
+            $date = date("Ymd", strtotime($record->timestamp_represent));
+                
+            $dataset_index[$index][$date] = $dataset_hash;
+            
+            $datasets[$dataset_hash] = $dataset;
+        }
+        
+        // Finalize dataset calculation
+        $this->finalize_datasets($dataset_index, "auto", $datasets, true);
+        
+        // Free the memory, which is no longer need (if hold data is not requested)
+        if (!$hold_data)
+            $this->eu_coviddata->handler->free();
+        
+        $this->datasets = $datasets;
+        
+        return true;
+    }
+    
     public function master_divis($hold_data = false)
     {
         $europe_hash = self::hash_name("continent", "Europe");
@@ -1564,6 +1651,7 @@ class Client
                         array_push($deaths, $datasets[$hash2]->deaths_today);
                         array_push($recovs, $datasets[$hash2]->recovered_today);                    
                     }
+
                     array_push($dates, $date2);
                 
                     if (count($cases) > 32)
@@ -1632,94 +1720,6 @@ class Client
                 self::result_object_merge($datasets[$hash], $this->calculate_dataset_fields($cases, $deaths, $recovs, $population_count, $area, $dates));
             }
         }
-        
-        return true;
-    }
-    
-    public function master_datasets($hold_data = false)
-    {                                                                                                                                                                                                                                                                                                                                            
-        // After stores are loaded, create the data pool with common fields
-        $datasets = array();
-        
-        if ($this->stores_loaded_count < 10)
-            return false;
-            
-        $dataset_index = array();
-            
-        foreach ($this->eu_coviddata->handler->get_data()->records as $id => $record)
-        {
-            $continent_hash = self::hash_name("continent", $record->continent);
-            $country_hash = self::hash_name("country", $record->country, $continent_hash);
-
-            $dataset_hash = self::hash_name("dataset-continent", $continent_hash, $record->date_rep."0");
-            
-            if (!isset($datasets[$dataset_hash]))
-                $dataset = $this->create_dataset_template();
-            else
-                $dataset = $datasets[$dataset_hash];
-                
-            $dataset->dataset_hash = $dataset_hash;
-            $dataset->continent_hash = $continent_hash;
-            $dataset->day_of_week = $record->day_of_week;
-            $dataset->day = $record->day;
-            $dataset->month = $record->month;
-            $dataset->year = $record->year;
-            $dataset->cases_count += $record->cases;
-            $dataset->deaths_count += $record->deaths;
-            $dataset->timestamp_represent = $record->timestamp_represent;
-            $dataset->location_type = "continent";
-            
-            $index = "N0".$dataset->continent_hash;
-            
-            if (!isset($dataset_index[$index]))
-                $dataset_index[$index] = array();
-                
-            $date = date("Ymd", strtotime($record->timestamp_represent));
-                
-            $dataset_index[$index][$date] = $dataset_hash;
-            
-            $datasets[$dataset_hash] = $dataset;
-
-            $dataset_hash = self::hash_name("dataset-country", $country_hash, $record->date_rep."0");
-
-            if (!isset($datasets[$dataset_hash]))
-                $dataset = $this->create_dataset_template();
-            else
-                $dataset = $datasets[$dataset_hash];
-                
-            $dataset->dataset_hash = $dataset_hash;
-            $dataset->country_hash = $country_hash;
-            $dataset->continent_hash = $continent_hash;
-            $dataset->day_of_week = $record->day_of_week;
-            $dataset->day = $record->day;
-            $dataset->month = $record->month;
-            $dataset->year = $record->year;
-            
-            $dataset->timestamp_represent = $record->timestamp_represent;
-            $dataset->location_type = "country";
-
-            $index = "C0".$dataset->country_hash;
-            
-            if (!isset($dataset_index[$index]))
-                $dataset_index[$index] = array();
-                
-            $date = date("Ymd", strtotime($record->timestamp_represent));
-                
-            $dataset_index[$index][$date] = $dataset_hash;
-            
-            $datasets[$dataset_hash] = $dataset;
-        }
-        
-        // Finalize dataset calculation
-        $this->finalize_datasets($dataset_index, "auto", $datasets, true);
-        
-        // Free the memory, which is no longer need (if hold data is not requested)
-        if (!$hold_data)
-        {
-            $this->eu_coviddata->handler->free();
-        }
-        
-        $this->datasets = $datasets;
         
         return true;
     }
