@@ -462,9 +462,9 @@ class Client
             $continent->continent_name = $record->continent;
             $continent->location_type = 'continent';
             
-            if (!isset($populations["N".$continent->continent_hash]))
+            if (!isset($populations[$country_hash]))
             {	
-                $populations["N".$continent->continent_hash] = true;
+                $populations[$country_hash] = true;
                 $continent->population_count += $record->population;
             }
             
