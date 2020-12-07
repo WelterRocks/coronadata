@@ -2200,7 +2200,7 @@ class Client
                                 $divi_hash = $this->divi_index["district"][$dataset->district_hash];
                                 
                                 if (isset($this->divis[$divi_hash]))
-                                        $divis[$divi_hash] => $dataset->district_hash;
+                                        $divis[$divi_hash] = $dataset->district_hash;
                             }
                             break;
                         case "state":
@@ -2209,7 +2209,7 @@ class Client
                                 foreach ($this->divi_index["state"][$dataset->state_hash] as $divi_hash)
                                 {                                
                                     if (isset($this->divis[$divi_hash]))
-                                        $divis[$divi_hash] => $dataset->state_hash;
+                                        $divis[$divi_hash] = $dataset->state_hash;
                                 }
                             }
                             break;
@@ -2219,7 +2219,7 @@ class Client
                                 foreach ($this->divi_index["country"][$dataset->country_hash] as $divi_hash)
                                 {                                
                                     if (isset($this->divis[$divi_hash]))
-                                        $divis[$divi_hash] => $dataset->country_hash;
+                                        $divis[$divi_hash] = $dataset->country_hash;
                                 }
                             }
                             break;
@@ -2270,6 +2270,28 @@ class Client
                         $dataset->nowcast_lower_7day_r_value = $nowcast->lower_7day_r_value;
                         $dataset->nowcast_upper_7day_r_value = $nowcast->upper_7day_r_value;
                     }
+                    
+                    // Try this, to understand whats going on
+                    /*
+                    SELECT
+                        (SELECT SUM(cases_count) FROM `testresults` WHERE cases_new IN (0)) as publication_last,
+                        (SELECT SUM(cases_count) FROM `testresults` WHERE cases_new IN (0,1)) as publication_today,
+                        (SELECT SUM(cases_count) FROM `testresults` WHERE cases_new IN (-1,1)) as publication_delta,
+                        (SELECT SUM(cases_count) FROM `testresults` WHERE cases_new IN (-1)) as removed_cases,
+                        (SELECT SUM(cases_count) FROM `testresults` WHERE cases_new IN (1)) as new_cases_today,
+                        (SELECT SUM(deaths_count) FROM `testresults` WHERE deaths_new IN (0)) as deaths_publication_last,
+                        (SELECT SUM(deaths_count) FROM `testresults` WHERE deaths_new IN (0,1)) as deaths_publication_today,
+                        (SELECT SUM(deaths_count) FROM `testresults` WHERE deaths_new IN (-1,1)) as deaths_publication_delta,
+                        (SELECT SUM(deaths_count) FROM `testresults` WHERE deaths_new IN (-1)) as deaths_removed_cases,
+                        (SELECT SUM(deaths_count) FROM `testresults` WHERE deaths_new IN (1)) as deaths_new_cases_today,
+                        (SELECT SUM(deaths_count) FROM `testresults` WHERE deaths_new IN (-9)) as deaths_not_in_publications,
+                        (SELECT SUM(recovered_count) FROM `testresults` WHERE recovered_new IN (0)) as recov_publication_last,
+                        (SELECT SUM(recovered_count) FROM `testresults` WHERE recovered_new IN (0,1)) as recov_publication_today,
+                        (SELECT SUM(recovered_count) FROM `testresults` WHERE recovered_new IN (-1,1)) as recov_publication_delta,
+                        (SELECT SUM(recovered_count) FROM `testresults` WHERE recovered_new IN (-1)) as recov_removed_cases,
+                        (SELECT SUM(recovered_count) FROM `testresults` WHERE recovered_new IN (1)) as recov_new_cases_today,
+                        (SELECT SUM(recovered_count) FROM `testresults` WHERE recovered_new IN (-9)) as recov_not_in_publications
+                    */
                     
                     if (($data->cases_new == 0) || ($data->cases_new == 1))
                     {
