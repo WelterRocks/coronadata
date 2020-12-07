@@ -903,7 +903,7 @@ class Client
                 
         unset($german_divi);
         
-        $this->divis = $divis;
+        $this->divis = $divis;    
         
         // Free the memory, which is no longer need (if hold data is not requested)
         if (!$hold_data)
@@ -2077,6 +2077,8 @@ class Client
         );
         
         unset($total);
+        
+        $divi_registered = array();
                                                 
         // No need for templates here, just clone data and add the hashes
         foreach($this->rki_positive->handler->get_data() as $data)
@@ -2198,7 +2200,7 @@ class Client
                                 $divi_hash = $this->divi_index["district"][$dataset->district_hash];
                                 
                                 if (isset($this->divis[$divi_hash]))
-                                    array_push($divis, $divi_hash);
+                                        $divis[$divi_hash] => $dataset->district_hash;
                             }
                             break;
                         case "state":
@@ -2207,7 +2209,7 @@ class Client
                                 foreach ($this->divi_index["state"][$dataset->state_hash] as $divi_hash)
                                 {                                
                                     if (isset($this->divis[$divi_hash]))
-                                        array_push($divis, $divi_hash);
+                                        $divis[$divi_hash] => $dataset->state_hash;
                                 }
                             }
                             break;
@@ -2217,16 +2219,21 @@ class Client
                                 foreach ($this->divi_index["country"][$dataset->country_hash] as $divi_hash)
                                 {                                
                                     if (isset($this->divis[$divi_hash]))
-                                        array_push($divis, $divi_hash);
+                                        $divis[$divi_hash] => $dataset->country_hash;
                                 }
                             }
                             break;
                     }
                     
-                    foreach ($divis as $divi_hash)
+                    foreach ($divis as $divi_hash => $loc_hash)
                     {
                         if (!isset($this->divis[$divi_hash]))
                             continue;
+                            
+                        if (!isset($divi_registered[$dataset_hash.$divi_hash]))
+                            continue;
+                        else
+                            $divi_registered[$dataset_hash.$divi_hash] = true;
                             
                         $divi = $this->divis[$divi_hash];
                         
