@@ -2297,7 +2297,7 @@ class Client
                     }
                     if (($data->cases_new == -1) || ($data->cases_new == 1))
                         $dataset->cases_delta += $data->cases_count;
-                    if ($data->cases_new == 0)
+                    if ($data->cases_new == 1)
                         $dataset->cases_today += $data->cases_count;
                     if ($data->cases_new == -1)
                         $dataset->cases_yesterday += $data->cases_count;
@@ -2308,10 +2308,6 @@ class Client
                         $dataset->cases_pointer = "asc";
                     elseif ($dataset->cases_today < $dataset->cases_yesterday)
                         $dataset->cases_pointer = "desc";                
-                    
-                    // Is this really correct???
-                    // TODO: Check cases_count, deaths_count and recovs_count twice
-                    $dataset->cases_count = ($dataset->cases_delta - $dataset->cases_new);
                     
                     if (($data->deaths_new == 0) || ($data->deaths_new == 1))
                     {
@@ -2339,7 +2335,7 @@ class Client
                     }
                     if (($data->deaths_new == -1) || ($data->deaths_new == 1))
                         $dataset->deaths_delta += $data->deaths_count;
-                    if ($data->deaths_new == 0)
+                    if ($data->deaths_new == 1)
                         $dataset->deaths_today += $data->deaths_count;
                     if ($data->deaths_new == -1)
                         $dataset->deaths_yesterday += $data->deaths_count;
@@ -2351,8 +2347,6 @@ class Client
                     elseif ($dataset->deaths_today < $dataset->deaths_yesterday)
                         $dataset->deaths_pointer = "desc";                
                         
-                    $dataset->deaths_count = ($dataset->deaths_delta - $dataset->deaths_new);
-                    
                     if (($data->recovered_new == 0) || ($data->recovered_new == 1))
                     {
                         $dataset->recovered_new += $data->recovered_count;
@@ -2379,7 +2373,7 @@ class Client
                     }                    
                     if (($data->recovered_new == -1) || ($data->recovered_new == 1))
                         $dataset->recovered_delta += $data->recovered_count;
-                    if ($data->recovered_new == 0)
+                    if ($data->recovered_new == 1)
                         $dataset->recovered_today += $data->recovered_count;
                     if ($data->recovered_new == -1)
                         $dataset->recovered_yesterday += $data->recovered_count;
@@ -2391,8 +2385,6 @@ class Client
                     elseif ($dataset->recovered_today < $dataset->recovered_yesterday)
                         $dataset->recovered_pointer = "desc";                
                         
-                    $dataset->recovered_count = ($dataset->recovered_delta - $dataset->recovered_new);
-                    
                     if ((isset($data->age_group)) || (isset($data->age_group2)))
                     {
                         $age_low = -1;
@@ -2484,7 +2476,7 @@ class Client
                             }
                             if (($data->cases_new == -1) || ($data->cases_new == 1))
                                 $dataset->$key_cases_delta += $data->cases_count;
-                            if ($data->cases_new == 0)
+                            if ($data->cases_new == 1)
                                 $dataset->$key_cases_today += $data->cases_count;
                             if ($data->cases_new == -1)
                                 $dataset->$key_cases_yesterday += $data->cases_count;
@@ -2532,7 +2524,7 @@ class Client
                             }
                             if (($data->deaths_new == -1) || ($data->deaths_new == 1))
                                 $dataset->$key_deaths_delta += $data->deaths_count;
-                            if ($data->deaths_new == 0)
+                            if ($data->deaths_new == 1)
                                 $dataset->$key_deaths_today += $data->deaths_count;
                             if ($data->deaths_new == -1)
                                 $dataset->$key_deaths_yesterday += $data->deaths_count;
@@ -2580,7 +2572,7 @@ class Client
                             }
                             if (($data->deaths_new == -1) || ($data->deaths_new == 1))
                                 $dataset->$key_recovered_delta += $data->deaths_count;
-                            if ($data->deaths_new == 0)
+                            if ($data->deaths_new == 1)
                                 $dataset->$key_recovered_today += $data->deaths_count;
                             if ($data->deaths_new == -1)
                                 $dataset->$key_recovered_yesterday += $data->deaths_count;
