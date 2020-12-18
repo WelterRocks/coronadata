@@ -579,13 +579,18 @@ class DataHandler
             "geoId" => "geo_id",
             "countryterritoryCode" => "country_code",
             "continentExp" => "continent",
-            "Cumulative_number_for_14_days_of_COVID-19_cases_per_100000" => "incidence_14day_given"
+            "Cumulative_number_for_14_days_of_COVID-19_cases_per_100000" => "incidence_14day_given",
+            "notification_rate_per_100000_population_14-days" => "notification_rate_per_100000_14days"
         );
+        
+        $field_buffer = array();
 
         foreach ($this->data->records as $id => $data)
         {
             foreach ($data as $key => $val)
             {
+                $field_buffer[$key] = true;
+                
                 if (isset($transform_keys[$key]))
                 {
                     $new_key = $transform_keys[$key];
@@ -630,8 +635,27 @@ class DataHandler
                     unset($population);
                     unset($population_year);
                 }
+                elseif ($key == "cases_weekly")
+                {   
+                    // 2020-12-18: Seems that they have removed the cases field and replaced it with cases_weekly
+                    if (!isset($this->data->records[$id]->cases))
+                    {
+                        $this->data->records[$id]->cases = ($val / 7);
+                    }
+                }
+                elseif ($key == "deaths_weekly")
+                {
+                    // 2020-12-18: Seems that they have removed the deaths field and replaced it with deaths_weekly
+                    if (!isset($this->data->records[$id]->deaths))
+                    {
+                        $this->data->records[$id]->deaths = ($val / 7);
+                    }
+                }
             }
         }
+        
+        // We leave this here to check for changes later
+        // print_r($field_buffer);
         
         return true;
     }
@@ -712,8 +736,6 @@ class DataHandler
                         
                         $obj->district_type = $type;
                         $obj->district_name = $name;
-// No longer needed, but leaving it here, if the other method leads to problems                        
-//                        $obj->district_fullname = $val;
                         continue(2);
                     case "gender":
                         $gender = strtolower($val);
